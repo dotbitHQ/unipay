@@ -1,13 +1,16 @@
 server:
   net: 1
+  http_port: ""
   cron_spec: "0 0 */1 * * ?" # refund regular
   hedge_url: "" # call hedge token
+business_ids:
+  "": ""
 db:
   mysql:
     addr: "127.0.0.1:3306"
     user: "root"
-    password: "123456"
-    db_name: "das_register"
+    password: "12345678"
+    db_name: "unipay_db"
 chain:
   ckb:
     refund: true # do refund

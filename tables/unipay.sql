@@ -13,11 +13,13 @@ CREATE TABLE `t_order_info`
     `pay_token_id` VARCHAR(255)        NOT NULL DEFAULT '' COMMENT '',
     `pay_status`   SMALLINT            NOT NULL DEFAULT '0' COMMENT '0-Unpaid 1-Paid',
     `order_status` SMALLINT            NOT NULL DEFAULT '0' COMMENT '0-Normal 1-Cancel',
+    `timestamp`    BIGINT              NOT NULL DEFAULT '0' COMMENT '',
     `created_at`   TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '',
     `updated_at`   TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '',
     PRIMARY KEY (`id`) USING BTREE,
     UNIQUE KEY `uk_order_id` (`order_id`) USING BTREE,
-    KEY `k_pay_address` (`pay_address`) USING BTREE
+    KEY `k_pay_address` (`pay_address`) USING BTREE,
+    KEY `k_timestamp` (`timestamp`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci COMMENT ='order info';

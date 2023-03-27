@@ -1,6 +1,8 @@
 package tables
 
 import (
+	"crypto/md5"
+	"fmt"
 	"github.com/dotbitHQ/das-lib/common"
 	"github.com/shopspring/decimal"
 	"time"
@@ -16,6 +18,7 @@ type TableOrderInfo struct {
 	PayTokenId  PayTokenId            `json:"pay_token_id" gorm:"column:pay_token_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
 	PayStatus   PayStatus             `json:"pay_status" gorm:"column:pay_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Unpaid 1-Paid';"`
 	OrderStatus OrderStatus           `json:"order_status" gorm:"column:order_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Normal 1-Cancel';"`
+	Timestamp   int64                 `json:"timestamp" gorm:"column:timestamp; index:k_timestamp; type:bigint(20) NOT NULL DEFAULT '0' COMMENT '';"`
 	CreatedAt   time.Time             `json:"created_at" gorm:"column:created_at; type:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '';"`
 	UpdatedAt   time.Time             `json:"updated_at" gorm:"column:updated_at; type:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '';"`
 }
@@ -55,3 +58,8 @@ const (
 	OrderStatusNormal OrderStatus = 0
 	OrderStatusCancel OrderStatus = 1
 )
+
+func (t *TableOrderInfo) InitOrderId() {
+	orderId := fmt.Sprintf("%s%s%d", t.BusinessId, t.PayAddress, t.Timestamp)
+	t.OrderId = fmt.Sprintf("%x", md5.Sum([]byte(orderId)))
+}

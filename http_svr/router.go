@@ -9,8 +9,8 @@ import (
 )
 
 func (h *HttpSvr) initRouter() {
-	h.Engine.Use(toolib.MiddlewareCors())
-	v1 := h.Engine.Group("v1")
+	h.engine.Use(toolib.MiddlewareCors())
+	v1 := h.engine.Group("v1")
 	{
 		// cache
 		//shortExpireTime, longExpireTime, lockTime := time.Second*5, time.Second*15, time.Minute
@@ -20,7 +20,10 @@ func (h *HttpSvr) initRouter() {
 		//cacheHandleShortCookies := toolib.MiddlewareCacheByRedis(h.rc.GetRedisClient(), true, shortDataTime, lockTime, shortExpireTime, respHandle)
 
 		// query
-		v1.POST("/version", api_code.DoMonitorLog("Version"), h.H.Version)
+		v1.POST("/version", api_code.DoMonitorLog("version"), h.H.Version)
+		v1.POST("/order/create", api_code.DoMonitorLog("order_create"), h.H.OrderCreate)
+		v1.POST("/order/refund", api_code.DoMonitorLog("order_refund"), h.H.OrderRefund)
+		v1.POST("/order/info", api_code.DoMonitorLog("order_info"), h.H.OrderInfo)
 
 		// operate
 	}

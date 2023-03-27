@@ -15,28 +15,29 @@ var (
 type HttpSvr struct {
 	Ctx     context.Context
 	Address string
-	Engine  *gin.Engine
-	Srv     *http.Server
 	H       *handle.HttpHandle
+	engine  *gin.Engine
+	srv     *http.Server
 }
 
 func (h *HttpSvr) Run() {
+	h.engine = gin.New()
 	h.initRouter()
-	h.Srv = &http.Server{
+	h.srv = &http.Server{
 		Addr:    h.Address,
-		Handler: h.Engine,
+		Handler: h.engine,
 	}
 	go func() {
-		if err := h.Srv.ListenAndServe(); err != nil {
+		if err := h.srv.ListenAndServe(); err != nil {
 			log.Error("ListenAndServe err:", err)
 		}
 	}()
 }
 
 func (h *HttpSvr) Shutdown() {
-	if h.Srv != nil {
+	if h.srv != nil {
 		log.Warn("HttpSvr Shutdown ... ")
-		if err := h.Srv.Shutdown(h.Ctx); err != nil {
+		if err := h.srv.Shutdown(h.Ctx); err != nil {
 			log.Error("Shutdown err:", err.Error())
 		}
 	}
