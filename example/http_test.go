@@ -17,7 +17,7 @@ func TestOrderCreate(t *testing.T) {
 			Type: "blockchain",
 			KeyInfo: core.KeyInfo{
 				CoinType: common.CoinTypeEth,
-				ChainId:  "",
+				ChainId:  "11",
 				Key:      "0xc9f53b1d85356B60453F867610888D89a0B667Ad",
 			},
 		},
