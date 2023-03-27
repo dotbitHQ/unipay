@@ -1,0 +1,52 @@
+server:
+  net: 1
+  cron_spec: "0 0 */1 * * ?" # refund regular
+  hedge_url: "" # call hedge token
+db:
+  mysql:
+    addr: "127.0.0.1:3306"
+    user: "root"
+    password: "123456"
+    db_name: "das_register"
+chain:
+  ckb:
+    refund: true # do refund
+    switch: true # start tx parse
+    node: ""
+    address: "" # receiver's address
+    private: "" # private key
+  eth:
+    refund: true
+    switch: true
+    node: "http://127.0.0.1:8585"
+    address: ""
+    private: ""
+    refund_add_fee: 1.1
+  tron:
+    refund: true
+    switch: true
+    node: "127.0.0.1:50051"
+    address: ""
+    private: ""
+    refund_add_fee: 1.1
+  bsc:
+    refund: true
+    switch: true
+    node: ""
+    address: ""
+    private: ""
+    refund_add_fee: 1.1
+  polygon:
+    refund: true
+    switch: true
+    node: "https://polygon-rpc.com"
+    address: ""
+    private: ""
+  doge:
+    refund: true
+    switch: true
+    node: ""
+    address: ""
+    private: ""
+    user: ""
+    password: ""
