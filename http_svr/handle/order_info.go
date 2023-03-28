@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"fmt"
 	"github.com/dotbitHQ/unipay/http_svr/api_code"
 	"github.com/dotbitHQ/unipay/tables"
 	"github.com/gin-gonic/gin"
@@ -64,9 +65,10 @@ func (h *HttpHandle) doOrderInfo(req *ReqOrderInfo, apiResp *api_code.ApiResp) e
 	}
 
 	// get payment info
-	paymentInfo := h.getPaymentInfo(orderInfo.OrderId, apiResp)
-	if apiResp.ErrNo != api_code.ApiCodeSuccess {
-		return nil
+	paymentInfo, err := h.DbDao.GetLatestPaymentInfo(orderInfo.OrderId)
+	if err != nil {
+		apiResp.ApiRespErr(api_code.ApiCodeDbError, "failed to get payment info")
+		return fmt.Errorf("GetLatestPaymentInfo err: %s", err.Error())
 	}
 
 	resp = RespOrderInfo{

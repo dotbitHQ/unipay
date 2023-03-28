@@ -90,6 +90,7 @@ func (h *HttpHandle) getOrderInfo(orderId, businessId string, apiResp *api_code.
 	orderInfo, err = h.DbDao.GetOrderInfo(orderId, businessId)
 	if err != nil {
 		apiResp.ApiRespErr(api_code.ApiCodeDbError, "failed to get order info")
+		log.Error("GetOrderInfo err: ", err.Error())
 		return
 	}
 	if orderInfo.Id == 0 {
@@ -104,6 +105,7 @@ func (h *HttpHandle) getPaymentInfo(orderId string, apiResp *api_code.ApiResp) (
 	paymentInfo, err = h.DbDao.GetLatestPaymentInfo(orderId)
 	if err != nil {
 		apiResp.ApiRespErr(api_code.ApiCodeDbError, "failed to get payment info")
+		log.Error("GetLatestPaymentInfo err: ", err.Error())
 		return
 	}
 	if paymentInfo.Id == 0 {
