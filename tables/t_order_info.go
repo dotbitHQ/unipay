@@ -60,6 +60,6 @@ const (
 )
 
 func (t *TableOrderInfo) InitOrderId() {
-	orderId := fmt.Sprintf("%s%s%d", t.BusinessId, t.PayAddress, t.Timestamp)
+	orderId := fmt.Sprintf("%s%s%s%s%d", t.BusinessId, t.PayAddress, t.PayTokenId, t.Amount.String(), t.Timestamp)
 	t.OrderId = fmt.Sprintf("%x", md5.Sum([]byte(orderId)))
 }

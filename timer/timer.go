@@ -2,7 +2,9 @@ package timer
 
 import (
 	"context"
+	"github.com/dotbitHQ/unipay/config"
 	"github.com/dotbitHQ/unipay/dao"
+	"github.com/dotbitHQ/unipay/notify"
 	"github.com/scorpiotzh/mylog"
 	"sync"
 	"time"
@@ -27,7 +29,7 @@ func (t *ToolTimer) RunCallbackNotice() {
 			case <-tickerCallback.C:
 				if err := t.doCallbackNotice(); err != nil {
 					log.Error("doCallbackNotice err: ", err.Error())
-					// todo notify
+					notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doCallbackNotice", err.Error())
 				}
 			case <-t.Ctx.Done():
 				log.Warn("RunCallbackNotice done")
