@@ -33,6 +33,7 @@ CREATE TABLE `t_payment_info`
     `pay_address`     VARCHAR(255)        NOT NULL DEFAULT '' COMMENT '',
     `algorithm_id`    SMALLINT            NOT NULL DEFAULT '0' COMMENT '3,5-EVM 4-TRON 7-DOGE',
     `timestamp`       BIGINT              NOT NULL DEFAULT '0' COMMENT '',
+    `amount`          DECIMAL(60)         NOT NULL DEFAULT '0' COMMENT 'Paid Amount',
     `pay_hash_status` SMALLINT            NOT NULL DEFAULT '0' COMMENT '0-Pending 1-Confirm 2-Fail',
     `refund_status`   SMALLINT            NOT NULL DEFAULT '0' COMMENT '0-Default 1-UnRefunded 2-Refunded',
     `refund_hash`     VARCHAR(255)        NOT NULL DEFAULT '' COMMENT '',

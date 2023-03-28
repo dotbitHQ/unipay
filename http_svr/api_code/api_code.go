@@ -9,6 +9,10 @@ const (
 	ApiCodeMethodNotExist ApiCode = 10001
 	ApiCodeDbError        ApiCode = 10002
 	ApiCodeCacheError     ApiCode = 10003
+
+	ApiCodeOrderNotExist   ApiCode = 600000
+	ApiCodeOrderUnPaid     ApiCode = 600001
+	ApiCodePaymentNotExist ApiCode = 600002
 )
 
 type ApiResp struct {

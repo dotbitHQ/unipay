@@ -60,8 +60,8 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *api_code.ApiRes
 	}
 
 	// check business_id
-	if _, ok := config.Cfg.BusinessIds[req.BusinessId]; !ok {
-		apiResp.ApiRespErr(api_code.ApiCodeParamsInvalid, fmt.Sprintf("unknow bussiness id[%s]", req.BusinessId))
+	checkBusinessIds(req.BusinessId, apiResp)
+	if apiResp.ErrNo != api_code.ApiCodeSuccess {
 		return nil
 	}
 
