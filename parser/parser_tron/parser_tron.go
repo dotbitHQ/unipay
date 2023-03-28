@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
+	"github.com/dotbitHQ/unipay/config"
+	"github.com/dotbitHQ/unipay/notify"
 	"github.com/dotbitHQ/unipay/parser/parser_common"
 	"github.com/dotbitHQ/unipay/tables"
 	"github.com/fbsobreira/gotron-sdk/pkg/proto/api"
@@ -51,6 +53,7 @@ func (p *ParserTron) Parser() {
 				if err := p.parserConcurrencyMode(); err != nil {
 					log.Error("parserConcurrencyMode err:", p.ParserType, err.Error(), p.CurrentBlockNumber)
 				}
+				notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("ParserType %d", p.ParserType), err.Error())
 				log.Warn("parserConcurrencyMode time:", p.ParserType, time.Since(nowTime).Seconds())
 				time.Sleep(time.Second * 1)
 			} else if p.CurrentBlockNumber < (latestBlockNumber - p.ConfirmNum) {
@@ -58,6 +61,7 @@ func (p *ParserTron) Parser() {
 				if err := p.parserSubMode(); err != nil {
 					log.Error("parserSubMode err:", p.ParserType, err.Error(), p.CurrentBlockNumber)
 				}
+				notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("ParserType %d", p.ParserType), err.Error())
 				log.Warn("parserSubMode time:", p.ParserType, time.Since(nowTime).Seconds())
 				time.Sleep(time.Second * 5)
 			} else {

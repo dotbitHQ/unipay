@@ -52,6 +52,7 @@ func (p *ParserBitcoin) Parser() {
 				if err := p.parserConcurrencyMode(); err != nil {
 					log.Error("parserConcurrencyMode err:", p.ParserType, err.Error(), p.CurrentBlockNumber)
 				}
+				notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("ParserType %d", p.ParserType), err.Error())
 				log.Warn("parserConcurrencyMode time:", p.ParserType, time.Since(nowTime).Seconds())
 				time.Sleep(time.Second * 1)
 			} else if p.CurrentBlockNumber < (latestBlockNumber - p.ConfirmNum) {
@@ -59,6 +60,7 @@ func (p *ParserBitcoin) Parser() {
 				if err := p.parserSubMode(); err != nil {
 					log.Error("parserSubMode err:", p.ParserType, err.Error(), p.CurrentBlockNumber)
 				}
+				notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("ParserType %d", p.ParserType), err.Error())
 				log.Warn("parserSubMode time:", p.ParserType, time.Since(nowTime).Seconds())
 				time.Sleep(time.Second * 5)
 			} else {
