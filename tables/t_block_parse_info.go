@@ -29,5 +29,5 @@ const (
 	ParserTypeBSC     = 5
 	ParserTypePOLYGON = 6
 	ParserTypeDoge    = 7
-	ParserTypeDAS     = 99
+	//ParserTypeDAS     = 99
 )
