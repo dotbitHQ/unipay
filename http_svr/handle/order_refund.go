@@ -59,7 +59,7 @@ func (h *HttpHandle) doOrderRefund(req *ReqOrderRefund, apiResp *api_code.ApiRes
 
 	// check paid
 	if orderInfo.PayStatus != tables.PayStatusPaid {
-		apiResp.ApiRespErr(api_code.ApiCodeOrderUnPaid, "order un paid")
+		apiResp.ApiRespErr(api_code.ApiCodeOrderUnPaid, "order not paid")
 		return nil
 	}
 

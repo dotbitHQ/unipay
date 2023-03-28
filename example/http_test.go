@@ -33,3 +33,31 @@ func TestOrderCreate(t *testing.T) {
 	}
 	fmt.Println(toolib.JsonString(&data))
 }
+
+func TestOrderRefund(t *testing.T) {
+	req := handle.ReqOrderRefund{
+		BusinessId: "auto-sub-account",
+		OrderId:    "0ba3ff32e5e585385073ad41305abf63",
+	}
+	url := fmt.Sprintf("%s%s", ApiUrl, "/order/refund")
+
+	var data handle.RespOrderRefund
+	if err := doReq(url, req, &data); err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(toolib.JsonString(&data))
+}
+
+func TestOrderInfo(t *testing.T) {
+	req := handle.ReqOrderInfo{
+		BusinessId: "auto-sub-account",
+		OrderId:    "0ba3ff32e5e585385073ad41305abf63",
+	}
+	url := fmt.Sprintf("%s%s", ApiUrl, "/order/info")
+
+	var data handle.RespOrderInfo
+	if err := doReq(url, req, &data); err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(toolib.JsonString(&data))
+}
