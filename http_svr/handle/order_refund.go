@@ -52,13 +52,8 @@ func (h *HttpHandle) doOrderRefund(req *ReqOrderRefund, apiResp *api_code.ApiRes
 	}
 
 	// get order info
-	orderInfo, err := h.DbDao.GetOrderInfo(req.OrderId, req.BusinessId)
-	if err != nil {
-		apiResp.ApiRespErr(api_code.ApiCodeDbError, "failed to get order info")
-		return fmt.Errorf("GetOrderInfo err: %s", err.Error())
-	}
-	if orderInfo.Id == 0 {
-		apiResp.ApiRespErr(api_code.ApiCodeOrderNotExist, "order not exist")
+	orderInfo := h.getOrderInfo(req.OrderId, req.BusinessId, apiResp)
+	if apiResp.ErrNo != api_code.ApiCodeSuccess {
 		return nil
 	}
 
@@ -69,13 +64,8 @@ func (h *HttpHandle) doOrderRefund(req *ReqOrderRefund, apiResp *api_code.ApiRes
 	}
 
 	// get payment info
-	paymentInfo, err := h.DbDao.GetUnRefundedPaymentInfo(orderInfo.OrderId, orderInfo.Amount)
-	if err != nil {
-		apiResp.ApiRespErr(api_code.ApiCodeDbError, "failed to get payment info")
-		return fmt.Errorf("GetUnRefundedPaymentInfo err: %s", err.Error())
-	}
-	if paymentInfo.Id == 0 {
-		apiResp.ApiRespErr(api_code.ApiCodePaymentNotExist, "payment not exist")
+	paymentInfo := h.getPaymentInfo(orderInfo.OrderId, apiResp)
+	if apiResp.ErrNo != api_code.ApiCodeSuccess {
 		return nil
 	}
 
@@ -93,4 +83,32 @@ func checkBusinessIds(businessId string, apiResp *api_code.ApiResp) {
 	if _, ok := config.Cfg.BusinessIds[businessId]; !ok {
 		apiResp.ApiRespErr(api_code.ApiCodeParamsInvalid, fmt.Sprintf("unknow bussiness id[%s]", businessId))
 	}
+}
+
+func (h *HttpHandle) getOrderInfo(orderId, businessId string, apiResp *api_code.ApiResp) (orderInfo tables.TableOrderInfo) {
+	var err error
+	orderInfo, err = h.DbDao.GetOrderInfo(orderId, businessId)
+	if err != nil {
+		apiResp.ApiRespErr(api_code.ApiCodeDbError, "failed to get order info")
+		return
+	}
+	if orderInfo.Id == 0 {
+		apiResp.ApiRespErr(api_code.ApiCodeOrderNotExist, "order not exist")
+		return
+	}
+	return
+}
+
+func (h *HttpHandle) getPaymentInfo(orderId string, apiResp *api_code.ApiResp) (paymentInfo tables.TablePaymentInfo) {
+	var err error
+	paymentInfo, err = h.DbDao.GetLatestPaymentInfo(orderId)
+	if err != nil {
+		apiResp.ApiRespErr(api_code.ApiCodeDbError, "failed to get payment info")
+		return
+	}
+	if paymentInfo.Id == 0 {
+		apiResp.ApiRespErr(api_code.ApiCodePaymentNotExist, "payment not exist")
+		return
+	}
+	return
 }

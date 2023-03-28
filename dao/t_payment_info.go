@@ -2,12 +2,10 @@ package dao
 
 import (
 	"github.com/dotbitHQ/unipay/tables"
-	"github.com/shopspring/decimal"
 )
 
-func (d *DbDao) GetUnRefundedPaymentInfo(orderId string, amount decimal.Decimal) (info tables.TablePaymentInfo, err error) {
-	err = d.db.Where("order_id=? AND amount=? AND pay_hash_status=? AND refund_status=?",
-		orderId, amount, tables.PayHashStatusConfirm, tables.RefundStatusDefault).
+func (d *DbDao) GetLatestPaymentInfo(orderId string) (info tables.TablePaymentInfo, err error) {
+	err = d.db.Where("order_id=?", orderId).Order("id DESC").
 		Limit(1).Find(&info).Error
 	return
 }
