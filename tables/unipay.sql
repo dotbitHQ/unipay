@@ -56,12 +56,12 @@ CREATE TABLE `t_notice_info`
     `order_id`      VARCHAR(255)        NOT NULL DEFAULT '' COMMENT '',
     `event_type`    VARCHAR(255)        NOT NULL DEFAULT '' COMMENT 'ORDER.PAY, ORDER.REFUND',
     `notice_count`  SMALLINT            NOT NULL DEFAULT '0' COMMENT '',
-    `notice_status` SMALLINT            NOT NULL DEFAULT '0' COMMENT '0-Default 1-OK',
+    `notice_status` SMALLINT            NOT NULL DEFAULT '0' COMMENT '0-Default 1-OK 2-Fail',
     `timestamp`     BIGINT              NOT NULL DEFAULT '0' COMMENT '',
     `created_at`    TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '',
     `updated_at`    TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '',
     PRIMARY KEY (`id`) USING BTREE,
-    UNIQUE KEY `uk_order_id` (`order_id`) USING BTREE,
+    UNIQUE KEY `uk_event_id` (`order_id`, `event_type`) USING BTREE,
     KEY `k_timestamp` (`timestamp`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4

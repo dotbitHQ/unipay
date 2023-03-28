@@ -7,6 +7,7 @@ import (
 	"github.com/dotbitHQ/unipay/dao"
 	"github.com/dotbitHQ/unipay/http_svr"
 	"github.com/dotbitHQ/unipay/http_svr/handle"
+	"github.com/dotbitHQ/unipay/timer"
 	"github.com/scorpiotzh/mylog"
 	"github.com/scorpiotzh/toolib"
 	"github.com/urfave/cli/v2"
@@ -65,6 +66,7 @@ func runServer(ctx *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("config.InitDasCore err: %s", err.Error())
 	}
+
 	// http
 	httpSvr := http_svr.HttpSvr{
 		Ctx:     ctxServer,
@@ -76,6 +78,14 @@ func runServer(ctx *cli.Context) error {
 		},
 	}
 	httpSvr.Run()
+
+	// tool timer
+	toolTimer := timer.ToolTimer{
+		Ctx:   ctxServer,
+		Wg:    &wgServer,
+		DbDao: dbDao,
+	}
+	toolTimer.RunCallbackNotice()
 
 	// ============= service end =============
 	toolib.ExitMonitoring(func(sig os.Signal) {

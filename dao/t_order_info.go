@@ -11,3 +11,8 @@ func (d *DbDao) GetOrderInfo(orderId, businessId string) (info tables.TableOrder
 		orderId, businessId).Find(&info).Error
 	return
 }
+
+func (d *DbDao) GetOrderInfoByOrderId(orderId string) (info tables.TableOrderInfo, err error) {
+	err = d.db.Where("order_id=?", orderId).Find(&info).Error
+	return
+}
