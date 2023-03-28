@@ -1,43 +1,53 @@
-package parser_evm
+package parser_ckb
 
 import (
 	"fmt"
-	"github.com/dotbitHQ/das-lib/chain/chain_evm"
+	"github.com/dotbitHQ/das-lib/common"
+	"github.com/dotbitHQ/unipay/config"
 	"github.com/dotbitHQ/unipay/parser/parser_common"
 	"github.com/dotbitHQ/unipay/tables"
-	ethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/nervosnetwork/ckb-sdk-go/address"
+	"github.com/nervosnetwork/ckb-sdk-go/rpc"
+	"github.com/nervosnetwork/ckb-sdk-go/types"
 	"github.com/scorpiotzh/mylog"
-	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-var log = mylog.NewLogger("parser_evm", mylog.LevelDebug)
+var log = mylog.NewLogger("parser_ckb", mylog.LevelDebug)
 
-type ParserEvm struct {
+type ParserCkb struct {
 	parser_common.ParserCommon
-	ChainEvm *chain_evm.ChainEvm
+	Client rpc.Client
+
+	addressArgs string
 }
 
-func (p *ParserEvm) getLatestBlockNumber() (uint64, error) {
-	currentBlockNumber, err := p.ChainEvm.BestBlockNumber()
-	if err != nil {
-		log.Error("BestBlockNumber err: ", p.ParserType, err.Error())
-		return 0, fmt.Errorf("BestBlockNumber err: %s", err.Error())
+func (p *ParserCkb) getLatestBlockNumber() (uint64, error) {
+	if blockNumber, err := p.Client.GetTipBlockNumber(p.Ctx); err != nil {
+		return 0, fmt.Errorf("GetTipBlockNumber err: %s", err.Error())
+	} else {
+		return blockNumber, nil
 	}
-	return currentBlockNumber, nil
 }
 
-func (p *ParserEvm) Parser() {
+func (p *ParserCkb) Parser() {
+	parseAdd, err := address.Parse(p.Address)
+	if err != nil {
+		log.Error("address.Parse err:", p.ParserType, err.Error())
+		return
+	}
+	p.addressArgs = common.Bytes2Hex(parseAdd.Script.Args)
+
 	if err := p.InitCurrentBlockNumber(p.getLatestBlockNumber); err != nil {
 		log.Error("InitCurrentBlockNumber err: ", err.Error())
 		return
 	}
+
 	atomic.AddUint64(&p.CurrentBlockNumber, 1)
 	p.Wg.Add(1)
 	for {
@@ -73,19 +83,21 @@ func (p *ParserEvm) Parser() {
 	}
 }
 
-func (p *ParserEvm) parsingBlockData(block *chain_evm.Block) error {
+func (p *ParserCkb) parsingBlockData(block *types.Block) error {
 	if block == nil {
 		return fmt.Errorf("block is nil")
 	}
 	for _, tx := range block.Transactions {
-		switch strings.ToLower(ethcommon.HexToAddress(tx.To).Hex()) {
-		case strings.ToLower(p.Address):
-			orderId := string(ethcommon.FromHex(tx.Input))
-			log.Info("ParsingBlockData:", p.ParserType, tx.Hash, tx.From, orderId, tx.Value)
+		for i, v := range tx.Outputs {
+			if p.addressArgs != common.Bytes2Hex(v.Lock.Args) {
+				continue
+			}
+			orderId := string(tx.OutputsData[i])
 			if orderId == "" {
 				continue
 			}
-			// select order by order id which in tx memo
+			log.Info("parsingBlockData:", orderId, tx.Hash.Hex())
+			capacity, _ := decimal.NewFromString(strconv.FormatUint(v.Capacity, 10))
 			order, err := p.DbDao.GetOrderInfoByOrderId(orderId)
 			if err != nil {
 				return fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
@@ -93,25 +105,35 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block) error {
 				log.Warn("order not exist:", p.ParserType, orderId)
 				continue
 			}
-			if order.PayTokenId != p.PayTokenId {
-				log.Warn("order pay token id not match", order.OrderId, p.PayTokenId)
+			if order.PayTokenId != tables.PayTokenIdCKB && order.PayTokenId != tables.PayTokenIdDAS {
+				log.Warn("order pay token id not match", order.OrderId)
 				continue
 			}
-			// check value is equal amount or not
-			decValue := decimal.NewFromBigInt(chain_evm.BigIntFromHex(tx.Value), 0)
-			if decValue.Cmp(order.Amount) == -1 {
-				log.Warn("tx value less than order amount:", p.ParserType, decValue, order.Amount.String())
+			if capacity.Cmp(order.Amount) == -1 {
+				log.Warn("tx value less than order amount:", capacity.String(), order.Amount.String())
 				continue
+			}
+			txInputs, err := p.Client.GetTransaction(p.Ctx, tx.Inputs[0].PreviousOutput.TxHash)
+			if err != nil {
+				return fmt.Errorf("GetTransaction err:%s", err.Error())
+			}
+			mode := address.Mainnet
+			if config.Cfg.Server.Net != common.DasNetTypeMainNet {
+				mode = address.Testnet
+			}
+
+			fromAddr, err := common.ConvertScriptToAddress(mode, txInputs.Transaction.Outputs[tx.Inputs[0].PreviousOutput.Index].Lock)
+			if err != nil {
+				return fmt.Errorf("common.ConvertScriptToAddress err:%s", err.Error())
 			}
 			// change the status to confirm
-			timestamp, _ := strconv.ParseInt(block.Timestamp, 10, 64)
 			paymentInfo := tables.TablePaymentInfo{
 				Id:            0,
-				PayHash:       tx.Hash,
+				PayHash:       tx.Hash.Hex(),
 				OrderId:       order.OrderId,
-				PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
+				PayAddress:    fromAddr,
 				AlgorithmId:   order.AlgorithmId,
-				Timestamp:     timestamp,
+				Timestamp:     int64(block.Header.Timestamp),
 				Amount:        order.Amount,
 				PayHashStatus: tables.PayHashStatusConfirm,
 				RefundStatus:  tables.RefundStatusDefault,
@@ -121,25 +143,21 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block) error {
 			if err := p.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
 				return fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
 			}
+			break
 		}
-		continue
 	}
 	return nil
 }
 
-func (p *ParserEvm) parserSubMode() error {
+func (p *ParserCkb) parserSubMode() error {
 	log.Info("parserSubMode:", p.ParserType, p.CurrentBlockNumber)
 
-	block, err := p.ChainEvm.GetBlockByNumber(p.CurrentBlockNumber)
+	block, err := p.Client.GetBlockByNumber(p.Ctx, p.CurrentBlockNumber)
 	if err != nil {
 		return fmt.Errorf("GetBlockByNumber err: %s", err.Error())
 	}
-	blockHash := block.Hash
-	parentHash := block.ParentHash
-	if block.Hash == "" || block.ParentHash == "" {
-		log.Info("GetBlockByNumber:", p.CurrentBlockNumber, toolib.JsonString(&block))
-		return fmt.Errorf("GetBlockByNumber data is nil: [%d]", p.CurrentBlockNumber)
-	}
+	blockHash := block.Header.Hash.Hex()
+	parentHash := block.Header.ParentHash.Hex()
 	log.Info("parserSubMode:", p.ParserType, blockHash, parentHash)
 
 	if fork, err := p.CheckFork(parentHash); err != nil {
@@ -171,12 +189,12 @@ func (p *ParserEvm) parserSubMode() error {
 	return nil
 }
 
-func (p *ParserEvm) parserConcurrencyMode() error {
+func (p *ParserCkb) parserConcurrencyMode() error {
 	log.Info("parserConcurrencyMode:", p.ParserType, p.CurrentBlockNumber, p.ConcurrencyNum)
 
 	var blockList = make([]tables.TableBlockParserInfo, p.ConcurrencyNum)
-	var blocks = make([]*chain_evm.Block, p.ConcurrencyNum)
-	var blockCh = make(chan *chain_evm.Block, p.ConcurrencyNum)
+	var blocks = make([]*types.Block, p.ConcurrencyNum)
+	var blockCh = make(chan *types.Block, p.ConcurrencyNum)
 
 	blockLock := &sync.Mutex{}
 	blockGroup := &errgroup.Group{}
@@ -185,16 +203,12 @@ func (p *ParserEvm) parserConcurrencyMode() error {
 		bn := p.CurrentBlockNumber + i
 		index := i
 		blockGroup.Go(func() error {
-			block, err := p.ChainEvm.GetBlockByNumber(bn)
+			block, err := p.Client.GetBlockByNumber(p.Ctx, bn)
 			if err != nil {
 				return fmt.Errorf("GetBlockByNumber err:%s [%d]", err.Error(), bn)
 			}
-			if block.Hash == "" || block.ParentHash == "" {
-				log.Warn("GetBlockByNumber:", bn, toolib.JsonString(&block))
-				return fmt.Errorf("GetBlockByNumber data is nil: [%d]", bn)
-			}
-			hash := block.Hash
-			parentHash := block.ParentHash
+			hash := block.Header.Hash.Hex()
+			parentHash := block.Header.ParentHash.Hex()
 
 			blockLock.Lock()
 			blockList[index] = tables.TableBlockParserInfo{
