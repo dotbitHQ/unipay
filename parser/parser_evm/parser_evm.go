@@ -1,38 +1,39 @@
-package parser_tron
+package parser_evm
 
 import (
-	"encoding/hex"
 	"fmt"
-	"github.com/dotbitHQ/das-lib/chain/chain_tron"
+	"github.com/dotbitHQ/das-lib/chain/chain_evm"
 	"github.com/dotbitHQ/unipay/parser/parser_common"
 	"github.com/dotbitHQ/unipay/tables"
-	"github.com/fbsobreira/gotron-sdk/pkg/proto/api"
-	"github.com/fbsobreira/gotron-sdk/pkg/proto/core"
-	"github.com/golang/protobuf/proto"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/scorpiotzh/mylog"
+	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
+	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-var log = mylog.NewLogger("parser_tron", mylog.LevelDebug)
+var log = mylog.NewLogger("parser_evm", mylog.LevelDebug)
 
-type ParserTron struct {
+type ParserEvm struct {
 	parser_common.ParserCommon
-	ChainTron *chain_tron.ChainTron
+	ChainEvm *chain_evm.ChainEvm
 }
 
-func (p *ParserTron) getLatestBlockNumber() (uint64, error) {
-	currentBlockNumber, err := p.ChainTron.GetBlockNumber()
+func (p *ParserEvm) getLatestBlockNumber() (uint64, error) {
+	currentBlockNumber, err := p.ChainEvm.BestBlockNumber()
 	if err != nil {
-		return 0, fmt.Errorf("GetBlockNumber err: %s", err.Error())
+		log.Error("BestBlockNumber err: ", p.ParserType, err.Error())
+		return 0, fmt.Errorf("BestBlockNumber err: %s", err.Error())
 	}
-	return uint64(currentBlockNumber), nil
+	return currentBlockNumber, nil
 }
 
-func (p *ParserTron) Parser() {
+func (p *ParserEvm) Parser() {
 	if err := p.InitCurrentBlockNumber(p.getLatestBlockNumber); err != nil {
 		log.Error("InitCurrentBlockNumber err: ", err.Error())
 		return
@@ -72,60 +73,42 @@ func (p *ParserTron) Parser() {
 	}
 }
 
-func (p *ParserTron) parsingBlockData(block *api.BlockExtention) error {
-	if block == nil {
-		return fmt.Errorf("block is nil")
-	}
+func (p *ParserEvm) parsingBlockData(block *chain_evm.Block) error {
 	for _, tx := range block.Transactions {
-		if len(tx.Transaction.RawData.Contract) != 1 {
-			continue
-		}
-		orderId := chain_tron.GetMemo(tx.Transaction.RawData.Data)
-		if orderId == "" {
-			continue
-		} else if len(orderId) > 64 {
-			continue
-		}
-
-		switch tx.Transaction.RawData.Contract[0].Type {
-		case core.Transaction_Contract_TransferContract:
-			instance := core.TransferContract{}
-			if err := proto.Unmarshal(tx.Transaction.RawData.Contract[0].Parameter.Value, &instance); err != nil {
-				log.Error(" proto.Unmarshal err:", err.Error())
+		switch strings.ToLower(ethcommon.HexToAddress(tx.To).Hex()) {
+		case strings.ToLower(p.Address):
+			orderId := string(ethcommon.FromHex(tx.Input))
+			log.Info("ParsingBlockData:", p.ParserType, tx.Hash, tx.From, orderId, tx.Value)
+			if orderId == "" {
 				continue
 			}
-			fromAddr, toAddr := hex.EncodeToString(instance.OwnerAddress), hex.EncodeToString(instance.ToAddress)
-			if toAddr != p.Address {
-				continue
-			}
-			log.Info("parsingBlockData orderId:", orderId, hex.EncodeToString(tx.Txid))
-
-			// check order id
+			// select order by order id which in tx memo
 			order, err := p.DbDao.GetOrderInfoByOrderId(orderId)
 			if err != nil {
 				return fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
 			} else if order.Id == 0 {
-				log.Warn("GetOrderInfoByOrderId is not exist:", p.ParserType, orderId)
+				log.Warn("order not exist:", p.ParserType, orderId)
 				continue
 			}
 			if order.PayTokenId != p.PayTokenId {
-				log.Warn("order pay token id not match", order.OrderId)
+				log.Warn("order pay token id not match", order.OrderId, p.PayTokenId)
 				continue
 			}
-
-			amountValue := decimal.New(instance.Amount, 0)
-			if amountValue.Cmp(order.Amount) == -1 {
-				log.Warn("tx value less than order amount:", amountValue.String(), order.Amount.String())
+			// check value is equal amount or not
+			decValue := decimal.NewFromBigInt(chain_evm.BigIntFromHex(tx.Value), 0)
+			if decValue.Cmp(order.Amount) == -1 {
+				log.Warn("tx value less than order amount:", p.ParserType, decValue, order.Amount.String())
 				continue
 			}
 			// change the status to confirm
+			timestamp, _ := strconv.ParseInt(block.Timestamp, 10, 64)
 			paymentInfo := tables.TablePaymentInfo{
 				Id:            0,
-				PayHash:       hex.EncodeToString(tx.Txid),
+				PayHash:       tx.Hash,
 				OrderId:       order.OrderId,
-				PayAddress:    fromAddr,
+				PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
 				AlgorithmId:   order.AlgorithmId,
-				Timestamp:     tx.Transaction.RawData.Timestamp,
+				Timestamp:     timestamp,
 				Amount:        order.Amount,
 				PayHashStatus: tables.PayHashStatusConfirm,
 				RefundStatus:  tables.RefundStatusDefault,
@@ -135,28 +118,25 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention) error {
 			if err := p.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
 				return fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
 			}
-		case core.Transaction_Contract_TransferAssetContract:
-		case core.Transaction_Contract_TriggerSmartContract:
 		}
+		continue
 	}
 	return nil
 }
 
-func (p *ParserTron) parserSubMode() error {
+func (p *ParserEvm) parserSubMode() error {
 	log.Info("parserSubMode:", p.ParserType, p.CurrentBlockNumber)
 
-	block, err := p.ChainTron.GetBlockByNumber(p.CurrentBlockNumber)
+	block, err := p.ChainEvm.GetBlockByNumber(p.CurrentBlockNumber)
 	if err != nil {
 		return fmt.Errorf("GetBlockByNumber err: %s", err.Error())
 	}
-	if block.BlockHeader == nil {
-		return fmt.Errorf("parserSubMode: block.BlockHeader is nil[%d]", p.CurrentBlockNumber)
-	} else if block.BlockHeader.RawData == nil {
-		return fmt.Errorf("parserSubMode: block.BlockHeader.RawData is nil[%d]", p.CurrentBlockNumber)
+	blockHash := block.Hash
+	parentHash := block.ParentHash
+	if block.Hash == "" || block.ParentHash == "" {
+		log.Info("GetBlockByNumber:", p.CurrentBlockNumber, toolib.JsonString(&block))
+		return fmt.Errorf("GetBlockByNumber data is nil: [%d]", p.CurrentBlockNumber)
 	}
-
-	blockHash := hex.EncodeToString(block.Blockid)
-	parentHash := hex.EncodeToString(block.BlockHeader.RawData.ParentHash)
 	log.Info("parserSubMode:", p.ParserType, blockHash, parentHash)
 
 	if fork, err := p.CheckFork(parentHash); err != nil {
@@ -188,12 +168,12 @@ func (p *ParserTron) parserSubMode() error {
 	return nil
 }
 
-func (p *ParserTron) parserConcurrencyMode() error {
+func (p *ParserEvm) parserConcurrencyMode() error {
 	log.Info("parserConcurrencyMode:", p.ParserType, p.CurrentBlockNumber, p.ConcurrencyNum)
 
 	var blockList = make([]tables.TableBlockParserInfo, p.ConcurrencyNum)
-	var blocks = make([]*api.BlockExtention, p.ConcurrencyNum)
-	var blockCh = make(chan *api.BlockExtention, p.ConcurrencyNum)
+	var blocks = make([]*chain_evm.Block, p.ConcurrencyNum)
+	var blockCh = make(chan *chain_evm.Block, p.ConcurrencyNum)
 
 	blockLock := &sync.Mutex{}
 	blockGroup := &errgroup.Group{}
@@ -202,18 +182,16 @@ func (p *ParserTron) parserConcurrencyMode() error {
 		bn := p.CurrentBlockNumber + i
 		index := i
 		blockGroup.Go(func() error {
-			block, err := p.ChainTron.GetBlockByNumber(bn)
+			block, err := p.ChainEvm.GetBlockByNumber(bn)
 			if err != nil {
 				return fmt.Errorf("GetBlockByNumber err:%s [%d]", err.Error(), bn)
 			}
-			if block.BlockHeader == nil {
-				return fmt.Errorf("parserSubMode: block.BlockHeader is nil[%d]", bn)
-			} else if block.BlockHeader.RawData == nil {
-				return fmt.Errorf("parserSubMode: block.BlockHeader.RawData is nil[%d]", bn)
+			if block.Hash == "" || block.ParentHash == "" {
+				log.Warn("GetBlockByNumber:", bn, toolib.JsonString(&block))
+				return fmt.Errorf("GetBlockByNumber data is nil: [%d]", bn)
 			}
-
-			hash := hex.EncodeToString(block.Blockid)
-			parentHash := hex.EncodeToString(block.BlockHeader.RawData.ParentHash)
+			hash := block.Hash
+			parentHash := block.ParentHash
 
 			blockLock.Lock()
 			blockList[index] = tables.TableBlockParserInfo{

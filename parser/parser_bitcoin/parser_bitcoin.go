@@ -66,6 +66,7 @@ func (p *ParserBitcoin) Parser() {
 				time.Sleep(time.Second * 10)
 			}
 		case <-p.Ctx.Done():
+			log.Warn("Parser done", p.ParserType)
 			p.Wg.Done()
 			return
 		}
