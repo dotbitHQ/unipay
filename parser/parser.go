@@ -71,9 +71,9 @@ func (t *ToolParser) initParserEth() error {
 	if !config.Cfg.Chain.Eth.Switch {
 		return nil
 	}
-	chainEvm, err := chain_evm.Initialize(t.ctx, config.Cfg.Chain.Eth.Node, config.Cfg.Chain.Eth.RefundAddFee)
+	chainEvm, err := chain_evm.NewChainEvm(t.ctx, config.Cfg.Chain.Eth.Node, config.Cfg.Chain.Eth.RefundAddFee)
 	if err != nil {
-		return fmt.Errorf("chain_evm.Initialize eth err: %s", err.Error())
+		return fmt.Errorf("chain_evm.NewChainEvm eth err: %s", err.Error())
 	}
 	t.ParserEth = &parser_evm.ParserEvm{
 		ParserCommon: parser_common.ParserCommon{
@@ -96,9 +96,9 @@ func (t *ToolParser) initParserBsc() error {
 	if !config.Cfg.Chain.Bsc.Switch {
 		return nil
 	}
-	chainEvm, err := chain_evm.Initialize(t.ctx, config.Cfg.Chain.Bsc.Node, config.Cfg.Chain.Bsc.RefundAddFee)
+	chainEvm, err := chain_evm.NewChainEvm(t.ctx, config.Cfg.Chain.Bsc.Node, config.Cfg.Chain.Bsc.RefundAddFee)
 	if err != nil {
-		return fmt.Errorf("chain_evm.Initialize bsc err: %s", err.Error())
+		return fmt.Errorf("chain_evm.NewChainEvm bsc err: %s", err.Error())
 	}
 	t.ParserBsc = &parser_evm.ParserEvm{
 		ParserCommon: parser_common.ParserCommon{
@@ -121,9 +121,9 @@ func (t *ToolParser) initParserPolygon() error {
 	if !config.Cfg.Chain.Polygon.Switch {
 		return nil
 	}
-	chainEvm, err := chain_evm.Initialize(t.ctx, config.Cfg.Chain.Polygon.Node, config.Cfg.Chain.Polygon.RefundAddFee)
+	chainEvm, err := chain_evm.NewChainEvm(t.ctx, config.Cfg.Chain.Polygon.Node, config.Cfg.Chain.Polygon.RefundAddFee)
 	if err != nil {
-		return fmt.Errorf("chain_evm.Initialize bsc err: %s", err.Error())
+		return fmt.Errorf("chain_evm.NewChainEvm bsc err: %s", err.Error())
 	}
 	t.ParserBsc = &parser_evm.ParserEvm{
 		ParserCommon: parser_common.ParserCommon{
@@ -146,9 +146,9 @@ func (t *ToolParser) initParserTron() error {
 	if !config.Cfg.Chain.Tron.Switch {
 		return nil
 	}
-	chainTron, err := chain_tron.Initialize(t.ctx, config.Cfg.Chain.Tron.Node)
+	chainTron, err := chain_tron.NewChainTron(t.ctx, config.Cfg.Chain.Tron.Node)
 	if err != nil {
-		return fmt.Errorf("chain_ckb.Initialize tron err: %s", err.Error())
+		return fmt.Errorf("chain_ckb.NewChainTron tron err: %s", err.Error())
 	}
 	address := config.Cfg.Chain.Tron.Address
 	if strings.HasPrefix(address, common.TronBase58PreFix) {
