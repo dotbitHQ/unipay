@@ -21,7 +21,7 @@ func (d *DbDao) UpdatePaymentInfoToUnRefunded(payHash string) error {
 		}).Error
 }
 
-func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo) error {
+func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo, noticeInfo tables.TableNoticeInfo) error {
 	return d.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(tables.TableOrderInfo{}).
 			Where("order_id=? AND pay_status=?",
@@ -44,6 +44,12 @@ func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo) error {
 		if err := tx.Clauses(clause.Insert{
 			Modifier: "IGNORE",
 		}).Create(&paymentInfo).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Clauses(clause.Insert{
+			Modifier: "IGNORE",
+		}).Create(&noticeInfo).Error; err != nil {
 			return err
 		}
 

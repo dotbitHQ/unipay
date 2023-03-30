@@ -195,8 +195,8 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 				RefundHash:    "",
 				RefundNonce:   0,
 			}
-			if err := pc.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
-				return fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
+			if err := pc.HandlePayment(paymentInfo, order); err != nil {
+				return fmt.Errorf("HandlePayment err: %s", err.Error())
 			}
 		case core.Transaction_Contract_TransferAssetContract:
 		case core.Transaction_Contract_TriggerSmartContract:

@@ -7,6 +7,7 @@ import (
 	"github.com/dotbitHQ/unipay/dao"
 	"github.com/dotbitHQ/unipay/http_svr"
 	"github.com/dotbitHQ/unipay/http_svr/handle"
+	"github.com/dotbitHQ/unipay/notify"
 	"github.com/dotbitHQ/unipay/parser"
 	"github.com/dotbitHQ/unipay/timer"
 	"github.com/scorpiotzh/mylog"
@@ -80,20 +81,24 @@ func runServer(ctx *cli.Context) error {
 	}
 	httpSvr.Run()
 
+	//
+	cn := &notify.CallbackNotice{DbDao: dbDao}
+
+	// tool parser
+	toolParser, err := parser.NewToolParser(ctxServer, &wgServer, dbDao, cn)
+	if err != nil {
+		return fmt.Errorf("NewToolParser err: %s", err.Error())
+	}
+	toolParser.RunParser()
+
 	// tool timer
 	toolTimer := timer.ToolTimer{
 		Ctx:   ctxServer,
 		Wg:    &wgServer,
 		DbDao: dbDao,
+		CN:    cn,
 	}
 	toolTimer.RunCallbackNotice()
-
-	// tool parser
-	toolParser, err := parser.NewToolParser(ctxServer, &wgServer, dbDao)
-	if err != nil {
-		return fmt.Errorf("NewToolParser err: %s", err.Error())
-	}
-	toolParser.RunParser()
 
 	// ============= service end =============
 	toolib.ExitMonitoring(func(sig os.Signal) {

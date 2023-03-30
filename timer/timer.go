@@ -18,6 +18,7 @@ type ToolTimer struct {
 	Ctx   context.Context
 	Wg    *sync.WaitGroup
 	DbDao *dao.DbDao
+	CN    *notify.CallbackNotice
 }
 
 func (t *ToolTimer) RunCallbackNotice() {

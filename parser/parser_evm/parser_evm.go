@@ -163,6 +163,7 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				log.Warn("tx value less than order amount:", parserType, decValue, order.Amount.String())
 				continue
 			}
+
 			// change the status to confirm
 			timestamp, _ := strconv.ParseInt(block.Timestamp, 10, 64)
 			paymentInfo := tables.TablePaymentInfo{
@@ -178,8 +179,8 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				RefundHash:    "",
 				RefundNonce:   0,
 			}
-			if err := pc.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
-				return fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
+			if err := pc.HandlePayment(paymentInfo, order); err != nil {
+				return fmt.Errorf("HandlePayment err: %s", err.Error())
 			}
 		}
 		continue

@@ -20,17 +20,18 @@ func (d *DbDao) UpdateNoticeStatus(id uint64, oldStatus, newStatus tables.Notice
 		}).Error
 }
 
-func (d *DbDao) UpdateNoticeCount(id uint64, noticeCount int) error {
-	if noticeCount > 3 {
+func (d *DbDao) UpdateNoticeCount(notice tables.TableNoticeInfo) error {
+	notice.NoticeCount++
+	if notice.NoticeCount > 3 {
 		return d.db.Model(tables.TableNoticeInfo{}).
-			Where("id=? AND notice_status=?", id, tables.NoticeStatusDefault).
+			Where("id=? AND notice_status=?", notice.Id, tables.NoticeStatusDefault).
 			Updates(map[string]interface{}{
 				"notice_status": tables.NoticeStatusFail,
 			}).Error
 	}
 	return d.db.Model(tables.TableNoticeInfo{}).
-		Where("id=? AND notice_status=?", id, tables.NoticeStatusDefault).
+		Where("id=? AND notice_status=?", notice.Id, tables.NoticeStatusDefault).
 		Updates(map[string]interface{}{
-			"notice_count": noticeCount,
+			"notice_count": notice.NoticeCount,
 		}).Error
 }

@@ -242,8 +242,8 @@ func (p *ParserBitcoin) dealWithOpReturn(pc *parser_common.ParserCore, data btcj
 		RefundHash:    "",
 		RefundNonce:   0,
 	}
-	if err := pc.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
-		return false, fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
+	if err := pc.HandlePayment(paymentInfo, order); err != nil {
+		return false, fmt.Errorf("HandlePayment err: %s", err.Error())
 	}
 
 	return true, nil
@@ -273,8 +273,8 @@ func (p *ParserBitcoin) dealWithHashAndAmount(pc *parser_common.ParserCore, data
 			RefundHash:    "",
 			RefundNonce:   0,
 		}
-		if err := pc.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
-			return fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
+		if err := pc.HandlePayment(paymentInfo, order); err != nil {
+			return fmt.Errorf("HandlePayment err: %s", err.Error())
 		}
 	} else {
 		msg := `hash: %s

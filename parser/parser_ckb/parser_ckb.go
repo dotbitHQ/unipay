@@ -191,8 +191,8 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 				RefundHash:    "",
 				RefundNonce:   0,
 			}
-			if err := pc.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
-				return fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
+			if err := pc.HandlePayment(paymentInfo, order); err != nil {
+				return fmt.Errorf("HandlePayment err: %s", err.Error())
 			}
 			break
 		}

@@ -9,6 +9,7 @@ import (
 	"github.com/dotbitHQ/das-lib/common"
 	"github.com/dotbitHQ/unipay/config"
 	"github.com/dotbitHQ/unipay/dao"
+	"github.com/dotbitHQ/unipay/notify"
 	"github.com/dotbitHQ/unipay/parser/parser_bitcoin"
 	"github.com/dotbitHQ/unipay/parser/parser_ckb"
 	"github.com/dotbitHQ/unipay/parser/parser_common"
@@ -26,14 +27,16 @@ type ToolParser struct {
 	ctx   context.Context
 	wg    *sync.WaitGroup
 	dbDao *dao.DbDao
+	cn    *notify.CallbackNotice
 }
 
-func NewToolParser(ctx context.Context, wg *sync.WaitGroup, dbDao *dao.DbDao) (*ToolParser, error) {
+func NewToolParser(ctx context.Context, wg *sync.WaitGroup, dbDao *dao.DbDao, cn *notify.CallbackNotice) (*ToolParser, error) {
 	tp := ToolParser{
 		ParserCommonMap: make(map[tables.ParserType]*parser_common.ParserCommon),
 		ctx:             ctx,
 		wg:              wg,
 		dbDao:           dbDao,
+		cn:              cn,
 	}
 
 	if err := tp.initParserEth(); err != nil {
@@ -70,6 +73,7 @@ func (t *ToolParser) initParserEth() error {
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
 			DbDao:              t.dbDao,
+			CN:                 t.cn,
 			ParserType:         tables.ParserTypeETH,
 			PayTokenId:         tables.PayTokenIdETH,
 			Address:            config.Cfg.Chain.Eth.Address,
@@ -98,6 +102,7 @@ func (t *ToolParser) initParserBsc() error {
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
 			DbDao:              t.dbDao,
+			CN:                 t.cn,
 			ParserType:         tables.ParserTypeBSC,
 			PayTokenId:         tables.PayTokenIdBNB,
 			Address:            config.Cfg.Chain.Bsc.Address,
@@ -127,6 +132,7 @@ func (t *ToolParser) initParserPolygon() error {
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
 			DbDao:              t.dbDao,
+			CN:                 t.cn,
 			ParserType:         tables.ParserTypePOLYGON,
 			PayTokenId:         tables.PayTokenIdMATIC,
 			Address:            config.Cfg.Chain.Polygon.Address,
@@ -161,6 +167,7 @@ func (t *ToolParser) initParserTron() error {
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
 			DbDao:              t.dbDao,
+			CN:                 t.cn,
 			ParserType:         tables.ParserTypeTRON,
 			PayTokenId:         tables.PayTokenIdTRX,
 			Address:            address,
@@ -188,6 +195,7 @@ func (t *ToolParser) initParserCkb() error {
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
 			DbDao:              t.dbDao,
+			CN:                 t.cn,
 			ParserType:         tables.ParserTypeCKB,
 			PayTokenId:         tables.PayTokenIdDAS,
 			Address:            config.Cfg.Chain.Ckb.Address,
@@ -219,6 +227,7 @@ func (t *ToolParser) initParserDoge() error {
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
 			DbDao:              t.dbDao,
+			CN:                 t.cn,
 			ParserType:         tables.ParserTypeDoge,
 			PayTokenId:         tables.PayTokenIdDOGE,
 			Address:            config.Cfg.Chain.Doge.Address,
