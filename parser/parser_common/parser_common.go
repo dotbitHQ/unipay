@@ -35,16 +35,50 @@ type ParserCore struct {
 	Switch             bool
 }
 
-func (p *ParserCore) CheckFork(parentHash string) (bool, error) {
+func (p *ParserCore) HandleFork(blockHash, parentHash string) (bool, error) {
 	block, err := p.DbDao.FindBlockInfoByBlockNumber(p.ParserType, p.CurrentBlockNumber-1)
 	if err != nil {
 		return false, err
 	}
 	if block.Id > 0 && block.BlockHash != parentHash {
-		log.Warn("CheckFork:", p.CurrentBlockNumber, parentHash, block.BlockHash)
+		log.Warn("DoCheckFork is true:", p.ParserType, p.CurrentBlockNumber, blockHash, parentHash, block.BlockHash)
+		if err := p.DbDao.DeleteBlockInfoByBlockNumber(p.ParserType, p.CurrentBlockNumber-1); err != nil {
+			return false, fmt.Errorf("DeleteBlockInfoByBlockNumber err: %s", err.Error())
+		}
+		atomic.AddUint64(&p.CurrentBlockNumber, ^uint64(0))
 		return true, nil
 	}
 	return false, nil
+}
+
+func (p *ParserCore) HandleSingleParsingOK(blockHash, parentHash string) error {
+	blockInfo := tables.TableBlockParserInfo{
+		ParserType:  p.ParserType,
+		BlockNumber: p.CurrentBlockNumber,
+		BlockHash:   blockHash,
+		ParentHash:  parentHash,
+	}
+	if err := p.DbDao.CreateBlockInfo(blockInfo); err != nil {
+		return fmt.Errorf("CreateBlockInfo err: %s", err.Error())
+	} else {
+		atomic.AddUint64(&p.CurrentBlockNumber, 1)
+	}
+	if err := p.DbDao.DeleteBlockInfo(p.ParserType, p.CurrentBlockNumber-20); err != nil {
+		log.Error("DeleteBlockInfo1 err:", p.ParserType, err.Error(), p.CurrentBlockNumber)
+	}
+	return nil
+}
+
+func (p *ParserCore) HandleConcurrentParsingOK(blockList []tables.TableBlockParserInfo) error {
+	if err := p.DbDao.CreateBlockInfoList(blockList); err != nil {
+		return fmt.Errorf("CreateBlockInfoList err:%s", err.Error())
+	} else {
+		atomic.AddUint64(&p.CurrentBlockNumber, p.ConcurrencyNum)
+	}
+	if err := p.DbDao.DeleteBlockInfo(p.ParserType, p.CurrentBlockNumber-20); err != nil {
+		log.Error("DeleteBlockInfo2 err:", p.ParserType, err.Error(), p.CurrentBlockNumber)
+	}
+	return nil
 }
 
 type ParserCommon struct {
@@ -90,7 +124,7 @@ func (p *ParserCommon) Parser() {
 				log.Error("GetLatestBlockNumber err: ", err.Error())
 				time.Sleep(time.Second * 10)
 			} else if concurrencyNum > 1 && p.PC.CurrentBlockNumber < (latestBlockNumber-confirmNum-concurrencyNum) {
-				log.Info("ConcurrentParsing:", concurrencyNum, p.PC.CurrentBlockNumber, latestBlockNumber, confirmNum, concurrencyNum)
+				log.Info("ConcurrentParsing:", p.PC.CurrentBlockNumber, latestBlockNumber)
 				nowTime := time.Now()
 				if err := p.PA.ConcurrentParsing(p.PC); err != nil {
 					log.Error("ConcurrentParsing err:", parserType, err.Error(), p.PC.CurrentBlockNumber)

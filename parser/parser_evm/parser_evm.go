@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 )
 
 var log = mylog.NewLogger("parser_evm", mylog.LevelDebug)
@@ -33,53 +32,40 @@ func (p *ParserEvm) GetLatestBlockNumber() (uint64, error) {
 	return currentBlockNumber, nil
 }
 func (p *ParserEvm) SingleParsing(pc *parser_common.ParserCore) error {
-	parserType := pc.ParserType
-	log.Info("SingleParsing:", parserType, pc.CurrentBlockNumber)
+	parserType, currentBlockNumber := pc.ParserType, pc.CurrentBlockNumber
+	log.Info("SingleParsing:", parserType, currentBlockNumber)
 
-	block, err := p.ChainEvm.GetBlockByNumber(pc.CurrentBlockNumber)
+	block, err := p.ChainEvm.GetBlockByNumber(currentBlockNumber)
 	if err != nil {
 		return fmt.Errorf("GetBlockByNumber err: %s", err.Error())
 	}
 	if block.Hash == "" || block.ParentHash == "" {
-		log.Info("GetBlockByNumber:", pc.CurrentBlockNumber, toolib.JsonString(&block))
-		return fmt.Errorf("GetBlockByNumber data is nil: [%d]", pc.CurrentBlockNumber)
+		log.Info("GetBlockByNumber:", currentBlockNumber, toolib.JsonString(&block))
+		return fmt.Errorf("GetBlockByNumber data is nil: [%d]", currentBlockNumber)
 	}
 
 	blockHash := block.Hash
 	parentHash := block.ParentHash
 	log.Info("SingleParsing:", parserType, blockHash, parentHash)
 
-	if fork, err := pc.CheckFork(parentHash); err != nil {
-		return fmt.Errorf("CheckFork err: %s", err.Error())
-	} else if fork {
-		log.Warn("CheckFork is true:", parserType, pc.CurrentBlockNumber, blockHash, parentHash)
-		if err := pc.DbDao.DeleteBlockInfoByBlockNumber(parserType, pc.CurrentBlockNumber-1); err != nil {
-			return fmt.Errorf("DeleteBlockInfoByBlockNumber err: %s", err.Error())
-		}
-		atomic.AddUint64(&pc.CurrentBlockNumber, ^uint64(0))
-	} else if err := p.parsingBlockData(block, pc); err != nil {
+	if isFork, err := pc.HandleFork(blockHash, parentHash); err != nil {
+		return fmt.Errorf("HandleFork err: %s", err.Error())
+	} else if isFork {
+		return nil
+	}
+
+	if err := p.parsingBlockData(block, pc); err != nil {
 		return fmt.Errorf("parsingBlockData err: %s", err.Error())
 	} else {
-		blockInfo := tables.TableBlockParserInfo{
-			ParserType:  parserType,
-			BlockNumber: pc.CurrentBlockNumber,
-			BlockHash:   blockHash,
-			ParentHash:  parentHash,
-		}
-		if err = pc.DbDao.CreateBlockInfo(blockInfo); err != nil {
-			return fmt.Errorf("CreateBlockInfo err: %s", err.Error())
-		} else {
-			atomic.AddUint64(&pc.CurrentBlockNumber, 1)
-		}
-		if err = pc.DbDao.DeleteBlockInfo(parserType, pc.CurrentBlockNumber-20); err != nil {
-			return fmt.Errorf("DeleteBlockInfo err: %s", err.Error())
+		if err := pc.HandleSingleParsingOK(blockHash, parentHash); err != nil {
+			return fmt.Errorf("HandleSingleParsingOK err: %s", err.Error())
 		}
 	}
 	return nil
 }
 func (p *ParserEvm) ConcurrentParsing(pc *parser_common.ParserCore) error {
-	parserType, concurrencyNum := pc.ParserType, pc.ConcurrencyNum
-	log.Info("ConcurrentParsing:", parserType, concurrencyNum, pc.CurrentBlockNumber)
+	parserType, concurrencyNum, currentBlockNumber := pc.ParserType, pc.ConcurrencyNum, pc.CurrentBlockNumber
+	log.Info("ConcurrentParsing:", parserType, concurrencyNum, currentBlockNumber)
 
 	var blockList = make([]tables.TableBlockParserInfo, concurrencyNum)
 	var blocks = make([]*chain_evm.Block, concurrencyNum)
@@ -89,7 +75,7 @@ func (p *ParserEvm) ConcurrentParsing(pc *parser_common.ParserCore) error {
 	blockGroup := &errgroup.Group{}
 
 	for i := uint64(0); i < concurrencyNum; i++ {
-		bn := pc.CurrentBlockNumber + i
+		bn := currentBlockNumber + i
 		index := i
 		blockGroup.Go(func() error {
 			block, err := p.ChainEvm.GetBlockByNumber(bn)
@@ -138,15 +124,11 @@ func (p *ParserEvm) ConcurrentParsing(pc *parser_common.ParserCore) error {
 		return fmt.Errorf("errGroup.Wait()2 err: %s", err.Error())
 	}
 
-	// block
-	if err := pc.DbDao.CreateBlockInfoList(blockList); err != nil {
-		return fmt.Errorf("CreateBlockInfoList err:%s", err.Error())
-	} else {
-		atomic.AddUint64(&pc.CurrentBlockNumber, concurrencyNum)
+	// ok
+	if err := pc.HandleConcurrentParsingOK(blockList); err != nil {
+		return fmt.Errorf("HandleConcurrentParsingOK err: %s", err.Error())
 	}
-	if err := pc.DbDao.DeleteBlockInfo(parserType, pc.CurrentBlockNumber-20); err != nil {
-		log.Error("DeleteBlockInfo err:", parserType, err.Error())
-	}
+
 	return nil
 }
 
