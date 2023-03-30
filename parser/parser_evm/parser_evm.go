@@ -3,8 +3,6 @@ package parser_evm
 import (
 	"fmt"
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
-	"github.com/dotbitHQ/unipay/config"
-	"github.com/dotbitHQ/unipay/notify"
 	"github.com/dotbitHQ/unipay/parser/parser_common"
 	"github.com/dotbitHQ/unipay/tables"
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -16,177 +14,82 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 var log = mylog.NewLogger("parser_evm", mylog.LevelDebug)
 
 type ParserEvm struct {
-	parser_common.ParserCommon
 	ChainEvm *chain_evm.ChainEvm
 }
 
-func (p *ParserEvm) getLatestBlockNumber() (uint64, error) {
+func (p *ParserEvm) Init(pc *parser_common.ParserCore) error {
+	return nil
+}
+func (p *ParserEvm) GetLatestBlockNumber() (uint64, error) {
 	currentBlockNumber, err := p.ChainEvm.BestBlockNumber()
 	if err != nil {
-		log.Error("BestBlockNumber err: ", p.ParserType, err.Error())
 		return 0, fmt.Errorf("BestBlockNumber err: %s", err.Error())
 	}
 	return currentBlockNumber, nil
 }
+func (p *ParserEvm) SingleParsing(pc *parser_common.ParserCore) error {
+	parserType := pc.ParserType
+	log.Info("SingleParsing:", parserType, pc.CurrentBlockNumber)
 
-func (p *ParserEvm) Parser() {
-	if err := p.InitCurrentBlockNumber(p.getLatestBlockNumber); err != nil {
-		log.Error("InitCurrentBlockNumber err: ", err.Error())
-		return
-	}
-	atomic.AddUint64(&p.CurrentBlockNumber, 1)
-	p.Wg.Add(1)
-	for {
-		select {
-		default:
-			latestBlockNumber, err := p.getLatestBlockNumber()
-			if err != nil {
-				log.Error("getLatestBlockNumber err: ", err.Error())
-				time.Sleep(time.Second * 10)
-			} else if p.ConcurrencyNum > 1 && p.CurrentBlockNumber < (latestBlockNumber-p.ConfirmNum-p.ConcurrencyNum) {
-				nowTime := time.Now()
-				if err := p.parserConcurrencyMode(); err != nil {
-					log.Error("parserConcurrencyMode err:", p.ParserType, err.Error(), p.CurrentBlockNumber)
-				}
-				notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("ParserType %d", p.ParserType), err.Error())
-				log.Warn("parserConcurrencyMode time:", p.ParserType, time.Since(nowTime).Seconds())
-				time.Sleep(time.Second * 1)
-			} else if p.CurrentBlockNumber < (latestBlockNumber - p.ConfirmNum) {
-				nowTime := time.Now()
-				if err := p.parserSubMode(); err != nil {
-					log.Error("parserSubMode err:", p.ParserType, err.Error(), p.CurrentBlockNumber)
-				}
-				notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("ParserType %d", p.ParserType), err.Error())
-				log.Warn("parserSubMode time:", p.ParserType, time.Since(nowTime).Seconds())
-				time.Sleep(time.Second * 5)
-			} else {
-				log.Info("Parser:", p.ParserType, p.CurrentBlockNumber, latestBlockNumber)
-				time.Sleep(time.Second * 10)
-			}
-		case <-p.Ctx.Done():
-			log.Warn("Parser done", p.ParserType)
-			p.Wg.Done()
-			return
-		}
-	}
-}
-
-func (p *ParserEvm) parsingBlockData(block *chain_evm.Block) error {
-	if block == nil {
-		return fmt.Errorf("block is nil")
-	}
-	for _, tx := range block.Transactions {
-		switch strings.ToLower(ethcommon.HexToAddress(tx.To).Hex()) {
-		case strings.ToLower(p.Address):
-			orderId := string(ethcommon.FromHex(tx.Input))
-			log.Info("ParsingBlockData:", p.ParserType, tx.Hash, tx.From, orderId, tx.Value)
-			if orderId == "" {
-				continue
-			}
-			// select order by order id which in tx memo
-			order, err := p.DbDao.GetOrderInfoByOrderId(orderId)
-			if err != nil {
-				return fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
-			} else if order.Id == 0 {
-				log.Warn("order not exist:", p.ParserType, orderId)
-				continue
-			}
-			if order.PayTokenId != p.PayTokenId {
-				log.Warn("order pay token id not match", order.OrderId, p.PayTokenId)
-				continue
-			}
-			// check value is equal amount or not
-			decValue := decimal.NewFromBigInt(chain_evm.BigIntFromHex(tx.Value), 0)
-			if decValue.Cmp(order.Amount) == -1 {
-				log.Warn("tx value less than order amount:", p.ParserType, decValue, order.Amount.String())
-				continue
-			}
-			// change the status to confirm
-			timestamp, _ := strconv.ParseInt(block.Timestamp, 10, 64)
-			paymentInfo := tables.TablePaymentInfo{
-				Id:            0,
-				PayHash:       tx.Hash,
-				OrderId:       order.OrderId,
-				PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
-				AlgorithmId:   order.AlgorithmId,
-				Timestamp:     timestamp,
-				Amount:        order.Amount,
-				PayHashStatus: tables.PayHashStatusConfirm,
-				RefundStatus:  tables.RefundStatusDefault,
-				RefundHash:    "",
-				RefundNonce:   0,
-			}
-			if err := p.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
-				return fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
-			}
-		}
-		continue
-	}
-	return nil
-}
-
-func (p *ParserEvm) parserSubMode() error {
-	log.Info("parserSubMode:", p.ParserType, p.CurrentBlockNumber)
-
-	block, err := p.ChainEvm.GetBlockByNumber(p.CurrentBlockNumber)
+	block, err := p.ChainEvm.GetBlockByNumber(pc.CurrentBlockNumber)
 	if err != nil {
 		return fmt.Errorf("GetBlockByNumber err: %s", err.Error())
 	}
+	if block.Hash == "" || block.ParentHash == "" {
+		log.Info("GetBlockByNumber:", pc.CurrentBlockNumber, toolib.JsonString(&block))
+		return fmt.Errorf("GetBlockByNumber data is nil: [%d]", pc.CurrentBlockNumber)
+	}
+
 	blockHash := block.Hash
 	parentHash := block.ParentHash
-	if block.Hash == "" || block.ParentHash == "" {
-		log.Info("GetBlockByNumber:", p.CurrentBlockNumber, toolib.JsonString(&block))
-		return fmt.Errorf("GetBlockByNumber data is nil: [%d]", p.CurrentBlockNumber)
-	}
-	log.Info("parserSubMode:", p.ParserType, blockHash, parentHash)
+	log.Info("SingleParsing:", parserType, blockHash, parentHash)
 
-	if fork, err := p.CheckFork(parentHash); err != nil {
+	if fork, err := pc.CheckFork(parentHash); err != nil {
 		return fmt.Errorf("CheckFork err: %s", err.Error())
 	} else if fork {
-		log.Warn("CheckFork is true:", p.ParserType, p.CurrentBlockNumber, blockHash, parentHash)
-		if err := p.DbDao.DeleteBlockInfoByBlockNumber(p.ParserType, p.CurrentBlockNumber-1); err != nil {
+		log.Warn("CheckFork is true:", parserType, pc.CurrentBlockNumber, blockHash, parentHash)
+		if err := pc.DbDao.DeleteBlockInfoByBlockNumber(parserType, pc.CurrentBlockNumber-1); err != nil {
 			return fmt.Errorf("DeleteBlockInfoByBlockNumber err: %s", err.Error())
 		}
-		atomic.AddUint64(&p.CurrentBlockNumber, ^uint64(0))
-	} else if err := p.parsingBlockData(block); err != nil {
+		atomic.AddUint64(&pc.CurrentBlockNumber, ^uint64(0))
+	} else if err := p.parsingBlockData(block, pc); err != nil {
 		return fmt.Errorf("parsingBlockData err: %s", err.Error())
 	} else {
 		blockInfo := tables.TableBlockParserInfo{
-			ParserType:  p.ParserType,
-			BlockNumber: p.CurrentBlockNumber,
+			ParserType:  parserType,
+			BlockNumber: pc.CurrentBlockNumber,
 			BlockHash:   blockHash,
 			ParentHash:  parentHash,
 		}
-		if err = p.DbDao.CreateBlockInfo(blockInfo); err != nil {
+		if err = pc.DbDao.CreateBlockInfo(blockInfo); err != nil {
 			return fmt.Errorf("CreateBlockInfo err: %s", err.Error())
 		} else {
-			atomic.AddUint64(&p.CurrentBlockNumber, 1)
+			atomic.AddUint64(&pc.CurrentBlockNumber, 1)
 		}
-		if err = p.DbDao.DeleteBlockInfo(p.ParserType, p.CurrentBlockNumber-20); err != nil {
+		if err = pc.DbDao.DeleteBlockInfo(parserType, pc.CurrentBlockNumber-20); err != nil {
 			return fmt.Errorf("DeleteBlockInfo err: %s", err.Error())
 		}
 	}
 	return nil
 }
+func (p *ParserEvm) ConcurrentParsing(pc *parser_common.ParserCore) error {
+	parserType, concurrencyNum := pc.ParserType, pc.ConcurrencyNum
+	log.Info("ConcurrentParsing:", parserType, concurrencyNum, pc.CurrentBlockNumber)
 
-func (p *ParserEvm) parserConcurrencyMode() error {
-	log.Info("parserConcurrencyMode:", p.ParserType, p.CurrentBlockNumber, p.ConcurrencyNum)
-
-	var blockList = make([]tables.TableBlockParserInfo, p.ConcurrencyNum)
-	var blocks = make([]*chain_evm.Block, p.ConcurrencyNum)
-	var blockCh = make(chan *chain_evm.Block, p.ConcurrencyNum)
+	var blockList = make([]tables.TableBlockParserInfo, concurrencyNum)
+	var blocks = make([]*chain_evm.Block, concurrencyNum)
+	var blockCh = make(chan *chain_evm.Block, concurrencyNum)
 
 	blockLock := &sync.Mutex{}
 	blockGroup := &errgroup.Group{}
 
-	for i := uint64(0); i < p.ConcurrencyNum; i++ {
-		bn := p.CurrentBlockNumber + i
+	for i := uint64(0); i < concurrencyNum; i++ {
+		bn := pc.CurrentBlockNumber + i
 		index := i
 		blockGroup.Go(func() error {
 			block, err := p.ChainEvm.GetBlockByNumber(bn)
@@ -202,7 +105,7 @@ func (p *ParserEvm) parserConcurrencyMode() error {
 
 			blockLock.Lock()
 			blockList[index] = tables.TableBlockParserInfo{
-				ParserType:  p.ParserType,
+				ParserType:  parserType,
 				BlockNumber: bn,
 				BlockHash:   hash,
 				ParentHash:  parentHash,
@@ -224,7 +127,7 @@ func (p *ParserEvm) parserConcurrencyMode() error {
 
 	blockGroup.Go(func() error {
 		for v := range blockCh {
-			if err := p.parsingBlockData(v); err != nil {
+			if err := p.parsingBlockData(v, pc); err != nil {
 				return fmt.Errorf("parsingBlockData err: %s", err.Error())
 			}
 		}
@@ -236,13 +139,68 @@ func (p *ParserEvm) parserConcurrencyMode() error {
 	}
 
 	// block
-	if err := p.DbDao.CreateBlockInfoList(blockList); err != nil {
+	if err := pc.DbDao.CreateBlockInfoList(blockList); err != nil {
 		return fmt.Errorf("CreateBlockInfoList err:%s", err.Error())
 	} else {
-		atomic.AddUint64(&p.CurrentBlockNumber, p.ConcurrencyNum)
+		atomic.AddUint64(&pc.CurrentBlockNumber, concurrencyNum)
 	}
-	if err := p.DbDao.DeleteBlockInfo(p.ParserType, p.CurrentBlockNumber-20); err != nil {
-		log.Error("DeleteBlockInfo err:", p.ParserType, err.Error())
+	if err := pc.DbDao.DeleteBlockInfo(parserType, pc.CurrentBlockNumber-20); err != nil {
+		log.Error("DeleteBlockInfo err:", parserType, err.Error())
+	}
+	return nil
+}
+
+func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.ParserCore) error {
+	parserType, payTokenId, addr := pc.ParserType, pc.PayTokenId, pc.Address
+	if block == nil {
+		return fmt.Errorf("block is nil")
+	}
+	for _, tx := range block.Transactions {
+		switch strings.ToLower(ethcommon.HexToAddress(tx.To).Hex()) {
+		case strings.ToLower(addr):
+			orderId := string(ethcommon.FromHex(tx.Input))
+			log.Info("parsingBlockData:", parserType, tx.Hash, tx.From, orderId, tx.Value)
+			if orderId == "" {
+				continue
+			}
+			// select order by order id which in tx memo
+			order, err := pc.DbDao.GetOrderInfoByOrderId(orderId)
+			if err != nil {
+				return fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
+			} else if order.Id == 0 {
+				log.Warn("order not exist:", parserType, orderId)
+				continue
+			}
+			if order.PayTokenId != payTokenId {
+				log.Warn("order pay token id not match", order.OrderId, payTokenId)
+				continue
+			}
+			// check value is equal amount or not
+			decValue := decimal.NewFromBigInt(chain_evm.BigIntFromHex(tx.Value), 0)
+			if decValue.Cmp(order.Amount) == -1 {
+				log.Warn("tx value less than order amount:", parserType, decValue, order.Amount.String())
+				continue
+			}
+			// change the status to confirm
+			timestamp, _ := strconv.ParseInt(block.Timestamp, 10, 64)
+			paymentInfo := tables.TablePaymentInfo{
+				Id:            0,
+				PayHash:       tx.Hash,
+				OrderId:       order.OrderId,
+				PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
+				AlgorithmId:   order.AlgorithmId,
+				Timestamp:     timestamp,
+				Amount:        order.Amount,
+				PayHashStatus: tables.PayHashStatusConfirm,
+				RefundStatus:  tables.RefundStatusDefault,
+				RefundHash:    "",
+				RefundNonce:   0,
+			}
+			if err := pc.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
+				return fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
+			}
+		}
+		continue
 	}
 	return nil
 }

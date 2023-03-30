@@ -93,7 +93,7 @@ func runServer(ctx *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("NewToolParser err: %s", err.Error())
 	}
-	toolParser.Run()
+	toolParser.RunParser()
 
 	// ============= service end =============
 	toolib.ExitMonitoring(func(sig os.Signal) {

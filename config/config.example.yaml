@@ -45,6 +45,7 @@ chain:
     node: "https://polygon-rpc.com"
     address: ""
     private: ""
+    refund_add_fee: 1.1
   doge:
     refund: true
     switch: true

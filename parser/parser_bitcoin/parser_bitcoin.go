@@ -3,6 +3,7 @@ package parser_bitcoin
 import (
 	"fmt"
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/dotbitHQ/das-lib/bitcoin"
 	"github.com/dotbitHQ/unipay/config"
@@ -14,79 +15,83 @@ import (
 	"golang.org/x/sync/errgroup"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 var log = mylog.NewLogger("parser_bitcoin", mylog.LevelDebug)
 
 type ParserBitcoin struct {
-	parser_common.ParserCommon
 	NodeRpc *bitcoin.BaseRequest
 }
 
-func (p *ParserBitcoin) getLatestBlockNumber() (uint64, error) {
+func (p *ParserBitcoin) GetLatestBlockNumber() (uint64, error) {
 	data, err := p.NodeRpc.GetBlockChainInfo()
 	if err != nil {
 		return 0, fmt.Errorf("GetBlockChainInfo err: %s", err.Error())
 	}
 	return data.Blocks, nil
 }
+func (p *ParserBitcoin) Init(pc *parser_common.ParserCore) error {
+	return nil
+}
+func (p *ParserBitcoin) SingleParsing(pc *parser_common.ParserCore) error {
+	parserType := pc.ParserType
+	log.Info("SingleParsing:", parserType, pc.CurrentBlockNumber)
 
-func (p *ParserBitcoin) Parser() {
-	if err := p.InitCurrentBlockNumber(p.getLatestBlockNumber); err != nil {
-		log.Error("InitCurrentBlockNumber err: ", err.Error())
-		return
+	hash, err := p.NodeRpc.GetBlockHash(pc.CurrentBlockNumber)
+	if err != nil {
+		return fmt.Errorf("req GetBlockHash err: %s", err.Error())
 	}
 
-	atomic.AddUint64(&p.CurrentBlockNumber, 1)
-	p.Wg.Add(1)
-	for {
-		select {
-		default:
-			latestBlockNumber, err := p.getLatestBlockNumber()
-			if err != nil {
-				log.Error("getLatestBlockNumber err: ", err.Error())
-				time.Sleep(time.Second * 10)
-			} else if p.ConcurrencyNum > 1 && p.CurrentBlockNumber < (latestBlockNumber-p.ConfirmNum-p.ConcurrencyNum) {
-				nowTime := time.Now()
-				if err := p.parserConcurrencyMode(); err != nil {
-					log.Error("parserConcurrencyMode err:", p.ParserType, err.Error(), p.CurrentBlockNumber)
-				}
-				notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("ParserType %d", p.ParserType), err.Error())
-				log.Warn("parserConcurrencyMode time:", p.ParserType, time.Since(nowTime).Seconds())
-				time.Sleep(time.Second * 1)
-			} else if p.CurrentBlockNumber < (latestBlockNumber - p.ConfirmNum) {
-				nowTime := time.Now()
-				if err := p.parserSubMode(); err != nil {
-					log.Error("parserSubMode err:", p.ParserType, err.Error(), p.CurrentBlockNumber)
-				}
-				notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("ParserType %d", p.ParserType), err.Error())
-				log.Warn("parserSubMode time:", p.ParserType, time.Since(nowTime).Seconds())
-				time.Sleep(time.Second * 5)
-			} else {
-				log.Info("Parser:", p.ParserType, p.CurrentBlockNumber, latestBlockNumber)
-				time.Sleep(time.Second * 10)
-			}
-		case <-p.Ctx.Done():
-			log.Warn("Parser done", p.ParserType)
-			p.Wg.Done()
-			return
+	block, err := p.NodeRpc.GetBlock(hash)
+	if err != nil {
+		return fmt.Errorf("req GetBlock err: %s", err.Error())
+	}
+
+	blockHash := block.Hash
+	parentHash := block.PreviousBlockHash
+	log.Info("SingleParsing:", parserType, blockHash, parentHash)
+
+	if fork, err := pc.CheckFork(parentHash); err != nil {
+		return fmt.Errorf("CheckFork err: %s", err.Error())
+	} else if fork {
+		log.Warn("CheckFork is true:", parserType, pc.CurrentBlockNumber, blockHash, parentHash)
+		if err := pc.DbDao.DeleteBlockInfoByBlockNumber(parserType, pc.CurrentBlockNumber-1); err != nil {
+			return fmt.Errorf("DeleteBlockInfoByBlockNumber err: %s", err.Error())
+		}
+		atomic.AddUint64(&pc.CurrentBlockNumber, ^uint64(0))
+	} else if err := p.parsingBlockData(&block, pc); err != nil {
+		return fmt.Errorf("parsingBlockData err: %s", err.Error())
+	} else {
+		blockInfo := tables.TableBlockParserInfo{
+			ParserType:  parserType,
+			BlockNumber: pc.CurrentBlockNumber,
+			BlockHash:   blockHash,
+			ParentHash:  parentHash,
+		}
+		if err = pc.DbDao.CreateBlockInfo(blockInfo); err != nil {
+			return fmt.Errorf("CreateBlockInfo err: %s", err.Error())
+		} else {
+			atomic.AddUint64(&pc.CurrentBlockNumber, 1)
+		}
+		if err = pc.DbDao.DeleteBlockInfo(parserType, pc.CurrentBlockNumber-20); err != nil {
+			return fmt.Errorf("DeleteBlockInfo err: %s", err.Error())
 		}
 	}
+	return nil
 }
+func (p *ParserBitcoin) ConcurrentParsing(pc *parser_common.ParserCore) error {
+	parserType, concurrencyNum := pc.ParserType, pc.ConcurrencyNum
+	log.Info("ConcurrentParsing:", parserType, concurrencyNum, pc.CurrentBlockNumber)
 
-func (p *ParserBitcoin) parserConcurrencyMode() error {
-	log.Info("parserConcurrencyMode:", p.ParserType, p.CurrentBlockNumber, p.ConcurrencyNum)
-
-	var blockList = make([]tables.TableBlockParserInfo, p.ConcurrencyNum)
-	var blocks = make([]bitcoin.BlockInfo, p.ConcurrencyNum)
-	var blockCh = make(chan bitcoin.BlockInfo, p.ConcurrencyNum)
+	var blockList = make([]tables.TableBlockParserInfo, concurrencyNum)
+	var blocks = make([]bitcoin.BlockInfo, concurrencyNum)
+	var blockCh = make(chan bitcoin.BlockInfo, concurrencyNum)
 
 	blockLock := &sync.Mutex{}
 	blockGroup := &errgroup.Group{}
 
-	for i := uint64(0); i < p.ConcurrencyNum; i++ {
-		bn := p.CurrentBlockNumber + i
+	for i := uint64(0); i < concurrencyNum; i++ {
+		bn := pc.CurrentBlockNumber + i
 		index := i
 		blockGroup.Go(func() error {
 			blockHash, err := p.NodeRpc.GetBlockHash(bn)
@@ -104,7 +109,7 @@ func (p *ParserBitcoin) parserConcurrencyMode() error {
 
 			blockLock.Lock()
 			blockList[index] = tables.TableBlockParserInfo{
-				ParserType:  p.ParserType,
+				ParserType:  parserType,
 				BlockNumber: bn,
 				BlockHash:   hash,
 				ParentHash:  parentHash,
@@ -126,7 +131,7 @@ func (p *ParserBitcoin) parserConcurrencyMode() error {
 
 	blockGroup.Go(func() error {
 		for v := range blockCh {
-			if err := p.parsingBlockData(&v); err != nil {
+			if err := p.parsingBlockData(&v, pc); err != nil {
 				return fmt.Errorf("parsingBlockData err: %s", err.Error())
 			}
 		}
@@ -138,65 +143,31 @@ func (p *ParserBitcoin) parserConcurrencyMode() error {
 	}
 
 	// block
-	if err := p.DbDao.CreateBlockInfoList(blockList); err != nil {
+	if err := pc.DbDao.CreateBlockInfoList(blockList); err != nil {
 		return fmt.Errorf("CreateBlockInfoList err:%s", err.Error())
 	} else {
-		atomic.AddUint64(&p.CurrentBlockNumber, p.ConcurrencyNum)
+		atomic.AddUint64(&pc.CurrentBlockNumber, concurrencyNum)
 	}
-	if err := p.DbDao.DeleteBlockInfo(p.ParserType, p.CurrentBlockNumber-20); err != nil {
-		log.Error("DeleteBlockInfo err:", p.ParserType, err.Error())
-	}
-	return nil
-}
-func (p *ParserBitcoin) parserSubMode() error {
-	log.Info("parserSubMode:", p.ParserType, p.CurrentBlockNumber)
-
-	hash, err := p.NodeRpc.GetBlockHash(p.CurrentBlockNumber)
-	if err != nil {
-		return fmt.Errorf("req GetBlockHash err: %s", err.Error())
-	}
-
-	block, err := p.NodeRpc.GetBlock(hash)
-	if err != nil {
-		return fmt.Errorf("req GetBlock err: %s", err.Error())
-	}
-	blockHash := block.Hash
-	parentHash := block.PreviousBlockHash
-	log.Info("parserSubMode:", p.ParserType, blockHash, parentHash)
-	if fork, err := p.CheckFork(parentHash); err != nil {
-		return fmt.Errorf("CheckFork err: %s", err.Error())
-	} else if fork {
-		log.Warn("CheckFork is true:", p.ParserType, p.CurrentBlockNumber, blockHash, parentHash)
-		if err := p.DbDao.DeleteBlockInfoByBlockNumber(p.ParserType, p.CurrentBlockNumber-1); err != nil {
-			return fmt.Errorf("DeleteBlockInfoByBlockNumber err: %s", err.Error())
-		}
-		atomic.AddUint64(&p.CurrentBlockNumber, ^uint64(0))
-	} else if err := p.parsingBlockData(&block); err != nil {
-		return fmt.Errorf("parsingBlockData err: %s", err.Error())
-	} else {
-		blockInfo := tables.TableBlockParserInfo{
-			ParserType:  p.ParserType,
-			BlockNumber: p.CurrentBlockNumber,
-			BlockHash:   blockHash,
-			ParentHash:  parentHash,
-		}
-		if err = p.DbDao.CreateBlockInfo(blockInfo); err != nil {
-			return fmt.Errorf("CreateBlockInfo err: %s", err.Error())
-		} else {
-			atomic.AddUint64(&p.CurrentBlockNumber, 1)
-		}
-		if err = p.DbDao.DeleteBlockInfo(p.ParserType, p.CurrentBlockNumber-20); err != nil {
-			return fmt.Errorf("DeleteBlockInfo err: %s", err.Error())
-		}
+	if err := pc.DbDao.DeleteBlockInfo(parserType, pc.CurrentBlockNumber-20); err != nil {
+		log.Error("DeleteBlockInfo err:", parserType, err.Error())
 	}
 	return nil
 }
 
-func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo) error {
+func (p *ParserBitcoin) getMainNetParams(pc *parser_common.ParserCore) (chaincfg.Params, error) {
+	switch pc.ParserType {
+	case tables.ParserTypeDoge:
+		return bitcoin.GetDogeMainNetParams(), nil
+	}
+	return chaincfg.MainNetParams, fmt.Errorf("unknow MainNetParams ParserType[%d]", pc.ParserType)
+}
+
+func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo, pc *parser_common.ParserCore) error {
+	parserType, addr := pc.ParserType, pc.Address
 	if block == nil {
 		return fmt.Errorf("block is nil")
 	}
-	log.Info("parsingBlockData:", p.ParserType, block.Height, block.Hash, len(block.Tx))
+	log.Info("parsingBlockData:", parserType, block.Height, block.Hash, len(block.Tx))
 	for _, v := range block.Tx {
 		// get tx info
 		data, err := p.NodeRpc.GetRawTransaction(v)
@@ -206,8 +177,8 @@ func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo) error {
 		// check address of outputs
 		isMyTx, value := false, float64(0)
 		for _, vOut := range data.Vout {
-			for _, addr := range vOut.ScriptPubKey.Addresses {
-				if addr == p.Address {
+			for _, outAddr := range vOut.ScriptPubKey.Addresses {
+				if outAddr == addr {
 					isMyTx = true
 					value = vOut.Value
 					break
@@ -220,21 +191,25 @@ func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo) error {
 		decValue := decimal.NewFromFloat(value)
 		// check inputs & pay info & order id
 		if isMyTx {
-			log.Info("parsingBlockData:", p.ParserType, v)
+			log.Info("parsingBlockData:", parserType, v)
 			if len(data.Vin) == 0 {
 				return fmt.Errorf("tx vin is nil")
 			}
-			_, addrPayload, err := bitcoin.VinScriptSigToAddress(data.Vin[0].ScriptSig, bitcoin.GetDogeMainNetParams())
+			mainNetParams, err := p.getMainNetParams(pc)
+			if err != nil {
+				return fmt.Errorf("getMainNetParams err: %s", err.Error())
+			}
+			_, addrPayload, err := bitcoin.VinScriptSigToAddress(data.Vin[0].ScriptSig, mainNetParams)
 			if err != nil {
 				return fmt.Errorf("VinScriptSigToAddress err: %s", err.Error())
 			}
 
-			if ok, err := p.dealWithOpReturn(data, decValue, addrPayload); err != nil {
+			if ok, err := p.dealWithOpReturn(pc, data, decValue, addrPayload); err != nil {
 				return fmt.Errorf("dealWithOpReturn err: %s", err.Error())
 			} else if ok {
 				continue
 			}
-			if err = p.dealWithHashAndAmount(data, decValue, addrPayload); err != nil {
+			if err = p.dealWithHashAndAmount(pc, data, decValue, addrPayload); err != nil {
 				return fmt.Errorf("dealWithHashAndAmount err: %s", err.Error())
 			}
 		}
@@ -242,7 +217,7 @@ func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo) error {
 	return nil
 }
 
-func (p *ParserBitcoin) dealWithOpReturn(data btcjson.TxRawResult, decValue decimal.Decimal, addrPayload string) (bool, error) {
+func (p *ParserBitcoin) dealWithOpReturn(pc *parser_common.ParserCore, data btcjson.TxRawResult, decValue decimal.Decimal, addrPayload string) (bool, error) {
 	var orderId string
 	for _, vOut := range data.Vout {
 		switch vOut.ScriptPubKey.Type {
@@ -253,18 +228,18 @@ func (p *ParserBitcoin) dealWithOpReturn(data btcjson.TxRawResult, decValue deci
 			}
 		}
 	}
-	log.Info("checkOpReturn:", orderId, addrPayload)
+	log.Info("dealWithOpReturn:", orderId, addrPayload)
 	if orderId == "" {
 		return false, nil
 	}
-	order, err := p.DbDao.GetOrderInfoByOrderId(orderId)
+	order, err := pc.DbDao.GetOrderInfoByOrderId(orderId)
 	if err != nil {
 		return false, fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
 	} else if order.Id == 0 {
-		log.Warn("order not exist:", p.ParserType, orderId)
+		log.Warn("order not exist:", pc.ParserType, orderId)
 		return false, nil
 	}
-	if order.PayTokenId != p.PayTokenId {
+	if order.PayTokenId != pc.PayTokenId {
 		log.Warn("order pay token id not match", order.OrderId)
 		return false, nil
 	}
@@ -287,19 +262,19 @@ func (p *ParserBitcoin) dealWithOpReturn(data btcjson.TxRawResult, decValue deci
 		RefundHash:    "",
 		RefundNonce:   0,
 	}
-	if err := p.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
+	if err := pc.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
 		return false, fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
 	}
 
 	return true, nil
 }
 
-func (p *ParserBitcoin) dealWithHashAndAmount(data btcjson.TxRawResult, decValue decimal.Decimal, addrPayload string) error {
+func (p *ParserBitcoin) dealWithHashAndAmount(pc *parser_common.ParserCore, data btcjson.TxRawResult, decValue decimal.Decimal, addrPayload string) error {
 	var order tables.TableOrderInfo
 	var err error
 
 	decValue = decValue.Mul(decimal.NewFromInt(1e8))
-	order, err = p.DbDao.GetOrderByAddrWithAmount(addrPayload, p.PayTokenId, decValue)
+	order, err = pc.DbDao.GetOrderByAddrWithAmount(addrPayload, pc.PayTokenId, decValue)
 	if err != nil {
 		return fmt.Errorf("GetOrderByAddrWithAmount err: %s", err.Error())
 	}
@@ -318,7 +293,7 @@ func (p *ParserBitcoin) dealWithHashAndAmount(data btcjson.TxRawResult, decValue
 			RefundHash:    "",
 			RefundNonce:   0,
 		}
-		if err := p.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
+		if err := pc.DbDao.UpdatePaymentStatus(paymentInfo); err != nil {
 			return fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
 		}
 	} else {

@@ -21,12 +21,7 @@ import (
 )
 
 type ToolParser struct {
-	ParserEth     *parser_evm.ParserEvm
-	ParserBsc     *parser_evm.ParserEvm
-	ParserPolygon *parser_evm.ParserEvm
-	ParserCkb     *parser_ckb.ParserCkb
-	ParserTron    *parser_tron.ParserTron
-	ParserDoge    *parser_bitcoin.ParserBitcoin
+	ParserCommonMap map[tables.ParserType]*parser_common.ParserCommon
 
 	ctx   context.Context
 	wg    *sync.WaitGroup
@@ -34,37 +29,32 @@ type ToolParser struct {
 }
 
 func NewToolParser(ctx context.Context, wg *sync.WaitGroup, dbDao *dao.DbDao) (*ToolParser, error) {
-	kp := ToolParser{
-		ParserEth:     nil,
-		ParserBsc:     nil,
-		ParserPolygon: nil,
-		ParserCkb:     nil,
-		ParserTron:    nil,
-		ParserDoge:    nil,
-		ctx:           ctx,
-		wg:            wg,
-		dbDao:         dbDao,
+	tp := ToolParser{
+		ParserCommonMap: make(map[tables.ParserType]*parser_common.ParserCommon),
+		ctx:             ctx,
+		wg:              wg,
+		dbDao:           dbDao,
 	}
 
-	if err := kp.initParserEth(); err != nil {
+	if err := tp.initParserEth(); err != nil {
 		return nil, fmt.Errorf("initParserEth err: %s", err.Error())
 	}
-	if err := kp.initParserBsc(); err != nil {
+	if err := tp.initParserBsc(); err != nil {
 		return nil, fmt.Errorf("initParserBsc err: %s", err.Error())
 	}
-	if err := kp.initParserPolygon(); err != nil {
+	if err := tp.initParserPolygon(); err != nil {
 		return nil, fmt.Errorf("initParserPolygon err: %s", err.Error())
 	}
-	if err := kp.initParserTron(); err != nil {
+	if err := tp.initParserTron(); err != nil {
 		return nil, fmt.Errorf("initParserTron err: %s", err.Error())
 	}
-	if err := kp.initParserCkb(); err != nil {
+	if err := tp.initParserCkb(); err != nil {
 		return nil, fmt.Errorf("initParserCkb err: %s", err.Error())
 	}
-	if err := kp.initParserDoge(); err != nil {
+	if err := tp.initParserDoge(); err != nil {
 		return nil, fmt.Errorf("initParserDoge err: %s", err.Error())
 	}
-	return &kp, nil
+	return &tp, nil
 }
 
 func (t *ToolParser) initParserEth() error {
@@ -75,8 +65,8 @@ func (t *ToolParser) initParserEth() error {
 	if err != nil {
 		return fmt.Errorf("chain_evm.NewChainEvm eth err: %s", err.Error())
 	}
-	t.ParserEth = &parser_evm.ParserEvm{
-		ParserCommon: parser_common.ParserCommon{
+	t.ParserCommonMap[tables.ParserTypeETH] = &parser_common.ParserCommon{
+		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
 			DbDao:              t.dbDao,
@@ -86,8 +76,11 @@ func (t *ToolParser) initParserEth() error {
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     5,
 			ConfirmNum:         2,
+			Switch:             config.Cfg.Chain.Eth.Switch,
 		},
-		ChainEvm: chainEvm,
+		PA: &parser_evm.ParserEvm{
+			ChainEvm: chainEvm,
+		},
 	}
 	return nil
 }
@@ -100,8 +93,8 @@ func (t *ToolParser) initParserBsc() error {
 	if err != nil {
 		return fmt.Errorf("chain_evm.NewChainEvm bsc err: %s", err.Error())
 	}
-	t.ParserBsc = &parser_evm.ParserEvm{
-		ParserCommon: parser_common.ParserCommon{
+	t.ParserCommonMap[tables.ParserTypeBSC] = &parser_common.ParserCommon{
+		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
 			DbDao:              t.dbDao,
@@ -111,9 +104,13 @@ func (t *ToolParser) initParserBsc() error {
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     10,
 			ConfirmNum:         10,
+			Switch:             config.Cfg.Chain.Bsc.Switch,
 		},
-		ChainEvm: chainEvm,
+		PA: &parser_evm.ParserEvm{
+			ChainEvm: chainEvm,
+		},
 	}
+
 	return nil
 }
 
@@ -125,8 +122,8 @@ func (t *ToolParser) initParserPolygon() error {
 	if err != nil {
 		return fmt.Errorf("chain_evm.NewChainEvm bsc err: %s", err.Error())
 	}
-	t.ParserBsc = &parser_evm.ParserEvm{
-		ParserCommon: parser_common.ParserCommon{
+	t.ParserCommonMap[tables.ParserTypePOLYGON] = &parser_common.ParserCommon{
+		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
 			DbDao:              t.dbDao,
@@ -136,8 +133,11 @@ func (t *ToolParser) initParserPolygon() error {
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     10,
 			ConfirmNum:         10,
+			Switch:             config.Cfg.Chain.Polygon.Switch,
 		},
-		ChainEvm: chainEvm,
+		PA: &parser_evm.ParserEvm{
+			ChainEvm: chainEvm,
+		},
 	}
 	return nil
 }
@@ -156,8 +156,8 @@ func (t *ToolParser) initParserTron() error {
 			return fmt.Errorf("TronBase58ToHex err: %s", err.Error())
 		}
 	}
-	t.ParserTron = &parser_tron.ParserTron{
-		ParserCommon: parser_common.ParserCommon{
+	t.ParserCommonMap[tables.ParserTypeTRON] = &parser_common.ParserCommon{
+		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
 			DbDao:              t.dbDao,
@@ -167,9 +167,11 @@ func (t *ToolParser) initParserTron() error {
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     10,
 			ConfirmNum:         10,
+			Switch:             config.Cfg.Chain.Tron.Switch,
 		},
-		ChainTron: chainTron,
+		PA: &parser_tron.ParserTron{ChainTron: chainTron},
 	}
+
 	return nil
 }
 
@@ -181,8 +183,8 @@ func (t *ToolParser) initParserCkb() error {
 	if err != nil {
 		return fmt.Errorf("rpc.DialWithIndexer err:%s", err.Error())
 	}
-	t.ParserCkb = &parser_ckb.ParserCkb{
-		ParserCommon: parser_common.ParserCommon{
+	t.ParserCommonMap[tables.ParserTypeCKB] = &parser_common.ParserCommon{
+		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
 			DbDao:              t.dbDao,
@@ -192,8 +194,12 @@ func (t *ToolParser) initParserCkb() error {
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     10,
 			ConfirmNum:         2,
+			Switch:             config.Cfg.Chain.Ckb.Switch,
 		},
-		Client: rpcClient,
+		PA: &parser_ckb.ParserCkb{
+			Ctx:    t.ctx,
+			Client: rpcClient,
+		},
 	}
 	return nil
 }
@@ -208,8 +214,8 @@ func (t *ToolParser) initParserDoge() error {
 		Password: config.Cfg.Chain.Doge.Password,
 		Proxy:    "",
 	}
-	t.ParserDoge = &parser_bitcoin.ParserBitcoin{
-		ParserCommon: parser_common.ParserCommon{
+	t.ParserCommonMap[tables.ParserTypeDoge] = &parser_common.ParserCommon{
+		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
 			DbDao:              t.dbDao,
@@ -217,31 +223,19 @@ func (t *ToolParser) initParserDoge() error {
 			PayTokenId:         tables.PayTokenIdDOGE,
 			Address:            config.Cfg.Chain.Doge.Address,
 			CurrentBlockNumber: 0,
-			ConcurrencyNum:     10,
+			ConcurrencyNum:     5,
 			ConfirmNum:         3,
+			Switch:             config.Cfg.Chain.Doge.Switch,
 		},
-		NodeRpc: &nodeRpc,
+		PA: &parser_bitcoin.ParserBitcoin{NodeRpc: &nodeRpc},
 	}
 	return nil
 }
 
-func (t *ToolParser) Run() {
-	if config.Cfg.Chain.Ckb.Switch {
-		go t.ParserCkb.Parser()
-	}
-	if config.Cfg.Chain.Eth.Switch {
-		go t.ParserEth.Parser()
-	}
-	if config.Cfg.Chain.Bsc.Switch {
-		go t.ParserBsc.Parser()
-	}
-	if config.Cfg.Chain.Polygon.Switch {
-		go t.ParserPolygon.Parser()
-	}
-	if config.Cfg.Chain.Tron.Switch {
-		go t.ParserTron.Parser()
-	}
-	if config.Cfg.Chain.Doge.Switch {
-		go t.ParserDoge.Parser()
+func (t *ToolParser) RunParser() {
+	for _, v := range t.ParserCommonMap {
+		if v.PC.Switch {
+			go v.Parser()
+		}
 	}
 }
