@@ -81,7 +81,7 @@ func runServer(ctx *cli.Context) error {
 	}
 	httpSvr.Run()
 
-	//
+	// callback notice
 	cn := &notify.CallbackNotice{DbDao: dbDao}
 
 	// tool parser

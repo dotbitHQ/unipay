@@ -49,7 +49,7 @@ type CfgServer struct {
 	Server struct {
 		Net      common.DasNetType `json:"net" yaml:"net"`
 		HttpPort string            `json:"http_port" yaml:"http_port"`
-		//CronSpec         string            `json:"cron_spec" yaml:"cron_spec"`
+		CronSpec string            `json:"cron_spec" yaml:"cron_spec"`
 		//HedgeUrl         string            `json:"hedge_url" yaml:"hedge_url"`
 		//RemoteSignApiUrl string            `json:"remote_sign_api_url" yaml:"remote_sign_api_url"`
 	} `json:"server" yaml:"server"`

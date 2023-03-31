@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dotbitHQ/unipay/config"
 	"github.com/dotbitHQ/unipay/dao"
+	"github.com/dotbitHQ/unipay/notify"
 	"github.com/dotbitHQ/unipay/parser"
 	"github.com/dotbitHQ/unipay/refund"
 	"github.com/scorpiotzh/mylog"
@@ -66,8 +67,11 @@ func runServer(ctx *cli.Context) error {
 		return fmt.Errorf("config.InitDasCore err: %s", err.Error())
 	}
 
+	// callback notice
+	cn := &notify.CallbackNotice{DbDao: dbDao}
+
 	// tool parser
-	toolParser, err := parser.NewToolParser(ctxServer, &wgServer, dbDao)
+	toolParser, err := parser.NewToolParser(ctxServer, &wgServer, dbDao, cn)
 	if err != nil {
 		return fmt.Errorf("NewToolParser err: %s", err.Error())
 	}
@@ -80,7 +84,9 @@ func runServer(ctx *cli.Context) error {
 		DasCore:    dasCore,
 		ToolParser: toolParser,
 	}
-	toolRefund.RunRefund()
+	if err := toolRefund.RunRefund(); err != nil {
+		return fmt.Errorf("RunRefund err: %s", err.Error())
+	}
 
 	// ============= service end =============
 	toolib.ExitMonitoring(func(sig os.Signal) {
