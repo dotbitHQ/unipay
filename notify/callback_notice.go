@@ -52,9 +52,9 @@ func (c *CallbackNotice) RepeatCallbackNotice(notice tables.TableNoticeInfo) err
 	case 3: // 300s
 		timestamp += 300
 	default:
-		if err := c.DbDao.UpdateNoticeStatus(notice.Id, tables.NoticeStatusDefault, tables.NoticeStatusFail); err != nil {
-			return fmt.Errorf("UpdateNoticeStatus err: %s", err.Error())
-		}
+		//if err := c.DbDao.UpdateNoticeStatus(notice.Id, tables.NoticeStatusDefault, tables.NoticeStatusFail); err != nil {
+		//	return fmt.Errorf("UpdateNoticeStatus err: %s", err.Error())
+		//}
 		return nil
 	}
 	nowT := time.Now().Unix()
@@ -81,8 +81,19 @@ func (c *CallbackNotice) RepeatCallbackNotice(notice tables.TableNoticeInfo) err
 
 	// callback
 	if err := c.CallbackNotice(notice, paymentInfo, orderInfo); err != nil {
-		if err := c.DbDao.UpdateNoticeCount(notice); err != nil {
-			return fmt.Errorf("UpdateNoticeCount err: %s", err.Error())
+		notice.NoticeCount++
+		if notice.NoticeCount > 3 {
+			// notify
+			txt := fmt.Sprintf(`BusinessId: %s
+OrderId: %s`, orderInfo.BusinessId, notice.OrderId)
+			SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "RepeatCallbackNotice", txt)
+			if err := c.DbDao.UpdateNoticeStatus(notice.Id, tables.NoticeStatusDefault, tables.NoticeStatusFail); err != nil {
+				return fmt.Errorf("UpdateNoticeStatus err: %s", err.Error())
+			}
+		} else {
+			if err := c.DbDao.UpdateNoticeCount(notice); err != nil {
+				return fmt.Errorf("UpdateNoticeCount err: %s", err.Error())
+			}
 		}
 		return fmt.Errorf("CallbackNotice err: %s", err.Error())
 	}
