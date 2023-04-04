@@ -70,9 +70,28 @@ func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo, noticeI
 	})
 }
 
-func (d *DbDao) GetRefundListWithin3d() (list tables.TablePaymentInfo, err error) {
+func (d *DbDao) GetRefundListWithin3d() (list []tables.TablePaymentInfo, err error) {
 	timestamp := time.Now().Add(time.Hour * 24 * 3).Unix()
 	err = d.db.Where("timestamp>=? AND pay_hash_status=? AND refund_status=?",
 		timestamp, tables.PayHashStatusConfirm, tables.RefundStatusUnRefunded).Find(&list).Error
 	return
+}
+
+func (d *DbDao) UpdatePaymentListToRefunded(payHashList []string, refundHash string) error {
+	return d.db.Model(tables.TablePaymentInfo{}).
+		Where("pay_hash IN(?) AND pay_hash_status=? AND refund_status=?",
+			payHashList, tables.PayHashStatusConfirm, tables.RefundStatusUnRefunded).
+		Updates(map[string]interface{}{
+			"refund_status": tables.RefundStatusRefunded,
+			"refund_hash":   refundHash,
+		}).Error
+}
+
+func (d *DbDao) UpdatePaymentListToUnRefunded(payHashList []string) error {
+	return d.db.Model(tables.TablePaymentInfo{}).
+		Where("pay_hash IN(?) AND pay_hash_status=? AND refund_status=?",
+			payHashList, tables.PayHashStatusConfirm, tables.RefundStatusRefunded).
+		Updates(map[string]interface{}{
+			"refund_status": tables.RefundStatusUnRefunded,
+		}).Error
 }

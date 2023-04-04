@@ -173,6 +173,7 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				AlgorithmId:   order.AlgorithmId,
 				Timestamp:     time.Now().Unix(),
 				Amount:        order.Amount,
+				PayTokenId:    order.PayTokenId,
 				PayHashStatus: tables.PayHashStatusConfirm,
 				RefundStatus:  tables.RefundStatusDefault,
 				RefundHash:    "",

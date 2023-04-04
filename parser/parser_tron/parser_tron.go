@@ -191,6 +191,7 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 				AlgorithmId:   order.AlgorithmId,
 				Timestamp:     time.Now().Unix(),
 				Amount:        order.Amount,
+				PayTokenId:    order.PayTokenId,
 				PayHashStatus: tables.PayHashStatusConfirm,
 				RefundStatus:  tables.RefundStatusDefault,
 				RefundHash:    "",

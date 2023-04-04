@@ -13,7 +13,8 @@ type TablePaymentInfo struct {
 	PayAddress    string                `json:"pay_address" gorm:"column:pay_address; index:k_pay_address; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
 	AlgorithmId   common.DasAlgorithmId `json:"algorithm_id" gorm:"column:algorithm_id; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '3,5-EVM 4-TRON 7-DOGE';"`
 	Timestamp     int64                 `json:"timestamp" gorm:"column:timestamp; index:k_timestamp; type:bigint(20) NOT NULL DEFAULT '0' COMMENT '';"`
-	Amount        decimal.Decimal       `json:"amount" gorm:"column:amount; type:decimal(60,0) NOT NULL DEFAULT '0' COMMENT '';"`
+	Amount        decimal.Decimal       `json:"amount" gorm:"column:amount; type:decimal(60,0) NOT NULL DEFAULT '0' COMMENT '';"` // diff from order
+	PayTokenId    PayTokenId            `json:"pay_token_id" gorm:"column:pay_token_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
 	PayHashStatus PayHashStatus         `json:"pay_hash_status" gorm:"column:pay_hash_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Pending 1-Confirm 2-Fail';"`
 	RefundStatus  RefundStatus          `json:"refund_status" gorm:"column:refund_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Default 1-UnRefunded 2-Refunded';"`
 	RefundHash    string                `json:"refund_hash" gorm:"column:refund_hash; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`

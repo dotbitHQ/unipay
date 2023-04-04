@@ -25,3 +25,8 @@ func (d *DbDao) GetOrderByAddrWithAmount(addr string, payTokenId tables.PayToken
 		Order("id DESC").Limit(1).Find(&order).Error
 	return
 }
+
+func (d *DbDao) GetOrderListByOrderIds(orderIds []string) (list []tables.TableOrderInfo, err error) {
+	err = d.db.Where("order_id=?", orderIds).Find(&list).Error
+	return
+}

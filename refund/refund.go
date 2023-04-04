@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/dotbitHQ/das-lib/core"
+	"github.com/dotbitHQ/das-lib/txbuilder"
 	"github.com/dotbitHQ/unipay/config"
 	"github.com/dotbitHQ/unipay/dao"
 	"github.com/dotbitHQ/unipay/parser"
@@ -17,11 +18,12 @@ var (
 )
 
 type ToolRefund struct {
-	Ctx        context.Context
-	Wg         *sync.WaitGroup
-	DbDao      *dao.DbDao
-	DasCore    *core.DasCore
-	ToolParser *parser.ToolParser
+	Ctx           context.Context
+	Wg            *sync.WaitGroup
+	DbDao         *dao.DbDao
+	DasCore       *core.DasCore
+	TxBuilderBase *txbuilder.DasTxBuilderBase
+	ToolParser    *parser.ToolParser
 
 	cron *cron.Cron
 }
