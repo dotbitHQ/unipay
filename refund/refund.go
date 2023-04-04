@@ -3,6 +3,7 @@ package refund
 import (
 	"context"
 	"fmt"
+	"github.com/dotbitHQ/das-lib/bitcoin"
 	"github.com/dotbitHQ/das-lib/core"
 	"github.com/dotbitHQ/das-lib/txbuilder"
 	"github.com/robfig/cron/v3"
@@ -10,7 +11,6 @@ import (
 	"sync"
 	"unipay/config"
 	"unipay/dao"
-	"unipay/parser"
 )
 
 var (
@@ -23,7 +23,8 @@ type ToolRefund struct {
 	DbDao         *dao.DbDao
 	DasCore       *core.DasCore
 	TxBuilderBase *txbuilder.DasTxBuilderBase
-	ToolParser    *parser.ToolParser
+
+	ChainDoge *bitcoin.TxTool
 
 	cron *cron.Cron
 }

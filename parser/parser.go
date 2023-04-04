@@ -22,17 +22,18 @@ import (
 )
 
 type ToolParser struct {
-	ParserCommonMap map[tables.ParserType]*parser_common.ParserCommon
-
 	ctx   context.Context
 	wg    *sync.WaitGroup
 	dbDao *dao.DbDao
-	cn    *notify.CallbackNotice
+
+	parserCommonMap map[tables.ParserType]*parser_common.ParserCommon
+
+	cn *notify.CallbackNotice
 }
 
 func NewToolParser(ctx context.Context, wg *sync.WaitGroup, dbDao *dao.DbDao, cn *notify.CallbackNotice) (*ToolParser, error) {
 	tp := ToolParser{
-		ParserCommonMap: make(map[tables.ParserType]*parser_common.ParserCommon),
+		parserCommonMap: make(map[tables.ParserType]*parser_common.ParserCommon),
 		ctx:             ctx,
 		wg:              wg,
 		dbDao:           dbDao,
@@ -68,7 +69,7 @@ func (t *ToolParser) initParserEth() error {
 	if err != nil {
 		return fmt.Errorf("chain_evm.NewChainEvm eth err: %s", err.Error())
 	}
-	t.ParserCommonMap[tables.ParserTypeETH] = &parser_common.ParserCommon{
+	t.parserCommonMap[tables.ParserTypeETH] = &parser_common.ParserCommon{
 		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
@@ -97,7 +98,7 @@ func (t *ToolParser) initParserBsc() error {
 	if err != nil {
 		return fmt.Errorf("chain_evm.NewChainEvm bsc err: %s", err.Error())
 	}
-	t.ParserCommonMap[tables.ParserTypeBSC] = &parser_common.ParserCommon{
+	t.parserCommonMap[tables.ParserTypeBSC] = &parser_common.ParserCommon{
 		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
@@ -127,7 +128,7 @@ func (t *ToolParser) initParserPolygon() error {
 	if err != nil {
 		return fmt.Errorf("chain_evm.NewChainEvm bsc err: %s", err.Error())
 	}
-	t.ParserCommonMap[tables.ParserTypePOLYGON] = &parser_common.ParserCommon{
+	t.parserCommonMap[tables.ParserTypePOLYGON] = &parser_common.ParserCommon{
 		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
@@ -162,7 +163,7 @@ func (t *ToolParser) initParserTron() error {
 			return fmt.Errorf("TronBase58ToHex err: %s", err.Error())
 		}
 	}
-	t.ParserCommonMap[tables.ParserTypeTRON] = &parser_common.ParserCommon{
+	t.parserCommonMap[tables.ParserTypeTRON] = &parser_common.ParserCommon{
 		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
@@ -190,7 +191,7 @@ func (t *ToolParser) initParserCkb() error {
 	if err != nil {
 		return fmt.Errorf("rpc.DialWithIndexer err:%s", err.Error())
 	}
-	t.ParserCommonMap[tables.ParserTypeCKB] = &parser_common.ParserCommon{
+	t.parserCommonMap[tables.ParserTypeCKB] = &parser_common.ParserCommon{
 		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
@@ -222,7 +223,7 @@ func (t *ToolParser) initParserDoge() error {
 		Password: config.Cfg.Chain.Doge.Password,
 		Proxy:    "",
 	}
-	t.ParserCommonMap[tables.ParserTypeDoge] = &parser_common.ParserCommon{
+	t.parserCommonMap[tables.ParserTypeDoge] = &parser_common.ParserCommon{
 		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
 			Wg:                 t.wg,
@@ -242,7 +243,7 @@ func (t *ToolParser) initParserDoge() error {
 }
 
 func (t *ToolParser) RunParser() {
-	for _, v := range t.ParserCommonMap {
+	for _, v := range t.parserCommonMap {
 		if v.PC.Switch {
 			go v.Parser()
 		}

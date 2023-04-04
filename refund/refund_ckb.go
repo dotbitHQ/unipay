@@ -112,12 +112,11 @@ func (t *ToolRefund) doRefundCkb(list []tables.TablePaymentInfo) error {
 	changeCapacity = changeCapacity - sizeInBlock - 5000
 	txBuilder.Transaction.Outputs[feeIndex].Capacity = changeCapacity
 
+	// send tx
 	refundHash, err := txBuilder.Transaction.ComputeHash()
 	if err != nil {
 		return fmt.Errorf("ComputeHash err: %s", err.Error())
 	}
-
-	// send tx
 	if err := t.DbDao.UpdatePaymentListToRefunded(payHashList, refundHash.Hex()); err != nil {
 		return fmt.Errorf("UpdatePaymentListToRefunded err: %s", err.Error())
 	}
