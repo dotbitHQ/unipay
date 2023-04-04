@@ -6,15 +6,15 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/dotbitHQ/das-lib/bitcoin"
-	"github.com/dotbitHQ/unipay/config"
-	"github.com/dotbitHQ/unipay/notify"
-	"github.com/dotbitHQ/unipay/parser/parser_common"
-	"github.com/dotbitHQ/unipay/tables"
 	"github.com/scorpiotzh/mylog"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
 	"sync"
 	"time"
+	"unipay/config"
+	"unipay/notify"
+	"unipay/parser/parser_common"
+	"unipay/tables"
 )
 
 var log = mylog.NewLogger("parser_bitcoin", mylog.LevelDebug)

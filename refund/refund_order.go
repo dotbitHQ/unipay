@@ -2,7 +2,7 @@ package refund
 
 import (
 	"fmt"
-	"github.com/dotbitHQ/unipay/tables"
+	"unipay/tables"
 )
 
 func (t *ToolRefund) doRefund() error {

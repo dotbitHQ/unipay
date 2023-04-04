@@ -1,8 +1,8 @@
 package dao
 
 import (
-	"github.com/dotbitHQ/unipay/tables"
 	"time"
+	"unipay/tables"
 )
 
 func (d *DbDao) Get24HUnNotifyList() (list []tables.TableNoticeInfo, err error) {

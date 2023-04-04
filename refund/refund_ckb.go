@@ -6,17 +6,17 @@ import (
 	"github.com/dotbitHQ/das-lib/core"
 	"github.com/dotbitHQ/das-lib/txbuilder"
 	"github.com/dotbitHQ/das-lib/witness"
-	"github.com/dotbitHQ/unipay/config"
-	"github.com/dotbitHQ/unipay/notify"
-	"github.com/dotbitHQ/unipay/tables"
 	"github.com/nervosnetwork/ckb-sdk-go/address"
 	"github.com/nervosnetwork/ckb-sdk-go/indexer"
 	"github.com/nervosnetwork/ckb-sdk-go/types"
 	"github.com/shopspring/decimal"
 	"strings"
+	"unipay/config"
+	"unipay/notify"
+	"unipay/tables"
 )
 
-func (t *ToolRefund) doRefundCKB(list []tables.TablePaymentInfo) error {
+func (t *ToolRefund) doRefundCkb(list []tables.TablePaymentInfo) error {
 	if !config.Cfg.Chain.Ckb.Refund {
 		return nil
 	}

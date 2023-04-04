@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/dotbitHQ/das-lib/common"
-	"github.com/dotbitHQ/unipay/config"
-	"github.com/dotbitHQ/unipay/parser/parser_common"
-	"github.com/dotbitHQ/unipay/tables"
 	"github.com/nervosnetwork/ckb-sdk-go/address"
 	"github.com/nervosnetwork/ckb-sdk-go/rpc"
 	"github.com/nervosnetwork/ckb-sdk-go/types"
@@ -16,6 +13,9 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"unipay/config"
+	"unipay/parser/parser_common"
+	"unipay/tables"
 )
 
 var log = mylog.NewLogger("parser_ckb", mylog.LevelDebug)

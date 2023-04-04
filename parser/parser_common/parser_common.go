@@ -2,11 +2,11 @@ package parser_common
 
 import (
 	"fmt"
-	"github.com/dotbitHQ/unipay/config"
-	"github.com/dotbitHQ/unipay/notify"
 	"github.com/scorpiotzh/mylog"
 	"sync/atomic"
 	"time"
+	"unipay/config"
+	"unipay/notify"
 )
 
 var log = mylog.NewLogger("parser_common", mylog.LevelDebug)

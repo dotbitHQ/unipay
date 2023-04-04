@@ -4,8 +4,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
-	"github.com/dotbitHQ/unipay/parser/parser_common"
-	"github.com/dotbitHQ/unipay/tables"
 	"github.com/fbsobreira/gotron-sdk/pkg/proto/api"
 	"github.com/fbsobreira/gotron-sdk/pkg/proto/core"
 	"github.com/golang/protobuf/proto"
@@ -14,6 +12,8 @@ import (
 	"golang.org/x/sync/errgroup"
 	"sync"
 	"time"
+	"unipay/parser/parser_common"
+	"unipay/tables"
 )
 
 var log = mylog.NewLogger("parser_tron", mylog.LevelDebug)

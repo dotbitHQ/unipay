@@ -2,8 +2,8 @@ package example
 
 import (
 	"fmt"
-	"github.com/dotbitHQ/unipay/http_svr/api_code"
 	"github.com/parnurzeal/gorequest"
+	"unipay/http_svr/api_code"
 )
 
 var ApiUrl = "http://127.0.0.1:9090/v1"

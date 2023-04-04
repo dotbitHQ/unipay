@@ -2,12 +2,11 @@ package notify
 
 import (
 	"fmt"
-	"github.com/dotbitHQ/unipay/config"
-	"github.com/dotbitHQ/unipay/dao"
-	"github.com/dotbitHQ/unipay/http_svr/api_code"
-	"github.com/dotbitHQ/unipay/tables"
 	"github.com/parnurzeal/gorequest"
 	"time"
+	"unipay/config"
+	"unipay/dao"
+	"unipay/tables"
 )
 
 type CallbackNotice struct {
@@ -120,8 +119,14 @@ type reqOrderInfo struct {
 type respCallbackNotice struct {
 }
 
+type apiResp struct {
+	ErrNo  int         `json:"err_no"`
+	ErrMsg string      `json:"err_msg"`
+	Data   interface{} `json:"data"`
+}
+
 func doNoticeReq(url string, req, data interface{}) error {
-	var resp api_code.ApiResp
+	var resp apiResp
 	resp.Data = &data
 
 	_, _, errs := gorequest.New().Post(url).
@@ -131,7 +136,7 @@ func doNoticeReq(url string, req, data interface{}) error {
 	if len(errs) > 0 {
 		return fmt.Errorf("%v", errs)
 	}
-	if resp.ErrNo != api_code.ApiCodeSuccess {
+	if resp.ErrNo != 0 {
 		return fmt.Errorf("%d - %s", resp.ErrNo, resp.ErrMsg)
 	}
 	return nil

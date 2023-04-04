@@ -2,10 +2,10 @@ package dao
 
 import (
 	"fmt"
-	"github.com/dotbitHQ/unipay/config"
-	"github.com/dotbitHQ/unipay/tables"
 	"github.com/scorpiotzh/toolib"
 	"gorm.io/gorm"
+	"unipay/config"
+	"unipay/tables"
 )
 
 type DbDao struct {

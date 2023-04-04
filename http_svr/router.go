@@ -2,10 +2,10 @@ package http_svr
 
 import (
 	"encoding/json"
-	"github.com/dotbitHQ/unipay/http_svr/api_code"
 	"github.com/gin-gonic/gin"
 	"github.com/scorpiotzh/toolib"
 	"net/http"
+	"unipay/http_svr/api_code"
 )
 
 func (h *HttpSvr) initRouter() {

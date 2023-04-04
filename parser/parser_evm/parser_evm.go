@@ -3,8 +3,6 @@ package parser_evm
 import (
 	"fmt"
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
-	"github.com/dotbitHQ/unipay/parser/parser_common"
-	"github.com/dotbitHQ/unipay/tables"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/scorpiotzh/mylog"
 	"github.com/scorpiotzh/toolib"
@@ -13,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unipay/parser/parser_common"
+	"unipay/tables"
 )
 
 var log = mylog.NewLogger("parser_evm", mylog.LevelDebug)

@@ -1,10 +1,10 @@
 package dao
 
 import (
-	"github.com/dotbitHQ/unipay/tables"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
+	"unipay/tables"
 )
 
 func (d *DbDao) GetLatestPaymentInfo(orderId string) (info tables.TablePaymentInfo, err error) {

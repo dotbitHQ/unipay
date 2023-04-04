@@ -1,8 +1,8 @@
 package dao
 
 import (
-	"github.com/dotbitHQ/unipay/tables"
 	"github.com/shopspring/decimal"
+	"unipay/tables"
 )
 
 func (d *DbDao) CreateOrder(info tables.TableOrderInfo) error {

@@ -3,12 +3,12 @@ package parser_common
 import (
 	"context"
 	"fmt"
-	"github.com/dotbitHQ/unipay/dao"
-	"github.com/dotbitHQ/unipay/notify"
-	"github.com/dotbitHQ/unipay/tables"
 	"sync"
 	"sync/atomic"
 	"time"
+	"unipay/dao"
+	"unipay/notify"
+	"unipay/tables"
 )
 
 type ParserCore struct {

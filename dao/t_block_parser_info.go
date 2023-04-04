@@ -1,8 +1,8 @@
 package dao
 
 import (
-	"github.com/dotbitHQ/unipay/tables"
 	"gorm.io/gorm/clause"
+	"unipay/tables"
 )
 
 func (d *DbDao) FindBlockInfoByBlockNumber(parserType tables.ParserType, blockNumber uint64) (block tables.TableBlockParserInfo, err error) {
