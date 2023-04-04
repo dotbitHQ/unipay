@@ -15,6 +15,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var log = mylog.NewLogger("parser_ckb", mylog.LevelDebug)
@@ -184,7 +185,7 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 				OrderId:       order.OrderId,
 				PayAddress:    fromAddr,
 				AlgorithmId:   order.AlgorithmId,
-				Timestamp:     int64(block.Header.Timestamp),
+				Timestamp:     time.Now().Unix(),
 				Amount:        order.Amount,
 				PayHashStatus: tables.PayHashStatusConfirm,
 				RefundStatus:  tables.RefundStatusDefault,

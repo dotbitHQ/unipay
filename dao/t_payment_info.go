@@ -4,6 +4,7 @@ import (
 	"github.com/dotbitHQ/unipay/tables"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"time"
 )
 
 func (d *DbDao) GetLatestPaymentInfo(orderId string) (info tables.TablePaymentInfo, err error) {
@@ -67,4 +68,11 @@ func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo, noticeI
 		}
 		return nil
 	})
+}
+
+func (d *DbDao) GetRefundListWithin3d() (list tables.TablePaymentInfo, err error) {
+	timestamp := time.Now().Add(time.Hour * 24 * 3).Unix()
+	err = d.db.Where("timestamp>=? AND pay_hash_status=? AND refund_status=?",
+		timestamp, tables.PayHashStatusConfirm, tables.RefundStatusUnRefunded).Find(&list).Error
+	return
 }

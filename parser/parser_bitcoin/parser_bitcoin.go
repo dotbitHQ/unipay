@@ -14,6 +14,7 @@ import (
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
 	"sync"
+	"time"
 )
 
 var log = mylog.NewLogger("parser_bitcoin", mylog.LevelDebug)
@@ -235,7 +236,7 @@ func (p *ParserBitcoin) dealWithOpReturn(pc *parser_common.ParserCore, data btcj
 		OrderId:       order.OrderId,
 		PayAddress:    addrPayload,
 		AlgorithmId:   order.AlgorithmId,
-		Timestamp:     data.Blocktime,
+		Timestamp:     time.Now().Unix(),
 		Amount:        order.Amount,
 		PayHashStatus: tables.PayHashStatusConfirm,
 		RefundStatus:  tables.RefundStatusDefault,
@@ -266,7 +267,7 @@ func (p *ParserBitcoin) dealWithHashAndAmount(pc *parser_common.ParserCore, data
 			OrderId:       order.OrderId,
 			PayAddress:    addrPayload,
 			AlgorithmId:   order.AlgorithmId,
-			Timestamp:     data.Blocktime,
+			Timestamp:     time.Now().Unix(),
 			Amount:        order.Amount,
 			PayHashStatus: tables.PayHashStatusConfirm,
 			RefundStatus:  tables.RefundStatusDefault,

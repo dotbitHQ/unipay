@@ -13,6 +13,7 @@ import (
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
 	"sync"
+	"time"
 )
 
 var log = mylog.NewLogger("parser_tron", mylog.LevelDebug)
@@ -188,7 +189,7 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 				OrderId:       order.OrderId,
 				PayAddress:    fromAddr,
 				AlgorithmId:   order.AlgorithmId,
-				Timestamp:     tx.Transaction.RawData.Timestamp,
+				Timestamp:     time.Now().Unix(),
 				Amount:        order.Amount,
 				PayHashStatus: tables.PayHashStatusConfirm,
 				RefundStatus:  tables.RefundStatusDefault,

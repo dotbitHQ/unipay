@@ -10,9 +10,9 @@ import (
 	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
-	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 var log = mylog.NewLogger("parser_evm", mylog.LevelDebug)
@@ -165,14 +165,13 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 			}
 
 			// change the status to confirm
-			timestamp, _ := strconv.ParseInt(block.Timestamp, 10, 64)
 			paymentInfo := tables.TablePaymentInfo{
 				Id:            0,
 				PayHash:       tx.Hash,
 				OrderId:       order.OrderId,
 				PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
 				AlgorithmId:   order.AlgorithmId,
-				Timestamp:     timestamp,
+				Timestamp:     time.Now().Unix(),
 				Amount:        order.Amount,
 				PayHashStatus: tables.PayHashStatusConfirm,
 				RefundStatus:  tables.RefundStatusDefault,
