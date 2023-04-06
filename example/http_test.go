@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/dotbitHQ/das-lib/common"
 	"github.com/dotbitHQ/das-lib/core"
+	"github.com/dotbitHQ/das-lib/http_api"
 	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
 	"testing"
@@ -28,7 +29,7 @@ func TestOrderCreate(t *testing.T) {
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/create")
 
 	var data handle.RespOrderCreate
-	if err := doReq(url, req, &data); err != nil {
+	if err := http_api.SendReq(url, req, &data); err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println(toolib.JsonString(&data))
@@ -42,7 +43,7 @@ func TestOrderRefund(t *testing.T) {
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/refund")
 
 	var data handle.RespOrderRefund
-	if err := doReq(url, req, &data); err != nil {
+	if err := http_api.SendReq(url, req, &data); err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println(toolib.JsonString(&data))
@@ -56,7 +57,7 @@ func TestOrderInfo(t *testing.T) {
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/info")
 
 	var data handle.RespOrderInfo
-	if err := doReq(url, req, &data); err != nil {
+	if err := http_api.SendReq(url, req, &data); err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println(toolib.JsonString(&data))

@@ -1,17 +1,15 @@
-package api_code
+package http_svr
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/dotbitHQ/das-lib/http_api"
 	"github.com/gin-gonic/gin"
 	"github.com/parnurzeal/gorequest"
-	"github.com/scorpiotzh/mylog"
 	"net/http"
 	"time"
 )
-
-var log = mylog.NewLogger("api_code", mylog.LevelDebug)
 
 type ReqPushLog struct {
 	Index   string        `json:"index"`
@@ -47,9 +45,9 @@ func DoMonitorLog(method string) gin.HandlerFunc {
 		statusCode := ctx.Writer.Status()
 
 		if statusCode == http.StatusOK && blw.body.String() != "" {
-			var resp ApiResp
+			var resp http_api.ApiResp
 			if err := json.Unmarshal(blw.body.Bytes(), &resp); err == nil {
-				if resp.ErrNo != ApiCodeSuccess {
+				if resp.ErrNo != http_api.ApiCodeSuccess {
 					log.Warn("DoMonitorLog:", method, resp.ErrNo, resp.ErrMsg)
 				}
 				//pushLog := ReqPushLog{

@@ -3,13 +3,13 @@ package handle
 import (
 	"fmt"
 	"github.com/dotbitHQ/das-lib/core"
+	"github.com/dotbitHQ/das-lib/http_api"
 	"github.com/gin-gonic/gin"
 	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
 	"net/http"
 	"time"
 	"unipay/config"
-	"unipay/http_svr/api_code"
 	"unipay/tables"
 )
 
@@ -30,13 +30,13 @@ func (h *HttpHandle) OrderCreate(ctx *gin.Context) {
 		funcName             = "OrderCreate"
 		clientIp, remoteAddr = GetClientIp(ctx)
 		req                  ReqOrderCreate
-		apiResp              api_code.ApiResp
+		apiResp              http_api.ApiResp
 		err                  error
 	)
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Error("ShouldBindJSON err: ", err.Error(), funcName, clientIp, remoteAddr)
-		apiResp.ApiRespErr(api_code.ApiCodeParamsInvalid, "params invalid")
+		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, "params invalid")
 		ctx.JSON(http.StatusOK, apiResp)
 		return
 	}
@@ -49,26 +49,26 @@ func (h *HttpHandle) OrderCreate(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, apiResp)
 }
 
-func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *api_code.ApiResp) error {
+func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiResp) error {
 	var resp RespOrderCreate
 
 	// check key
 	addrHex, err := req.FormatChainTypeAddress(h.DasCore.NetType(), true)
 	if err != nil {
-		apiResp.ApiRespErr(api_code.ApiCodeParamsInvalid, err.Error())
+		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, err.Error())
 		return fmt.Errorf("FormatChainTypeAddress err: %s", err.Error())
 	}
 
 	// check business_id
 	checkBusinessIds(req.BusinessId, apiResp)
-	if apiResp.ErrNo != api_code.ApiCodeSuccess {
+	if apiResp.ErrNo != http_api.ApiCodeSuccess {
 		return nil
 	}
 
 	// check pay token id
 	paymentAddress, err := config.GetPaymentAddress(req.PayTokenId)
 	if err != nil {
-		apiResp.ApiRespErr(api_code.ApiCodeParamsInvalid, err.Error())
+		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, err.Error())
 		return nil
 	}
 	log.Info("doOrderCreate:", paymentAddress, req.PayTokenId)
@@ -88,7 +88,7 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *api_code.ApiRes
 	orderInfo.InitOrderId()
 
 	if err := h.DbDao.CreateOrder(orderInfo); err != nil {
-		apiResp.ApiRespErr(api_code.ApiCodeDbError, "Failed to create order")
+		apiResp.ApiRespErr(http_api.ApiCodeDbError, "Failed to create order")
 		return fmt.Errorf("CreateOrder err: %s", err.Error())
 	}
 	//

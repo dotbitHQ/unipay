@@ -2,10 +2,10 @@ package handle
 
 import (
 	"fmt"
+	"github.com/dotbitHQ/das-lib/http_api"
 	"github.com/gin-gonic/gin"
 	"github.com/scorpiotzh/toolib"
 	"net/http"
-	"unipay/http_svr/api_code"
 	"unipay/tables"
 )
 
@@ -30,13 +30,13 @@ func (h *HttpHandle) OrderInfo(ctx *gin.Context) {
 		funcName             = "OrderInfo"
 		clientIp, remoteAddr = GetClientIp(ctx)
 		req                  ReqOrderInfo
-		apiResp              api_code.ApiResp
+		apiResp              http_api.ApiResp
 		err                  error
 	)
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Error("ShouldBindJSON err: ", err.Error(), funcName, clientIp, remoteAddr)
-		apiResp.ApiRespErr(api_code.ApiCodeParamsInvalid, "params invalid")
+		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, "params invalid")
 		ctx.JSON(http.StatusOK, apiResp)
 		return
 	}
@@ -49,25 +49,25 @@ func (h *HttpHandle) OrderInfo(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, apiResp)
 }
 
-func (h *HttpHandle) doOrderInfo(req *ReqOrderInfo, apiResp *api_code.ApiResp) error {
+func (h *HttpHandle) doOrderInfo(req *ReqOrderInfo, apiResp *http_api.ApiResp) error {
 	var resp RespOrderInfo
 
 	// check business_id
 	checkBusinessIds(req.BusinessId, apiResp)
-	if apiResp.ErrNo != api_code.ApiCodeSuccess {
+	if apiResp.ErrNo != http_api.ApiCodeSuccess {
 		return nil
 	}
 
 	// get order info
 	orderInfo := h.getOrderInfo(req.OrderId, req.BusinessId, apiResp)
-	if apiResp.ErrNo != api_code.ApiCodeSuccess {
+	if apiResp.ErrNo != http_api.ApiCodeSuccess {
 		return nil
 	}
 
 	// get payment info
 	paymentInfo, err := h.DbDao.GetLatestPaymentInfo(orderInfo.OrderId)
 	if err != nil {
-		apiResp.ApiRespErr(api_code.ApiCodeDbError, "failed to get payment info")
+		apiResp.ApiRespErr(http_api.ApiCodeDbError, "failed to get payment info")
 		return fmt.Errorf("GetLatestPaymentInfo err: %s", err.Error())
 	}
 

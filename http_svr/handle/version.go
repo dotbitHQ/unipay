@@ -1,11 +1,11 @@
 package handle
 
 import (
+	"github.com/dotbitHQ/das-lib/http_api"
 	"github.com/gin-gonic/gin"
 	"github.com/scorpiotzh/toolib"
 	"net/http"
 	"time"
-	"unipay/http_svr/api_code"
 )
 
 type ReqVersion struct {
@@ -20,13 +20,13 @@ func (h *HttpHandle) Version(ctx *gin.Context) {
 		funcName             = "Version"
 		clientIp, remoteAddr = GetClientIp(ctx)
 		req                  ReqVersion
-		apiResp              api_code.ApiResp
+		apiResp              http_api.ApiResp
 		err                  error
 	)
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Error("ShouldBindJSON err: ", err.Error(), funcName, clientIp, remoteAddr)
-		apiResp.ApiRespErr(api_code.ApiCodeParamsInvalid, "params invalid")
+		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, "params invalid")
 		ctx.JSON(http.StatusOK, apiResp)
 		return
 	}
@@ -39,7 +39,7 @@ func (h *HttpHandle) Version(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, apiResp)
 }
 
-func (h *HttpHandle) doVersion(req *ReqVersion, apiResp *api_code.ApiResp) error {
+func (h *HttpHandle) doVersion(req *ReqVersion, apiResp *http_api.ApiResp) error {
 	var resp RespVersion
 
 	resp.Version = time.Now().String()
