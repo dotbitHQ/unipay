@@ -3,7 +3,6 @@ server:
   http_port: ""
   cron_spec: "0 0 */1 * * ?" # refund regular
   remote_sign_api_url: ""
-  hedge_url: "" # call hedge token
 business_ids:
   "": ""
 db:

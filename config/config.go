@@ -54,7 +54,8 @@ type CfgServer struct {
 		HttpPort         string            `json:"http_port" yaml:"http_port"`
 		CronSpec         string            `json:"cron_spec" yaml:"cron_spec"`
 		RemoteSignApiUrl string            `json:"remote_sign_api_url" yaml:"remote_sign_api_url"`
-		HedgeUrl         string            `json:"hedge_url" yaml:"hedge_url"`
+		//HedgeUrl         string            `json:"hedge_url" yaml:"hedge_url"`
+		// Hedging is completed on the business side
 	} `json:"server" yaml:"server"`
 	BusinessIds map[string]string `json:"business_ids" yaml:"business_ids"`
 	Notify      struct {
