@@ -66,8 +66,8 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 			e = fmt.Errorf("SignWithPrivateKey err:%s", err.Error())
 			return
 		}
-	} else if t.RemoteSignClient != nil {
-		tx, err = t.RemoteSignClient.SignEvmTx(remote_sign.SignMethodEvm, fromAddr, tx)
+	} else if t.remoteSignClient != nil {
+		tx, err = t.remoteSignClient.SignEvmTx(remote_sign.SignMethodEvm, fromAddr, tx)
 		if err != nil {
 			e = fmt.Errorf("SignEvmTx err: %s [%s]", err.Error(), p.info.PayTokenId)
 			return
@@ -114,18 +114,18 @@ func (t *ToolRefund) refundTron(info tables.TablePaymentInfo) error {
 		}
 	}
 
-	tx, err := t.ChainTron.CreateTransaction(fromHex, toAddr, orderId, amount.IntPart())
+	tx, err := t.chainTron.CreateTransaction(fromHex, toAddr, orderId, amount.IntPart())
 	if err != nil {
 		return fmt.Errorf("CreateTransaction err: %s", err.Error())
 	}
 
 	if config.Cfg.Chain.Tron.Private != "" {
-		tx, err = t.ChainTron.AddSign(tx.Transaction, config.Cfg.Chain.Tron.Private)
+		tx, err = t.chainTron.AddSign(tx.Transaction, config.Cfg.Chain.Tron.Private)
 		if err != nil {
 			return fmt.Errorf("AddSign err:%s", err.Error())
 		}
-	} else if t.RemoteSignClient != nil {
-		tx, err = t.RemoteSignClient.SignTrxTx(fromHex, tx)
+	} else if t.remoteSignClient != nil {
+		tx, err = t.remoteSignClient.SignTrxTx(fromHex, tx)
 		if err != nil {
 			return fmt.Errorf("SignTrxTx err: %s", err.Error())
 		}
@@ -139,7 +139,7 @@ func (t *ToolRefund) refundTron(info tables.TablePaymentInfo) error {
 	if err := t.DbDao.UpdateSinglePaymentToRefunded(payHash, refundHash, 0); err != nil {
 		return fmt.Errorf("UpdateSinglePaymentToRefunded err: %s", err.Error())
 	}
-	if err = t.ChainTron.SendTransaction(tx.Transaction); err != nil {
+	if err = t.chainTron.SendTransaction(tx.Transaction); err != nil {
 		if err = t.DbDao.UpdateSinglePaymentToUnRefunded(payHash); err != nil {
 			log.Info("UpdateSinglePaymentToUnRefunded err: ", err.Error(), payHash)
 			sendRefundNotify(info.Id, payTokenId, orderId, err.Error())
@@ -157,8 +157,8 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 	// get nonce
 	refundEth, refundBsc, refundPolygon := config.Cfg.Chain.Eth.Refund, config.Cfg.Chain.Bsc.Refund, config.Cfg.Chain.Polygon.Refund
 	refundNonceETH, refundNonceBSC, refundNoncePolygon := uint64(0), uint64(0), uint64(0)
-	if refundEth && t.ChainEth != nil {
-		nonce, err := t.ChainEth.NonceAt(config.Cfg.Chain.Eth.Address)
+	if refundEth && t.chainEth != nil {
+		nonce, err := t.chainEth.NonceAt(config.Cfg.Chain.Eth.Address)
 		if err != nil {
 			return fmt.Errorf("NonceAt eth err: %s", err.Error())
 		}
@@ -171,8 +171,8 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 			refundEth = false
 		}
 	}
-	if refundBsc && t.ChainBsc != nil {
-		nonce, err := t.ChainBsc.NonceAt(config.Cfg.Chain.Bsc.Address)
+	if refundBsc && t.chainBsc != nil {
+		nonce, err := t.chainBsc.NonceAt(config.Cfg.Chain.Bsc.Address)
 		if err != nil {
 			return fmt.Errorf("NonceAt bsc err: %s", err.Error())
 		}
@@ -185,8 +185,8 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 			refundEth = false
 		}
 	}
-	if refundPolygon && t.ChainPolygon != nil {
-		nonce, err := t.ChainPolygon.NonceAt(config.Cfg.Chain.Polygon.Address)
+	if refundPolygon && t.chainPolygon != nil {
+		nonce, err := t.chainPolygon.NonceAt(config.Cfg.Chain.Polygon.Address)
 		if err != nil {
 			return fmt.Errorf("NonceAt polygon err: %s", err.Error())
 		}
@@ -210,7 +210,7 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 				private:     config.Cfg.Chain.Eth.Private,
 				addFee:      config.Cfg.Chain.Eth.RefundAddFee,
 				refund:      refundEth,
-				chainEvm:    t.ChainEth,
+				chainEvm:    t.chainEth,
 				refundNonce: refundNonceETH,
 			}); err != nil {
 				log.Error("refundEvm err:", err.Error(), v.PayTokenId, v.OrderId)
@@ -225,7 +225,7 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 				private:     config.Cfg.Chain.Bsc.Private,
 				addFee:      config.Cfg.Chain.Bsc.RefundAddFee,
 				refund:      refundBsc,
-				chainEvm:    t.ChainBsc,
+				chainEvm:    t.chainBsc,
 				refundNonce: refundNonceBSC,
 			}); err != nil {
 				log.Error("refundEvm err:", err.Error(), v.PayTokenId, v.OrderId)
@@ -240,7 +240,7 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 				private:     config.Cfg.Chain.Polygon.Private,
 				addFee:      config.Cfg.Chain.Polygon.RefundAddFee,
 				refund:      refundPolygon,
-				chainEvm:    t.ChainPolygon,
+				chainEvm:    t.chainPolygon,
 				refundNonce: refundNoncePolygon,
 			}); err != nil {
 				log.Error("refundEvm err:", err.Error(), v.PayTokenId, v.OrderId)

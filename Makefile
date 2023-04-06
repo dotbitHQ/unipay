@@ -1,9 +1,14 @@
 # build file
 GO_BUILD=go build -ldflags -s -v
 
-unipay: BIN_BINARY_NAME=unipay
-unipay:
+unipay_svr: BIN_BINARY_NAME=unipay_svr
+unipay_svr:
 	GO111MODULE=on $(GO_BUILD) -o $(BIN_BINARY_NAME) cmd/main.go
+	@echo "Build $(BIN_BINARY_NAME) successfully. You can run ./$(BIN_BINARY_NAME) now.If you can't see it soon,wait some seconds"
+
+refund_svr: BIN_BINARY_NAME=refund_svr
+refund_svr:
+	GO111MODULE=on $(GO_BUILD) -o $(BIN_BINARY_NAME) cmd/refund/main.go
 	@echo "Build $(BIN_BINARY_NAME) successfully. You can run ./$(BIN_BINARY_NAME) now.If you can't see it soon,wait some seconds"
 
 update:

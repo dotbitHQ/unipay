@@ -38,13 +38,13 @@ func (t *ToolRefund) doRefundDoge(list []tables.TablePaymentInfo) error {
 	}
 
 	// get utxo
-	_, uos, err := t.ChainDoge.GetUnspentOutputsDoge(config.Cfg.Chain.Doge.Address, config.Cfg.Chain.Doge.Private, total)
+	_, uos, err := t.chainDoge.GetUnspentOutputsDoge(config.Cfg.Chain.Doge.Address, config.Cfg.Chain.Doge.Private, total)
 	if err != nil {
 		return fmt.Errorf("GetUnspentOutputsDoge err: %s", err.Error())
 	}
 
 	// build tx
-	tx, err := t.ChainDoge.NewTx(uos, addresses, values, "")
+	tx, err := t.chainDoge.NewTx(uos, addresses, values, "")
 	if err != nil {
 		return fmt.Errorf("NewTx err: %s", err.Error())
 	}
@@ -52,12 +52,12 @@ func (t *ToolRefund) doRefundDoge(list []tables.TablePaymentInfo) error {
 	// sign
 	var signTx *wire.MsgTx
 	if config.Cfg.Chain.Doge.Private != "" {
-		if _, err = t.ChainDoge.LocalSignTx(tx, uos); err != nil {
+		if _, err = t.chainDoge.LocalSignTx(tx, uos); err != nil {
 			return fmt.Errorf("LocalSignTx err: %s", err.Error())
 		}
 		signTx = tx
-	} else if t.ChainDoge.RemoteSignClient != nil {
-		if signTx, err = t.ChainDoge.RemoteSignTx(bitcoin.RemoteSignMethodDogeTx, tx, uos); err != nil {
+	} else if t.chainDoge.RemoteSignClient != nil {
+		if signTx, err = t.chainDoge.RemoteSignTx(bitcoin.RemoteSignMethodDogeTx, tx, uos); err != nil {
 			return fmt.Errorf("RemoteSignTx err: %s", err.Error())
 		}
 	} else {
@@ -69,7 +69,7 @@ func (t *ToolRefund) doRefundDoge(list []tables.TablePaymentInfo) error {
 	if err := t.DbDao.UpdatePaymentListToRefunded(payHashList, refundHash.String()); err != nil {
 		return fmt.Errorf("UpdatePaymentListToRefunded err: %s", err.Error())
 	}
-	if _, err = t.ChainDoge.SendTx(signTx); err != nil {
+	if _, err = t.chainDoge.SendTx(signTx); err != nil {
 		if err = t.DbDao.UpdatePaymentListToUnRefunded(payHashList); err != nil {
 			log.Info("UpdatePaymentListToUnRefunded err: ", err.Error(), payHashList)
 			notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doRefundDoge", fmt.Sprintf("%s\n%s", strings.Join(payHashList, ","), err.Error()))
