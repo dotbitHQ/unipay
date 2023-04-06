@@ -2,6 +2,8 @@ package refund
 
 import (
 	"fmt"
+	"unipay/config"
+	"unipay/notify"
 	"unipay/tables"
 )
 
@@ -31,7 +33,20 @@ func (t *ToolRefund) doRefund() error {
 			log.Warn("unknown pay token id[%s]", v.PayTokenId)
 		}
 	}
-	// todo refund
+
+	// refund
+	if err = t.doRefundCkb(ckbList); err != nil {
+		log.Error("doRefundCkb err: ", err.Error())
+		notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doRefundCKB", err.Error())
+	}
+	if err = t.doRefundDoge(dogeList); err != nil {
+		log.Error("doRefundDoge err: ", err.Error())
+		notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doRefundDoge", err.Error())
+	}
+	if err = t.doRefundOther(otherList); err != nil {
+		log.Error("doRefundOther err: ", err.Error())
+		notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doRefundOther", err.Error())
+	}
 
 	return nil
 }

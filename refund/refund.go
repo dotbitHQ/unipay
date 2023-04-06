@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/dotbitHQ/das-lib/bitcoin"
+	"github.com/dotbitHQ/das-lib/chain/chain_evm"
+	"github.com/dotbitHQ/das-lib/chain/chain_tron"
 	"github.com/dotbitHQ/das-lib/core"
+	"github.com/dotbitHQ/das-lib/remote_sign"
 	"github.com/dotbitHQ/das-lib/txbuilder"
 	"github.com/robfig/cron/v3"
 	"github.com/scorpiotzh/mylog"
@@ -24,7 +27,12 @@ type ToolRefund struct {
 	DasCore       *core.DasCore
 	TxBuilderBase *txbuilder.DasTxBuilderBase
 
-	ChainDoge *bitcoin.TxTool
+	ChainDoge        *bitcoin.TxTool
+	RemoteSignClient *remote_sign.RemoteSignClient
+	ChainETH         *chain_evm.ChainEvm
+	ChainBSC         *chain_evm.ChainEvm
+	ChainPolygon     *chain_evm.ChainEvm
+	ChainTron        *chain_tron.ChainTron
 
 	cron *cron.Cron
 }

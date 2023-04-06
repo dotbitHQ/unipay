@@ -20,6 +20,9 @@ func (t *ToolRefund) doRefundCkb(list []tables.TablePaymentInfo) error {
 	if !config.Cfg.Chain.Ckb.Refund {
 		return nil
 	}
+	if len(list) == 0 {
+		return nil
+	}
 	fromCkbAddr, err := address.Parse(config.Cfg.Chain.Ckb.Address)
 	if err != nil {
 		return fmt.Errorf("address.Parse err:%s %s", err.Error(), config.Cfg.Chain.Ckb.Address)

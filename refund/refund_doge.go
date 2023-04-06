@@ -12,7 +12,10 @@ import (
 )
 
 func (t *ToolRefund) doRefundDoge(list []tables.TablePaymentInfo) error {
-	if !config.Cfg.Chain.Ckb.Refund {
+	if !config.Cfg.Chain.Doge.Refund {
+		return nil
+	}
+	if len(list) == 0 {
 		return nil
 	}
 	var payHashList []string
