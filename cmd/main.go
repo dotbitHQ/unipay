@@ -64,7 +64,7 @@ func runServer(ctx *cli.Context) error {
 	}
 
 	// das core
-	dasCore, _, err := config.InitDasCore(ctxServer, &wgServer)
+	dasCore, _, _, err := config.InitDasCore(ctxServer, &wgServer)
 	if err != nil {
 		return fmt.Errorf("config.InitDasCore err: %s", err.Error())
 	}

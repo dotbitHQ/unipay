@@ -117,3 +117,9 @@ func (d *DbDao) UpdateSinglePaymentToUnRefunded(payHash string) error {
 			"refund_nonce":  0,
 		}).Error
 }
+
+func (d *DbDao) GetRefundNonce(refundNonce uint64, payTokenIds []tables.PayTokenId) (info tables.TablePaymentInfo, err error) {
+	err = d.db.Where("refund_nonce>=? AND pay_token_id IN(?)",
+		refundNonce, payTokenIds).Limit(1).Find(&info).Error
+	return
+}

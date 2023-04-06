@@ -11,8 +11,6 @@ import (
 	"time"
 	"unipay/config"
 	"unipay/dao"
-	"unipay/notify"
-	"unipay/parser"
 	"unipay/refund"
 )
 
@@ -62,27 +60,21 @@ func runServer(ctx *cli.Context) error {
 	}
 
 	// das core
-	dasCore, _, err := config.InitDasCore(ctxServer, &wgServer)
+	dasCore, _, txBuilderBase, err := config.InitDasCore(ctxServer, &wgServer)
 	if err != nil {
 		return fmt.Errorf("config.InitDasCore err: %s", err.Error())
 	}
 
-	// callback notice
-	cn := &notify.CallbackNotice{DbDao: dbDao}
-
-	// tool parser
-	toolParser, err := parser.NewToolParser(ctxServer, &wgServer, dbDao, cn)
-	if err != nil {
-		return fmt.Errorf("NewToolParser err: %s", err.Error())
-	}
-
 	// tool refund
 	toolRefund := refund.ToolRefund{
-		Ctx:        ctxServer,
-		Wg:         &wgServer,
-		DbDao:      dbDao,
-		DasCore:    dasCore,
-		ToolParser: toolParser,
+		Ctx:           ctxServer,
+		Wg:            &wgServer,
+		DbDao:         dbDao,
+		DasCore:       dasCore,
+		TxBuilderBase: txBuilderBase,
+	}
+	if err := toolRefund.InitRefundInfo(); err != nil {
+		return fmt.Errorf("InitRefundInfo err: %s", err.Error())
 	}
 	if err := toolRefund.RunRefund(); err != nil {
 		return fmt.Errorf("RunRefund err: %s", err.Error())

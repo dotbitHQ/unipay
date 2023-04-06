@@ -154,10 +154,53 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 	if len(list) == 0 {
 		return nil
 	}
-	// todo
-	refundNonceETH := uint64(0)
-	refundNonceBSC := uint64(0)
-	refundNoncePolygon := uint64(0)
+	// get nonce
+	refundEth, refundBsc, refundPolygon := config.Cfg.Chain.Eth.Refund, config.Cfg.Chain.Bsc.Refund, config.Cfg.Chain.Polygon.Refund
+	refundNonceETH, refundNonceBSC, refundNoncePolygon := uint64(0), uint64(0), uint64(0)
+	if refundEth && t.ChainEth != nil {
+		nonce, err := t.ChainEth.NonceAt(config.Cfg.Chain.Eth.Address)
+		if err != nil {
+			return fmt.Errorf("NonceAt eth err: %s", err.Error())
+		}
+		refundNonceETH = nonce
+		payTokenIds := []tables.PayTokenId{tables.PayTokenIdETH}
+		nonceInfo, err := t.DbDao.GetRefundNonce(refundNonceETH, payTokenIds)
+		if err != nil {
+			return fmt.Errorf("GetRefundNonce err: %s[%d][%v]", err.Error(), refundNonceETH, payTokenIds)
+		} else if nonceInfo.Id > 0 {
+			refundEth = false
+		}
+	}
+	if refundBsc && t.ChainBsc != nil {
+		nonce, err := t.ChainBsc.NonceAt(config.Cfg.Chain.Bsc.Address)
+		if err != nil {
+			return fmt.Errorf("NonceAt bsc err: %s", err.Error())
+		}
+		refundNonceBSC = nonce
+		payTokenIds := []tables.PayTokenId{tables.PayTokenIdBNB}
+		nonceInfo, err := t.DbDao.GetRefundNonce(refundNonceBSC, payTokenIds)
+		if err != nil {
+			return fmt.Errorf("GetRefundNonce err: %s[%d][%v]", err.Error(), refundNonceBSC, payTokenIds)
+		} else if nonceInfo.Id > 0 {
+			refundEth = false
+		}
+	}
+	if refundPolygon && t.ChainPolygon != nil {
+		nonce, err := t.ChainPolygon.NonceAt(config.Cfg.Chain.Polygon.Address)
+		if err != nil {
+			return fmt.Errorf("NonceAt polygon err: %s", err.Error())
+		}
+		refundNoncePolygon = nonce
+		payTokenIds := []tables.PayTokenId{tables.PayTokenIdMATIC}
+		nonceInfo, err := t.DbDao.GetRefundNonce(refundNoncePolygon, payTokenIds)
+		if err != nil {
+			return fmt.Errorf("GetRefundNonce err: %s[%d][%v]", err.Error(), refundNoncePolygon, payTokenIds)
+		} else if nonceInfo.Id > 0 {
+			refundEth = false
+		}
+	}
+
+	// refund
 	for i, v := range list {
 		switch v.PayTokenId {
 		case tables.PayTokenIdETH:
@@ -166,8 +209,8 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 				fromAddr:    config.Cfg.Chain.Eth.Address,
 				private:     config.Cfg.Chain.Eth.Private,
 				addFee:      config.Cfg.Chain.Eth.RefundAddFee,
-				refund:      config.Cfg.Chain.Eth.Refund,
-				chainEvm:    t.ChainETH,
+				refund:      refundEth,
+				chainEvm:    t.ChainEth,
 				refundNonce: refundNonceETH,
 			}); err != nil {
 				log.Error("refundEvm err:", err.Error(), v.PayTokenId, v.OrderId)
@@ -181,8 +224,8 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 				fromAddr:    config.Cfg.Chain.Bsc.Address,
 				private:     config.Cfg.Chain.Bsc.Private,
 				addFee:      config.Cfg.Chain.Bsc.RefundAddFee,
-				refund:      config.Cfg.Chain.Bsc.Refund,
-				chainEvm:    t.ChainBSC,
+				refund:      refundBsc,
+				chainEvm:    t.ChainBsc,
 				refundNonce: refundNonceBSC,
 			}); err != nil {
 				log.Error("refundEvm err:", err.Error(), v.PayTokenId, v.OrderId)
@@ -196,7 +239,7 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 				fromAddr:    config.Cfg.Chain.Polygon.Address,
 				private:     config.Cfg.Chain.Polygon.Private,
 				addFee:      config.Cfg.Chain.Polygon.RefundAddFee,
-				refund:      config.Cfg.Chain.Polygon.Refund,
+				refund:      refundPolygon,
 				chainEvm:    t.ChainPolygon,
 				refundNonce: refundNoncePolygon,
 			}); err != nil {

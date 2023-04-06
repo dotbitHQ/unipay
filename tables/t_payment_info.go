@@ -18,7 +18,7 @@ type TablePaymentInfo struct {
 	PayHashStatus PayHashStatus         `json:"pay_hash_status" gorm:"column:pay_hash_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Pending 1-Confirm 2-Fail';"`
 	RefundStatus  RefundStatus          `json:"refund_status" gorm:"column:refund_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Default 1-UnRefunded 2-Refunded';"`
 	RefundHash    string                `json:"refund_hash" gorm:"column:refund_hash; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
-	RefundNonce   uint64                `json:"refund_nonce" gorm:"column:refund_nonce; type:int(11) NOT NULL DEFAULT '0' COMMENT '';"`
+	RefundNonce   uint64                `json:"refund_nonce" gorm:"column:refund_nonce; index:k_refund_nonce; type:int(11) NOT NULL DEFAULT '0' COMMENT '';"`
 	CreatedAt     time.Time             `json:"created_at" gorm:"column:created_at; type:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '';"`
 	UpdatedAt     time.Time             `json:"updated_at" gorm:"column:updated_at; type:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '';"`
 }

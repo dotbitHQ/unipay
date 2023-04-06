@@ -6,7 +6,10 @@ import (
 	"github.com/dotbitHQ/das-lib/common"
 	"github.com/dotbitHQ/das-lib/core"
 	"github.com/dotbitHQ/das-lib/dascache"
+	"github.com/dotbitHQ/das-lib/sign"
+	"github.com/dotbitHQ/das-lib/txbuilder"
 	"github.com/fsnotify/fsnotify"
+	"github.com/nervosnetwork/ckb-sdk-go/address"
 	"github.com/nervosnetwork/ckb-sdk-go/rpc"
 	"github.com/scorpiotzh/mylog"
 	"github.com/scorpiotzh/toolib"
@@ -47,11 +50,11 @@ func AddCfgFileWatcher(configFilePath string) (*fsnotify.Watcher, error) {
 
 type CfgServer struct {
 	Server struct {
-		Net      common.DasNetType `json:"net" yaml:"net"`
-		HttpPort string            `json:"http_port" yaml:"http_port"`
-		CronSpec string            `json:"cron_spec" yaml:"cron_spec"`
-		//HedgeUrl         string            `json:"hedge_url" yaml:"hedge_url"`
-		//RemoteSignApiUrl string            `json:"remote_sign_api_url" yaml:"remote_sign_api_url"`
+		Net              common.DasNetType `json:"net" yaml:"net"`
+		HttpPort         string            `json:"http_port" yaml:"http_port"`
+		CronSpec         string            `json:"cron_spec" yaml:"cron_spec"`
+		RemoteSignApiUrl string            `json:"remote_sign_api_url" yaml:"remote_sign_api_url"`
+		HedgeUrl         string            `json:"hedge_url" yaml:"hedge_url"`
 	} `json:"server" yaml:"server"`
 	BusinessIds map[string]string `json:"business_ids" yaml:"business_ids"`
 	Notify      struct {
@@ -122,11 +125,11 @@ func GetPaymentAddress(payTokenId tables.PayTokenId) (string, error) {
 	return addr, nil
 }
 
-func InitDasCore(ctx context.Context, wg *sync.WaitGroup) (*core.DasCore, *dascache.DasCache, error) {
+func InitDasCore(ctx context.Context, wg *sync.WaitGroup) (*core.DasCore, *dascache.DasCache, *txbuilder.DasTxBuilderBase, error) {
 	// ckb node
 	ckbClient, err := rpc.DialWithIndexer(Cfg.Chain.Ckb.Node, Cfg.Chain.Ckb.Node)
 	if err != nil {
-		return nil, nil, fmt.Errorf("rpc.DialWithIndexer err: %s", err.Error())
+		return nil, nil, nil, fmt.Errorf("rpc.DialWithIndexer err: %s", err.Error())
 	}
 	log.Info("ckb node ok")
 
@@ -143,10 +146,10 @@ func InitDasCore(ctx context.Context, wg *sync.WaitGroup) (*core.DasCore, *dasca
 	dasCore := core.NewDasCore(ctx, wg, ops...)
 	dasCore.InitDasContract(env.MapContract)
 	if err := dasCore.InitDasConfigCell(); err != nil {
-		return nil, nil, fmt.Errorf("InitDasConfigCell err: %s", err.Error())
+		return nil, nil, nil, fmt.Errorf("InitDasConfigCell err: %s", err.Error())
 	}
 	if err := dasCore.InitDasSoScript(); err != nil {
-		return nil, nil, fmt.Errorf("InitDasSoScript err: %s", err.Error())
+		return nil, nil, nil, fmt.Errorf("InitDasSoScript err: %s", err.Error())
 	}
 	dasCore.RunAsyncDasContract(time.Minute * 3)   // contract outpoint
 	dasCore.RunAsyncDasConfigCell(time.Minute * 5) // config cell outpoint
@@ -159,5 +162,27 @@ func InitDasCore(ctx context.Context, wg *sync.WaitGroup) (*core.DasCore, *dasca
 	dasCache.RunClearExpiredOutPoint(time.Minute * 15)
 	log.Info("das cache ok")
 
-	return dasCore, dasCache, nil
+	//
+	payServerAddressArgs := ""
+	if Cfg.Chain.Ckb.Address != "" {
+		parseAddress, err := address.Parse(Cfg.Chain.Ckb.Address)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("address.Parse err: %s", err.Error())
+		} else {
+			payServerAddressArgs = common.Bytes2Hex(parseAddress.Script.Args)
+		}
+	}
+	var handleSign sign.HandleSignCkbMessage
+	if Cfg.Chain.Ckb.Private != "" {
+		handleSign = sign.LocalSign(Cfg.Chain.Ckb.Private)
+	} else if Cfg.Server.RemoteSignApiUrl != "" && payServerAddressArgs != "" {
+		remoteSignClient, err := sign.NewClient(ctx, Cfg.Server.RemoteSignApiUrl)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("sign.NewClient err: %s", err.Error())
+		}
+		handleSign = sign.RemoteSign(remoteSignClient, Cfg.Server.Net, payServerAddressArgs)
+	}
+	txBuilderBase := txbuilder.NewDasTxBuilderBase(ctx, dasCore, handleSign, payServerAddressArgs)
+
+	return dasCore, dasCache, txBuilderBase, nil
 }
