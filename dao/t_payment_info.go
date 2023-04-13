@@ -140,3 +140,9 @@ func (d *DbDao) GetPaymentByPayHashList(payHashList []string) (list []tables.Tab
 	err = d.db.Where("pay_hash IN(?)", payHashList).Find(&list).Error
 	return
 }
+
+func (d *DbDao) GetPaymentListByOrderIds(orderIds []string) (list []tables.TablePaymentInfo, err error) {
+	err = d.db.Where("order_id IN(?)", orderIds).
+		Order("order_id,id").Find(&list).Error
+	return
+}

@@ -23,7 +23,7 @@ func (h *HttpSvr) initRouter() {
 		v1.POST("/version", DoMonitorLog("version"), h.H.Version)
 		v1.POST("/order/create", DoMonitorLog("order_create"), h.H.OrderCreate)
 		v1.POST("/order/refund", DoMonitorLog("order_refund"), h.H.OrderRefund)
-		v1.POST("/payment/info", DoMonitorLog("payment_info"), h.H.PaymentInfo)
+		v1.POST("/order/info", DoMonitorLog("order_info"), h.H.OrderInfo)
 
 		// operate
 	}
