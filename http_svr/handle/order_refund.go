@@ -10,9 +10,14 @@ import (
 	"unipay/tables"
 )
 
+type RefundInfo struct {
+	OrderId string `json:"order_id"`
+	PayHash string `json:"pay_hash"`
+}
+
 type ReqOrderRefund struct {
-	BusinessId string `json:"business_id"`
-	OrderId    string `json:"order_id"`
+	BusinessId string       `json:"business_id"`
+	RefundList []RefundInfo `json:"refund_list"`
 }
 
 type RespOrderRefund struct {
@@ -51,28 +56,32 @@ func (h *HttpHandle) doOrderRefund(req *ReqOrderRefund, apiResp *http_api.ApiRes
 		return nil
 	}
 
-	// get order info
-	orderInfo := h.getOrderInfo(req.OrderId, req.BusinessId, apiResp)
-	if apiResp.ErrNo != http_api.ApiCodeSuccess {
-		return nil
-	}
-
-	// check paid
-	if orderInfo.PayStatus != tables.PayStatusPaid {
-		apiResp.ApiRespErr(http_api.ApiCodeOrderUnPaid, "order not paid")
-		return nil
+	var payHashList []string
+	var refundMap = make(map[string]string)
+	for _, v := range req.RefundList {
+		payHashList = append(payHashList, v.PayHash)
+		refundMap[v.PayHash] = v.OrderId
 	}
 
 	// get payment info
-	paymentInfo := h.getPaymentInfo(orderInfo.OrderId, apiResp)
-	if apiResp.ErrNo != http_api.ApiCodeSuccess {
+	paymentList, err := h.DbDao.GetPaymentByPayHashList(payHashList)
+	if err != nil {
+		apiResp.ApiRespErr(http_api.ApiCodeDbError, "failed to search payment")
+		return fmt.Errorf("GetPaymentByPayHashList err: %s", err.Error())
+	}
+	if len(paymentList) == 0 {
+		apiResp.ApiRespOK(resp)
 		return nil
 	}
 
 	// update refund status
-	if err := h.DbDao.UpdatePaymentInfoToUnRefunded(paymentInfo.PayHash); err != nil {
-		apiResp.ApiRespErr(http_api.ApiCodeDbError, "failed to update refund status")
-		return fmt.Errorf("UpdatePaymentInfoToUnRefunded err: %s", err.Error())
+	for _, v := range paymentList {
+		if orderId, ok := refundMap[v.PayHash]; !ok || orderId != v.OrderId {
+			continue
+		}
+		if err := h.DbDao.UpdatePaymentInfoToUnRefunded(v.PayHash); err != nil {
+			log.Error("UpdatePaymentInfoToUnRefunded err: %s", err.Error())
+		}
 	}
 
 	apiResp.ApiRespOK(resp)
@@ -95,21 +104,6 @@ func (h *HttpHandle) getOrderInfo(orderId, businessId string, apiResp *http_api.
 	}
 	if orderInfo.Id == 0 {
 		apiResp.ApiRespErr(http_api.ApiCodeOrderNotExist, "order not exist")
-		return
-	}
-	return
-}
-
-func (h *HttpHandle) getPaymentInfo(orderId string, apiResp *http_api.ApiResp) (paymentInfo tables.TablePaymentInfo) {
-	var err error
-	paymentInfo, err = h.DbDao.GetLatestPaymentInfo(orderId)
-	if err != nil {
-		apiResp.ApiRespErr(http_api.ApiCodeDbError, "failed to get payment info")
-		log.Error("GetLatestPaymentInfo err: ", err.Error())
-		return
-	}
-	if paymentInfo.Id == 0 {
-		apiResp.ApiRespErr(http_api.ApiCodePaymentNotExist, "payment not exist")
 		return
 	}
 	return

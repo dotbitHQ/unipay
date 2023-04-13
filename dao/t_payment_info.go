@@ -123,3 +123,12 @@ func (d *DbDao) GetRefundNonce(refundNonce uint64, payTokenIds []tables.PayToken
 		refundNonce, payTokenIds).Limit(1).Find(&info).Error
 	return
 }
+
+func (d *DbDao) GetPaymentByPayHashList(payHashList []string) (list []tables.TablePaymentInfo, err error) {
+	if len(payHashList) == 0 {
+		return
+	}
+	err = d.db.Where("pay_hash IN(?) AND pay_hash_status=? AND refund_status=?",
+		payHashList, tables.PayHashStatusConfirm, tables.RefundStatusDefault).Find(&list).Error
+	return
+}
