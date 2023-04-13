@@ -33,14 +33,14 @@ func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo, noticeI
 			return err
 		}
 
-		if err := tx.Model(tables.TablePaymentInfo{}).
-			Where("order_id=? AND pay_hash!=? AND pay_hash_status=? AND refund_status=?",
-				paymentInfo.OrderId, paymentInfo.PayHash, tables.PayHashStatusConfirm, tables.RefundStatusDefault).
-			Updates(map[string]interface{}{
-				"refund_status": tables.RefundStatusUnRefunded,
-			}).Error; err != nil {
-			return err
-		}
+		//if err := tx.Model(tables.TablePaymentInfo{}).
+		//	Where("order_id=? AND pay_hash!=? AND pay_hash_status=? AND refund_status=?",
+		//		paymentInfo.OrderId, paymentInfo.PayHash, tables.PayHashStatusConfirm, tables.RefundStatusDefault).
+		//	Updates(map[string]interface{}{
+		//		"refund_status": tables.RefundStatusUnRefunded,
+		//	}).Error; err != nil {
+		//	return err
+		//}
 
 		if err := tx.Clauses(clause.Insert{
 			Modifier: "IGNORE",
