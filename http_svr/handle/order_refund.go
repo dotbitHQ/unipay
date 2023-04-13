@@ -7,7 +7,6 @@ import (
 	"github.com/scorpiotzh/toolib"
 	"net/http"
 	"unipay/config"
-	"unipay/tables"
 )
 
 type RefundInfo struct {
@@ -64,7 +63,7 @@ func (h *HttpHandle) doOrderRefund(req *ReqOrderRefund, apiResp *http_api.ApiRes
 	}
 
 	// get payment info
-	paymentList, err := h.DbDao.GetPaymentByPayHashList(payHashList)
+	paymentList, err := h.DbDao.GetPaymentByPayHashListWithStatus(payHashList)
 	if err != nil {
 		apiResp.ApiRespErr(http_api.ApiCodeDbError, "failed to search payment")
 		return fmt.Errorf("GetPaymentByPayHashList err: %s", err.Error())
@@ -92,19 +91,4 @@ func checkBusinessIds(businessId string, apiResp *http_api.ApiResp) {
 	if _, ok := config.Cfg.BusinessIds[businessId]; !ok {
 		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, fmt.Sprintf("unknow bussiness id[%s]", businessId))
 	}
-}
-
-func (h *HttpHandle) getOrderInfo(orderId, businessId string, apiResp *http_api.ApiResp) (orderInfo tables.TableOrderInfo) {
-	var err error
-	orderInfo, err = h.DbDao.GetOrderInfo(orderId, businessId)
-	if err != nil {
-		apiResp.ApiRespErr(http_api.ApiCodeDbError, "failed to get order info")
-		log.Error("GetOrderInfo err: ", err.Error())
-		return
-	}
-	if orderInfo.Id == 0 {
-		apiResp.ApiRespErr(http_api.ApiCodeOrderNotExist, "order not exist")
-		return
-	}
-	return
 }
