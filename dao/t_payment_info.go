@@ -18,7 +18,7 @@ func (d *DbDao) UpdatePaymentInfoToUnRefunded(payHash string) error {
 		Where("pay_hash=? AND pay_hash_status=? AND refund_status=?",
 			payHash, tables.PayHashStatusConfirm, tables.RefundStatusDefault).
 		Updates(map[string]interface{}{
-			"refund_status": tables.RefundStatusUnRefunded,
+			"refund_status": tables.RefundStatusUnRefund,
 		}).Error
 }
 
@@ -37,7 +37,7 @@ func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo, noticeI
 		//	Where("order_id=? AND pay_hash!=? AND pay_hash_status=? AND refund_status=?",
 		//		paymentInfo.OrderId, paymentInfo.PayHash, tables.PayHashStatusConfirm, tables.RefundStatusDefault).
 		//	Updates(map[string]interface{}{
-		//		"refund_status": tables.RefundStatusUnRefunded,
+		//		"refund_status": tables.RefundStatusUnRefund,
 		//	}).Error; err != nil {
 		//	return err
 		//}
@@ -73,14 +73,14 @@ func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo, noticeI
 func (d *DbDao) GetRefundListWithin3d() (list []tables.TablePaymentInfo, err error) {
 	timestamp := time.Now().Add(time.Hour * 24 * 3).Unix()
 	err = d.db.Where("timestamp>=? AND pay_hash_status=? AND refund_status=?",
-		timestamp, tables.PayHashStatusConfirm, tables.RefundStatusUnRefunded).Find(&list).Error
+		timestamp, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).Find(&list).Error
 	return
 }
 
 func (d *DbDao) UpdatePaymentListToRefunded(payHashList []string, refundHash string) error {
 	return d.db.Model(tables.TablePaymentInfo{}).
 		Where("pay_hash IN(?) AND pay_hash_status=? AND refund_status=?",
-			payHashList, tables.PayHashStatusConfirm, tables.RefundStatusUnRefunded).
+			payHashList, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).
 		Updates(map[string]interface{}{
 			"refund_status": tables.RefundStatusRefunded,
 			"refund_hash":   refundHash,
@@ -90,7 +90,7 @@ func (d *DbDao) UpdatePaymentListToRefunded(payHashList []string, refundHash str
 func (d *DbDao) UpdateSinglePaymentToRefunded(payHash string, refundHash string, refundNonce uint64) error {
 	return d.db.Model(tables.TablePaymentInfo{}).
 		Where("pay_hash=? AND pay_hash_status=? AND refund_status=?",
-			payHash, tables.PayHashStatusConfirm, tables.RefundStatusUnRefunded).
+			payHash, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).
 		Updates(map[string]interface{}{
 			"refund_status": tables.RefundStatusRefunded,
 			"refund_hash":   refundHash,
@@ -103,7 +103,7 @@ func (d *DbDao) UpdatePaymentListToUnRefunded(payHashList []string) error {
 		Where("pay_hash IN(?) AND pay_hash_status=? AND refund_status=?",
 			payHashList, tables.PayHashStatusConfirm, tables.RefundStatusRefunded).
 		Updates(map[string]interface{}{
-			"refund_status": tables.RefundStatusUnRefunded,
+			"refund_status": tables.RefundStatusUnRefund,
 		}).Error
 }
 
@@ -112,7 +112,7 @@ func (d *DbDao) UpdateSinglePaymentToUnRefunded(payHash string) error {
 		Where("pay_hash=? AND pay_hash_status=? AND refund_status=?",
 			payHash, tables.PayHashStatusConfirm, tables.RefundStatusRefunded).
 		Updates(map[string]interface{}{
-			"refund_status": tables.RefundStatusUnRefunded,
+			"refund_status": tables.RefundStatusUnRefund,
 			"refund_hash":   "",
 			"refund_nonce":  0,
 		}).Error

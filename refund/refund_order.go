@@ -19,7 +19,7 @@ func (t *ToolRefund) doRefund() error {
 	var dogeList []tables.TablePaymentInfo
 	var otherList []tables.TablePaymentInfo
 	for i, v := range list {
-		if v.PayHashStatus != tables.PayHashStatusConfirm && v.RefundStatus != tables.RefundStatusUnRefunded {
+		if v.PayHashStatus != tables.PayHashStatusConfirm && v.RefundStatus != tables.RefundStatusUnRefund {
 			continue
 		}
 		switch v.PayTokenId {
