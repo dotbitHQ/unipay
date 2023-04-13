@@ -6,6 +6,7 @@ import (
 	"github.com/dotbitHQ/das-lib/bitcoin"
 	"github.com/dotbitHQ/das-lib/common"
 	"strings"
+	"time"
 	"unipay/config"
 	"unipay/notify"
 	"unipay/tables"
@@ -77,5 +78,29 @@ func (t *ToolRefund) doRefundDoge(list []tables.TablePaymentInfo) error {
 		return fmt.Errorf("SendTx err: %s", err.Error())
 	}
 
+	// callback notice
+	if err = t.addCallbackNotice(list); err != nil {
+		log.Error("addCallbackNotice err:", err.Error())
+	}
+
+	return nil
+}
+
+func (t *ToolRefund) addCallbackNotice(list []tables.TablePaymentInfo) error {
+	var noticeList []tables.TableNoticeInfo
+	for _, v := range list {
+		notice := tables.TableNoticeInfo{
+			OrderId:      v.OrderId,
+			EventType:    tables.EventTypeOrderRefund,
+			NoticeCount:  0,
+			NoticeStatus: tables.NoticeStatusDefault,
+			Timestamp:    time.Now().Unix(),
+		}
+		noticeList = append(noticeList, notice)
+	}
+
+	if err := t.DbDao.CreateNoticeList(noticeList); err != nil {
+		return fmt.Errorf("CreateNoticeList erR: %s", err.Error())
+	}
 	return nil
 }

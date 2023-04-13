@@ -112,7 +112,7 @@ func (d *DbDao) UpdateSinglePaymentToUnRefunded(payHash string) error {
 		Where("pay_hash=? AND pay_hash_status=? AND refund_status=?",
 			payHash, tables.PayHashStatusConfirm, tables.RefundStatusRefunded).
 		Updates(map[string]interface{}{
-			"refund_status": tables.RefundStatusRefunded,
+			"refund_status": tables.RefundStatusUnRefunded,
 			"refund_hash":   "",
 			"refund_nonce":  0,
 		}).Error

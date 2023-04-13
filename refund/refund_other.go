@@ -84,6 +84,7 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 		e = fmt.Errorf("UpdateSinglePaymentToRefunded err: %s", err.Error())
 		return
 	}
+
 	if err = p.chainEvm.SendTransaction(tx); err != nil {
 		if err = t.DbDao.UpdateSinglePaymentToUnRefunded(payHash); err != nil {
 			log.Info("UpdateSinglePaymentToUnRefunded err: ", err.Error(), payHash)
@@ -91,6 +92,11 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 		}
 		e = fmt.Errorf("SendTx err: %s", err.Error())
 		return
+	}
+
+	// callback notice
+	if err = t.addCallbackNotice([]tables.TablePaymentInfo{p.info}); err != nil {
+		log.Error("addCallbackNotice err:", err.Error())
 	}
 
 	return true, nil

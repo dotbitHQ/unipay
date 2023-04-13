@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"gorm.io/gorm/clause"
 	"time"
 	"unipay/tables"
 )
@@ -37,4 +38,10 @@ func (d *DbDao) UpdateNoticeStatusToFail(id uint64) error {
 		Updates(map[string]interface{}{
 			"notice_status": tables.NoticeStatusFail,
 		}).Error
+}
+
+func (d *DbDao) CreateNoticeList(list []tables.TableNoticeInfo) error {
+	return d.db.Clauses(clause.Insert{
+		Modifier: "IGNORE",
+	}).Create(&list).Error
 }

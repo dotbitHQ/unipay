@@ -130,5 +130,10 @@ func (t *ToolRefund) doRefundCkb(list []tables.TablePaymentInfo) error {
 		}
 		return fmt.Errorf("SendTransaction err: %s", err.Error())
 	}
+
+	// callback notice
+	if err = t.addCallbackNotice(list); err != nil {
+		log.Error("addCallbackNotice err:", err.Error())
+	}
 	return nil
 }
