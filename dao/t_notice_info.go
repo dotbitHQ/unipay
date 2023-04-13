@@ -12,18 +12,29 @@ func (d *DbDao) Get24HUnNotifyList() (list []tables.TableNoticeInfo, err error) 
 	return
 }
 
-func (d *DbDao) UpdateNoticeStatus(id uint64, oldStatus, newStatus tables.NoticeStatus) error {
+func (d *DbDao) UpdateNoticeStatusToOK(ids []uint64) error {
+	if len(ids) == 0 {
+		return nil
+	}
 	return d.db.Model(tables.TableNoticeInfo{}).
-		Where("id=? AND notice_status=?", id, oldStatus).
+		Where("id IN(?) AND notice_status=?", ids, tables.NoticeStatusDefault).
 		Updates(map[string]interface{}{
-			"notice_status": newStatus,
+			"notice_status": tables.NoticeStatusOK,
 		}).Error
 }
 
-func (d *DbDao) UpdateNoticeCount(notice tables.TableNoticeInfo) error {
+func (d *DbDao) UpdateNoticeCount(id uint64, noticeCount int) error {
 	return d.db.Model(tables.TableNoticeInfo{}).
-		Where("id=? AND notice_status=?", notice.Id, tables.NoticeStatusDefault).
+		Where("id=? AND notice_status=?", id, tables.NoticeStatusDefault).
 		Updates(map[string]interface{}{
-			"notice_count": notice.NoticeCount,
+			"notice_count": noticeCount,
+		}).Error
+}
+
+func (d *DbDao) UpdateNoticeStatusToFail(id uint64) error {
+	return d.db.Model(tables.TableNoticeInfo{}).
+		Where("id=? AND notice_status=?", id, tables.NoticeStatusDefault).
+		Updates(map[string]interface{}{
+			"notice_status": tables.NoticeStatusFail,
 		}).Error
 }

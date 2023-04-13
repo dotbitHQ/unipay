@@ -22,14 +22,15 @@ func (c *CallbackNotice) CallbackNotice(notice tables.TableNoticeInfo, paymentIn
 
 	// send notice
 	req := reqCallbackNotice{
-		OrderId:   notice.OrderId,
-		EventType: notice.EventType,
-		OrderInfo: reqOrderInfo{
+		BusinessId: orderInfo.BusinessId,
+		EventList: []EventInfo{{
+			EventType:    notice.EventType,
+			OrderId:      notice.OrderId,
 			PayStatus:    orderInfo.PayStatus,
 			PayHash:      paymentInfo.PayHash,
 			RefundStatus: paymentInfo.RefundStatus,
 			RefundHash:   paymentInfo.RefundHash,
-		},
+		}},
 	}
 	resp := &respCallbackNotice{}
 	if err := doNoticeReq(callbackUrl, req, resp); err != nil {
@@ -38,7 +39,47 @@ func (c *CallbackNotice) CallbackNotice(notice tables.TableNoticeInfo, paymentIn
 	return nil
 }
 
-func (c *CallbackNotice) RepeatCallbackNotice(notice tables.TableNoticeInfo) error {
+func (c *CallbackNotice) RepeatCallbackNotice(eventMap map[string][]EventInfo) error {
+	if len(eventMap) == 0 {
+		return nil
+	}
+
+	// callback
+	for k, list := range eventMap {
+		req := reqCallbackNotice{
+			BusinessId: k,
+			EventList:  list,
+		}
+		callbackUrl, ok := config.Cfg.BusinessIds[k]
+		if !ok {
+			log.Error("BusinessId not exist:", k)
+			continue
+		}
+		resp := &respCallbackNotice{}
+		if err := doNoticeReq(callbackUrl, req, resp); err != nil {
+			log.Error("doNoticeReq err:", err.Error())
+			for _, v := range list {
+				noticeCount := v.NoticeCount + 1
+				if err := c.DbDao.UpdateNoticeCount(v.NoticeId, noticeCount); err != nil {
+					log.Error("UpdateNoticeCount err: ", err.Error(), v.NoticeId)
+				}
+			}
+			continue
+		}
+		//
+		var ids []uint64
+		for _, v := range list {
+			ids = append(ids, v.NoticeId)
+		}
+		if err := c.DbDao.UpdateNoticeStatusToOK(ids); err != nil {
+			log.Error("UpdateNoticeStatusToOK err:", err.Error(), ids)
+		}
+	}
+
+	return nil
+}
+
+func (c *CallbackNotice) GetEventInfo(notice tables.TableNoticeInfo) (businessId string, eventInfo EventInfo, e error) {
 	// check timestamp
 	timestamp := notice.Timestamp
 	switch notice.NoticeCount {
@@ -51,70 +92,65 @@ func (c *CallbackNotice) RepeatCallbackNotice(notice tables.TableNoticeInfo) err
 	case 3: // 300s
 		timestamp += 300
 	default:
-		//if err := c.DbDao.UpdateNoticeStatus(notice.Id, tables.NoticeStatusDefault, tables.NoticeStatusFail); err != nil {
-		//	return fmt.Errorf("UpdateNoticeStatus err: %s", err.Error())
-		//}
-		return nil
+		if err := c.DbDao.UpdateNoticeStatusToFail(notice.Id); err != nil {
+			e = fmt.Errorf("UpdateNoticeStatusToFail err: %s", err.Error())
+			return
+		}
+		return
 	}
 	nowT := time.Now().Unix()
 	if nowT < timestamp {
 		log.Info("callbackNotice NoticeCount:", notice.NoticeCount, timestamp-nowT)
-		return nil
+		return
 	}
 
 	// get order info
 	orderInfo, err := c.DbDao.GetOrderInfoByOrderId(notice.OrderId)
 	if err != nil {
-		return fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
+		e = fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
+		return
 	} else if orderInfo.Id == 0 {
-		return fmt.Errorf("order not exist[%s]", notice.OrderId)
+		e = fmt.Errorf("order not exist[%s]", notice.OrderId)
+		return
 	}
 
 	// get payment info
 	paymentInfo, err := c.DbDao.GetLatestPaymentInfo(notice.OrderId)
 	if err != nil {
-		return fmt.Errorf("GetLatestPaymentInfo err: %s", err.Error())
+		e = fmt.Errorf("GetLatestPaymentInfo err: %s", err.Error())
+		return
 	} else if paymentInfo.Id == 0 {
-		return fmt.Errorf("payment not exist[%s]", notice.OrderId)
+		e = fmt.Errorf("payment not exist[%s]", notice.OrderId)
+		return
 	}
 
-	// callback
-	if err := c.CallbackNotice(notice, paymentInfo, orderInfo); err != nil {
-		notice.NoticeCount++
-		if notice.NoticeCount > 3 {
-			// notify
-			txt := fmt.Sprintf(`BusinessId: %s
-OrderId: %s`, orderInfo.BusinessId, notice.OrderId)
-			SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "RepeatCallbackNotice", txt)
-			if err := c.DbDao.UpdateNoticeStatus(notice.Id, tables.NoticeStatusDefault, tables.NoticeStatusFail); err != nil {
-				return fmt.Errorf("UpdateNoticeStatus err: %s", err.Error())
-			}
-		} else {
-			if err := c.DbDao.UpdateNoticeCount(notice); err != nil {
-				return fmt.Errorf("UpdateNoticeCount err: %s", err.Error())
-			}
-		}
-		return fmt.Errorf("CallbackNotice err: %s", err.Error())
+	eventInfo = EventInfo{
+		EventType:    notice.EventType,
+		OrderId:      notice.OrderId,
+		PayStatus:    orderInfo.PayStatus,
+		PayHash:      paymentInfo.PayHash,
+		RefundStatus: paymentInfo.RefundStatus,
+		RefundHash:   paymentInfo.RefundHash,
+		NoticeId:     notice.Id,
+		NoticeCount:  notice.NoticeCount,
 	}
-
-	// update status, retry
-	if err := c.DbDao.UpdateNoticeStatus(notice.Id, tables.NoticeStatusDefault, tables.NoticeStatusOK); err != nil {
-		return fmt.Errorf("UpdateNoticeStatus err: %s", err.Error())
-	}
-
-	return nil
+	businessId = orderInfo.BusinessId
+	return
 }
 
 type reqCallbackNotice struct {
-	OrderId   string           `json:"order_id"`
-	EventType tables.EventType `json:"event_type"`
-	OrderInfo reqOrderInfo     `json:"order_info"`
+	BusinessId string      `json:"business_id"`
+	EventList  []EventInfo `json:"event_list"`
 }
-type reqOrderInfo struct {
+type EventInfo struct {
+	EventType    tables.EventType    `json:"event_type"`
+	OrderId      string              `json:"order_id"`
 	PayStatus    tables.PayStatus    `json:"pay_status"`
 	PayHash      string              `json:"pay_hash"`
 	RefundStatus tables.RefundStatus `json:"refund_status"`
 	RefundHash   string              `json:"refund_hash"`
+	NoticeId     uint64              `json:"notice_id"`
+	NoticeCount  int                 `json:"notice_count"`
 }
 type respCallbackNotice struct {
 }
