@@ -171,7 +171,7 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				OrderId:       order.OrderId,
 				PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
 				AlgorithmId:   order.AlgorithmId,
-				Timestamp:     time.Now().Unix(),
+				Timestamp:     time.Now().UnixMilli(),
 				Amount:        order.Amount,
 				PayTokenId:    order.PayTokenId,
 				PayHashStatus: tables.PayHashStatusConfirm,

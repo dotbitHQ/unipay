@@ -189,7 +189,7 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 				OrderId:       order.OrderId,
 				PayAddress:    fromAddr,
 				AlgorithmId:   order.AlgorithmId,
-				Timestamp:     time.Now().Unix(),
+				Timestamp:     time.Now().UnixMilli(),
 				Amount:        order.Amount,
 				PayTokenId:    order.PayTokenId,
 				PayHashStatus: tables.PayHashStatusConfirm,

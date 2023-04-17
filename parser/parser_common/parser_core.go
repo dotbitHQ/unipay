@@ -77,7 +77,7 @@ func (p *ParserCore) HandlePayment(paymentInfo tables.TablePaymentInfo, orderInf
 		EventType:    tables.EventTypeOrderPay,
 		NoticeCount:  0,
 		NoticeStatus: tables.NoticeStatusDefault,
-		Timestamp:    time.Now().Unix(),
+		Timestamp:    time.Now().UnixMilli(),
 	}
 
 	orderInfo.PayStatus = tables.PayStatusPaid

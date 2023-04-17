@@ -94,7 +94,7 @@ func (t *ToolRefund) addCallbackNotice(list []tables.TablePaymentInfo) error {
 			EventType:    tables.EventTypeOrderRefund,
 			NoticeCount:  0,
 			NoticeStatus: tables.NoticeStatusDefault,
-			Timestamp:    time.Now().Unix(),
+			Timestamp:    time.Now().UnixMilli(),
 		}
 		noticeList = append(noticeList, notice)
 	}

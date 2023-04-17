@@ -84,13 +84,13 @@ func (c *CallbackNotice) GetEventInfo(notice tables.TableNoticeInfo) (businessId
 	timestamp := notice.Timestamp
 	switch notice.NoticeCount {
 	case 0: // 30s
-		timestamp += 30
+		timestamp += 30 * 1e3
 	case 1: // 60s
-		timestamp += 60
+		timestamp += 60 * 1e3
 	case 2: // 120s
-		timestamp += 120
+		timestamp += 120 * 1e3
 	case 3: // 300s
-		timestamp += 300
+		timestamp += 300 * 1e3
 	default:
 		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateNoticeStatusToFail", notice.OrderId)
 		if err := c.DbDao.UpdateNoticeStatusToFail(notice.Id); err != nil {
@@ -99,9 +99,9 @@ func (c *CallbackNotice) GetEventInfo(notice tables.TableNoticeInfo) (businessId
 		}
 		return
 	}
-	nowT := time.Now().Unix()
+	nowT := time.Now().UnixMilli()
 	if nowT < timestamp {
-		log.Info("callbackNotice NoticeCount:", notice.NoticeCount, timestamp-nowT)
+		log.Info("callbackNotice NoticeCount:", notice.NoticeCount, nowT, timestamp-nowT)
 		return
 	}
 
