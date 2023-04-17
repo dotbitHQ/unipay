@@ -20,6 +20,7 @@ func (t *ToolTimer) doCallbackNotice() error {
 	if len(list) == 0 {
 		return nil
 	}
+	log.Info("doCallbackNotice list:", len(list))
 
 	// callback
 	ch := make(chan tables.TableNoticeInfo, 10)

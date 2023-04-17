@@ -92,6 +92,7 @@ func (c *CallbackNotice) GetEventInfo(notice tables.TableNoticeInfo) (businessId
 	case 3: // 300s
 		timestamp += 300
 	default:
+		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateNoticeStatusToFail", notice.OrderId)
 		if err := c.DbDao.UpdateNoticeStatusToFail(notice.Id); err != nil {
 			e = fmt.Errorf("UpdateNoticeStatusToFail err: %s", err.Error())
 			return
