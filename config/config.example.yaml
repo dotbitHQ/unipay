@@ -1,7 +1,7 @@
 server:
   net: 1
-  http_port: ""
-  cron_spec: "0 0 */1 * * ?" # refund regular
+  http_port: ":9092"
+  cron_spec: "0 30 */1 * * ?" # refund regular
   remote_sign_api_url: ""
 business_ids:
   "": ""
