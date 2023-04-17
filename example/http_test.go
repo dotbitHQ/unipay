@@ -21,14 +21,14 @@ func TestOrderCreate(t *testing.T) {
 		ChainTypeAddress: core.ChainTypeAddress{
 			Type: "blockchain",
 			KeyInfo: core.KeyInfo{
-				CoinType: common.CoinTypeEth,
-				ChainId:  "11",
-				Key:      "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891",
+				CoinType: common.CoinTypeTrx,
+				ChainId:  "",
+				Key:      "TFUg8zKThCj23acDSwsVjQrBVRywMMQGP1",
 			},
 		},
 		BusinessId: BusinessIdAutoSubAccount,
-		Amount:     decimal.NewFromInt(1e16),
-		PayTokenId: tables.PayTokenIdETH,
+		Amount:     decimal.NewFromInt(500 * 1e6),
+		PayTokenId: tables.PayTokenIdTRX,
 	}
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/create")
 

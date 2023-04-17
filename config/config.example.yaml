@@ -5,6 +5,8 @@ server:
   remote_sign_api_url: ""
 business_ids:
   "": ""
+notify:
+  lark_error_key: ""
 db:
   mysql:
     addr: "127.0.0.1:3306"

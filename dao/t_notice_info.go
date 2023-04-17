@@ -7,7 +7,7 @@ import (
 )
 
 func (d *DbDao) Get24HUnNotifyList() (list []tables.TableNoticeInfo, err error) {
-	nowTimestamp := time.Now().Add(-time.Hour * 24).Unix()
+	nowTimestamp := time.Now().Add(-time.Hour * 24).UnixMilli()
 	err = d.db.Where("timestamp>=? AND notice_status=?",
 		nowTimestamp, tables.NoticeStatusDefault).Find(&list).Error
 	return
