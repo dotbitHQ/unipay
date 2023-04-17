@@ -1,3 +1,3 @@
 package example
 
-var ApiUrl = "http://127.0.0.1:9090/v1"
+var ApiUrl = "http://127.0.0.1:9092/v1"

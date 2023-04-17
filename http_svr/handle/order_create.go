@@ -83,7 +83,7 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 		PayTokenId:  req.PayTokenId,
 		PayStatus:   tables.PayStatusUnpaid,
 		OrderStatus: tables.OrderStatusNormal,
-		Timestamp:   time.Now().UnixNano() / 1e6,
+		Timestamp:   time.Now().Unix(),
 	}
 	orderInfo.InitOrderId()
 

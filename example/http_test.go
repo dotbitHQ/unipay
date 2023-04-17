@@ -12,6 +12,10 @@ import (
 	"unipay/tables"
 )
 
+var (
+	BusinessIdAutoSubAccount = "auto-sub-account"
+)
+
 func TestOrderCreate(t *testing.T) {
 	req := handle.ReqOrderCreate{
 		ChainTypeAddress: core.ChainTypeAddress{
@@ -19,11 +23,11 @@ func TestOrderCreate(t *testing.T) {
 			KeyInfo: core.KeyInfo{
 				CoinType: common.CoinTypeEth,
 				ChainId:  "11",
-				Key:      "0xc9f53b1d85356B60453F867610888D89a0B667Ad",
+				Key:      "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891",
 			},
 		},
-		BusinessId: "auto-sub-account",
-		Amount:     decimal.NewFromInt(1e18),
+		BusinessId: BusinessIdAutoSubAccount,
+		Amount:     decimal.NewFromInt(1e16),
 		PayTokenId: tables.PayTokenIdETH,
 	}
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/create")
@@ -38,7 +42,10 @@ func TestOrderCreate(t *testing.T) {
 func TestOrderRefund(t *testing.T) {
 	req := handle.ReqOrderRefund{
 		BusinessId: "auto-sub-account",
-		OrderId:    "0ba3ff32e5e585385073ad41305abf63",
+		RefundList: []handle.RefundInfo{{
+			OrderId: "",
+			PayHash: "",
+		}},
 	}
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/refund")
 
@@ -51,8 +58,9 @@ func TestOrderRefund(t *testing.T) {
 
 func TestOrderInfo(t *testing.T) {
 	req := handle.ReqOrderInfo{
-		BusinessId: "auto-sub-account",
-		OrderId:    "0ba3ff32e5e585385073ad41305abf63",
+		BusinessId:  "auto-sub-account",
+		OrderIdList: []string{},
+		PayHashList: []string{},
 	}
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/info")
 
