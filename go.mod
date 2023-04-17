@@ -18,7 +18,7 @@ require (
 	github.com/shopspring/decimal v1.3.1
 	github.com/urfave/cli/v2 v2.10.2
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	gorm.io/gorm v1.24.6
+	gorm.io/gorm v1.23.6
 
 )
 
