@@ -13,19 +13,19 @@ func (h *HttpSvr) initRouter() {
 	v1 := h.engine.Group("v1")
 	{
 		// cache
-		//shortExpireTime, longExpireTime, lockTime := time.Second*5, time.Second*15, time.Minute
-		//shortDataTime, longDataTime := time.Minute*3, time.Minute*10
+		//longExpireTime, longDataTime := time.Second*15, time.Minute*10
+		//shortExpireTime, shortDataTime, lockTime := time.Second*5, time.Minute*3, time.Minute
 		//cacheHandleShort := toolib.MiddlewareCacheByRedis(h.rc.GetRedisClient(), false, shortDataTime, lockTime, shortExpireTime, respHandle)
 		//cacheHandleLong := toolib.MiddlewareCacheByRedis(h.rc.GetRedisClient(), false, longDataTime, lockTime, longExpireTime, respHandle)
 		//cacheHandleShortCookies := toolib.MiddlewareCacheByRedis(h.rc.GetRedisClient(), true, shortDataTime, lockTime, shortExpireTime, respHandle)
 
 		// query
 		v1.POST("/version", DoMonitorLog("version"), h.H.Version)
-		v1.POST("/order/create", DoMonitorLog("order_create"), h.H.OrderCreate)
-		v1.POST("/order/refund", DoMonitorLog("order_refund"), h.H.OrderRefund)
 		v1.POST("/order/info", DoMonitorLog("order_info"), h.H.OrderInfo)
 
 		// operate
+		v1.POST("/order/create", DoMonitorLog("order_create"), h.H.OrderCreate)
+		v1.POST("/order/refund", DoMonitorLog("order_refund"), h.H.OrderRefund)
 	}
 }
 
