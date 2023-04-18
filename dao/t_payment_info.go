@@ -22,6 +22,12 @@ func (d *DbDao) UpdatePaymentInfoToUnRefunded(payHash string) error {
 		}).Error
 }
 
+func (d *DbDao) CreatePayment(paymentInfo tables.TablePaymentInfo) error {
+	return d.db.Clauses(clause.Insert{
+		Modifier: "IGNORE",
+	}).Create(&paymentInfo).Error
+}
+
 func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo, noticeInfo tables.TableNoticeInfo) error {
 	return d.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(tables.TableOrderInfo{}).

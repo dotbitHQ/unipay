@@ -180,11 +180,24 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 			amountValue := decimal.New(instance.Amount, 0)
 			if amountValue.Cmp(order.Amount) == -1 {
 				log.Warn("tx value less than order amount:", amountValue.String(), order.Amount.String())
+				paymentInfo := tables.TablePaymentInfo{
+					PayHash:       hex.EncodeToString(tx.Txid),
+					OrderId:       order.OrderId,
+					PayAddress:    fromAddr,
+					AlgorithmId:   order.AlgorithmId,
+					Timestamp:     time.Now().UnixMilli(),
+					Amount:        amountValue,
+					PayTokenId:    order.PayTokenId,
+					PayHashStatus: tables.PayHashStatusConfirm,
+					RefundStatus:  tables.RefundStatusDefault,
+				}
+				if err = pc.DbDao.CreatePayment(paymentInfo); err != nil {
+					log.Error("CreatePayment err:", err.Error())
+				}
 				continue
 			}
 			// change the status to confirm
 			paymentInfo := tables.TablePaymentInfo{
-				Id:            0,
 				PayHash:       hex.EncodeToString(tx.Txid),
 				OrderId:       order.OrderId,
 				PayAddress:    fromAddr,
@@ -194,8 +207,6 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 				PayTokenId:    order.PayTokenId,
 				PayHashStatus: tables.PayHashStatusConfirm,
 				RefundStatus:  tables.RefundStatusDefault,
-				RefundHash:    "",
-				RefundNonce:   0,
 			}
 			if err := pc.HandlePayment(paymentInfo, order); err != nil {
 				return fmt.Errorf("HandlePayment err: %s", err.Error())

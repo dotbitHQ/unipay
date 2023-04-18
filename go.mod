@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/btcsuite/btcd v0.23.0
-	github.com/dotbitHQ/das-lib v1.0.2-0.20230417094935-9fc0bd4ef728
+	github.com/dotbitHQ/das-lib v1.0.2-0.20230418062923-217f32b9192a
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/fbsobreira/gotron-sdk v0.0.0-20230323193002-7843d2a7548e
 	github.com/fsnotify/fsnotify v1.5.4
@@ -16,6 +16,7 @@ require (
 	github.com/scorpiotzh/mylog v1.0.10
 	github.com/scorpiotzh/toolib v1.1.6
 	github.com/shopspring/decimal v1.3.1
+	github.com/stretchr/testify v1.8.1
 	github.com/urfave/cli/v2 v2.10.2
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	gorm.io/gorm v1.23.6
@@ -34,6 +35,7 @@ require (
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/clipperhouse/uax29 v1.12.4 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/decred/dcrd/crypto/blake256 v1.0.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
@@ -60,6 +62,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shengdoushi/base58 v1.0.0 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect

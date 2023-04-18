@@ -161,12 +161,25 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 			decValue := decimal.NewFromBigInt(chain_evm.BigIntFromHex(tx.Value), 0)
 			if decValue.Cmp(order.Amount) == -1 {
 				log.Warn("tx value less than order amount:", parserType, decValue, order.Amount.String())
+				paymentInfo := tables.TablePaymentInfo{
+					PayHash:       tx.Hash,
+					OrderId:       order.OrderId,
+					PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
+					AlgorithmId:   order.AlgorithmId,
+					Timestamp:     time.Now().UnixMilli(),
+					Amount:        decValue,
+					PayTokenId:    order.PayTokenId,
+					PayHashStatus: tables.PayHashStatusConfirm,
+					RefundStatus:  tables.RefundStatusDefault,
+				}
+				if err = pc.DbDao.CreatePayment(paymentInfo); err != nil {
+					log.Error("CreatePayment err:", err.Error())
+				}
 				continue
 			}
 
 			// change the status to confirm
 			paymentInfo := tables.TablePaymentInfo{
-				Id:            0,
 				PayHash:       tx.Hash,
 				OrderId:       order.OrderId,
 				PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
@@ -176,8 +189,6 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				PayTokenId:    order.PayTokenId,
 				PayHashStatus: tables.PayHashStatusConfirm,
 				RefundStatus:  tables.RefundStatusDefault,
-				RefundHash:    "",
-				RefundNonce:   0,
 			}
 			if err := pc.HandlePayment(paymentInfo, order); err != nil {
 				return fmt.Errorf("HandlePayment err: %s", err.Error())

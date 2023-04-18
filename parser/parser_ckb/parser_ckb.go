@@ -161,10 +161,6 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 				log.Warn("order pay token id not match", order.OrderId)
 				continue
 			}
-			if capacity.Cmp(order.Amount) == -1 {
-				log.Warn("tx value less than order amount:", capacity.String(), order.Amount.String())
-				continue
-			}
 			txInputs, err := p.Client.GetTransaction(p.Ctx, tx.Inputs[0].PreviousOutput.TxHash)
 			if err != nil {
 				return fmt.Errorf("GetTransaction err:%s", err.Error())
@@ -178,9 +174,26 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 			if err != nil {
 				return fmt.Errorf("common.ConvertScriptToAddress err:%s", err.Error())
 			}
+			if capacity.Cmp(order.Amount) == -1 {
+				log.Warn("tx value less than order amount:", capacity.String(), order.Amount.String())
+				paymentInfo := tables.TablePaymentInfo{
+					PayHash:       tx.Hash.Hex(),
+					OrderId:       order.OrderId,
+					PayAddress:    fromAddr,
+					AlgorithmId:   order.AlgorithmId,
+					Timestamp:     time.Now().UnixMilli(),
+					Amount:        capacity,
+					PayTokenId:    order.PayTokenId,
+					PayHashStatus: tables.PayHashStatusConfirm,
+					RefundStatus:  tables.RefundStatusDefault,
+				}
+				if err = pc.DbDao.CreatePayment(paymentInfo); err != nil {
+					log.Error("CreatePayment err:", err.Error())
+				}
+				continue
+			}
 			// change the status to confirm
 			paymentInfo := tables.TablePaymentInfo{
-				Id:            0,
 				PayHash:       tx.Hash.Hex(),
 				OrderId:       order.OrderId,
 				PayAddress:    fromAddr,
@@ -190,8 +203,6 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 				PayTokenId:    order.PayTokenId,
 				PayHashStatus: tables.PayHashStatusConfirm,
 				RefundStatus:  tables.RefundStatusDefault,
-				RefundHash:    "",
-				RefundNonce:   0,
 			}
 			if err := pc.HandlePayment(paymentInfo, order); err != nil {
 				return fmt.Errorf("HandlePayment err: %s", err.Error())

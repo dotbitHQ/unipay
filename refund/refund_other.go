@@ -126,7 +126,7 @@ func (t *ToolRefund) refundTron(info tables.TablePaymentInfo) error {
 	}
 
 	if config.Cfg.Chain.Tron.Private != "" {
-		tx, err = t.chainTron.AddSign(tx.Transaction, config.Cfg.Chain.Tron.Private)
+		err = t.chainTron.LocalSign(tx, config.Cfg.Chain.Tron.Private)
 		if err != nil {
 			return fmt.Errorf("AddSign err:%s", err.Error())
 		}

@@ -224,14 +224,27 @@ func (p *ParserBitcoin) dealWithOpReturn(pc *parser_common.ParserCore, data btcj
 		log.Warn("order pay token id not match", order.OrderId)
 		return false, nil
 	}
-	payAmount := order.Amount.DivRound(decimal.NewFromInt(1e8), 8)
-	if payAmount.Cmp(decValue) != 0 {
-		log.Warn("tx value not match order amount:", decValue.String(), payAmount.String())
+	decValue = decValue.Mul(decimal.NewFromInt(1e8))
+	if decValue.Cmp(order.Amount) == -1 {
+		log.Warn("tx value less than order amount:", decValue.String(), order.Amount.String())
+		paymentInfo := tables.TablePaymentInfo{
+			PayHash:       data.Txid,
+			OrderId:       order.OrderId,
+			PayAddress:    addrPayload,
+			AlgorithmId:   order.AlgorithmId,
+			Timestamp:     time.Now().UnixMilli(),
+			Amount:        decValue,
+			PayTokenId:    order.PayTokenId,
+			PayHashStatus: tables.PayHashStatusConfirm,
+			RefundStatus:  tables.RefundStatusDefault,
+		}
+		if err = pc.DbDao.CreatePayment(paymentInfo); err != nil {
+			log.Error("CreatePayment err:", err.Error())
+		}
 		return false, nil
 	}
 	// update payment info
 	paymentInfo := tables.TablePaymentInfo{
-		Id:            0,
 		PayHash:       data.Txid,
 		OrderId:       order.OrderId,
 		PayAddress:    addrPayload,
@@ -241,8 +254,6 @@ func (p *ParserBitcoin) dealWithOpReturn(pc *parser_common.ParserCore, data btcj
 		PayTokenId:    order.PayTokenId,
 		PayHashStatus: tables.PayHashStatusConfirm,
 		RefundStatus:  tables.RefundStatusDefault,
-		RefundHash:    "",
-		RefundNonce:   0,
 	}
 	if err := pc.HandlePayment(paymentInfo, order); err != nil {
 		return false, fmt.Errorf("HandlePayment err: %s", err.Error())
