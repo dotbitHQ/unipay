@@ -7,7 +7,7 @@ import (
 )
 
 type TablePaymentInfo struct {
-	Id            uint64                `json:"id" gorm:"column:id" gorm:"column:id; primaryKey; type:bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '';"`
+	Id            uint64                `json:"id" gorm:"column:id; primaryKey; type:bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '';"`
 	PayHash       string                `json:"pay_hash" gorm:"column:pay_hash; uniqueIndex:uk_pay_hash; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
 	OrderId       string                `json:"order_id" gorm:"column:order_id; index:k_order_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
 	PayAddress    string                `json:"pay_address" gorm:"column:pay_address; index:k_pay_address; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`

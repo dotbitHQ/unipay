@@ -5,7 +5,7 @@ import (
 )
 
 type TableNoticeInfo struct {
-	Id           uint64       `json:"id" gorm:"column:id" gorm:"column:id; primaryKey; type:bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '';"`
+	Id           uint64       `json:"id" gorm:"column:id; primaryKey; type:bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '';"`
 	OrderId      string       `json:"order_id" gorm:"column:order_id; uniqueIndex:uk_event_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
 	EventType    EventType    `json:"event_type" gorm:"column:event_type; uniqueIndex:uk_event_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT 'ORDER.PAY, ORDER.REFUND';"`
 	NoticeCount  int          `json:"notice_count" gorm:"column:notice_count; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '';"`

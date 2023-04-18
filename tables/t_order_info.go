@@ -9,7 +9,7 @@ import (
 )
 
 type TableOrderInfo struct {
-	Id          uint64                `json:"id" gorm:"column:id" gorm:"column:id; primaryKey; type:bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '';"`
+	Id          uint64                `json:"id" gorm:"column:id; primaryKey; type:bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '';"`
 	OrderId     string                `json:"order_id" gorm:"column:order_id; uniqueIndex:uk_order_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
 	BusinessId  string                `json:"business_id" gorm:"column:business_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
 	PayAddress  string                `json:"pay_address" gorm:"column:pay_address; index:k_pay_address; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
