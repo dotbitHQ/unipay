@@ -71,7 +71,7 @@ type CfgServer struct {
 			Node    string `json:"node" yaml:"node"`
 			Address string `json:"address" yaml:"address"`
 			Private string `json:"private" yaml:"private"`
-		} `json:"ckb"`
+		} `json:"ckb" yaml:"ckb"`
 		Eth     EvmNode `json:"eth" yaml:"eth"`
 		Tron    EvmNode `json:"tron" yaml:"tron"`
 		Bsc     EvmNode `json:"bsc" yaml:"bsc"`
