@@ -30,22 +30,20 @@ func TestTron(t *testing.T) {
 	fromHex, _ := common.TronBase58ToHex("TQoLh9evwUmZKxpD1uhFttsZk3EBs8BksV")
 	toHex, _ := common.TronBase58ToHex("TFUg8zKThCj23acDSwsVjQrBVRywMMQGP1")
 	memo := "3d863f089368ccad5eb1e746417e2803"
-	amount := int64(1e6)
+	amount := int64(500 * 1e6)
 	tx, err := chainTron.CreateTransaction(fromHex, toHex, memo, amount)
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := chainTron.LocalSign(tx, privateKey); err != nil {
+		t.Fatal(err)
+	}
 
-	txSign, err := chainTron.AddSign(tx.Transaction, privateKey)
+	err = chainTron.SendTransaction(tx.Transaction)
 	if err != nil {
 		t.Fatal(err)
 	}
-	hash := hex.EncodeToString(txSign.Txid)
-	fmt.Println("tx hash:", hash)
-	err = chainTron.SendTransaction(txSign.Transaction)
-	if err != nil {
-		t.Fatal(err)
-	}
+	fmt.Println(hex.EncodeToString(tx.Txid))
 }
 
 func TestCkbTx(t *testing.T) {
