@@ -34,15 +34,16 @@ func (t *TableOrderInfo) TableName() string {
 type PayTokenId string
 
 const (
-	PayTokenIdETH      PayTokenId = "eth_eth"
-	PayTokenIdTRX      PayTokenId = "tron_trx"
-	PayTokenIdBNB      PayTokenId = "bsc_bnb"
-	PayTokenIdMATIC    PayTokenId = "polygon_matic"
-	PayTokenIdDOGE     PayTokenId = "doge_doge"
-	PayTokenIdDAS      PayTokenId = "ckb_das"
-	PayTokenIdCKB      PayTokenId = "ckb_ckb"
-	PayTokenIdInternal PayTokenId = "ckb_internal"
-	PayTokenIdCoupon   PayTokenId = "coupon"
+	PayTokenIdETH       PayTokenId = "eth_eth"
+	PayTokenIdErc20USDT PayTokenId = "eth_erc20_usdt"
+	PayTokenIdTRX       PayTokenId = "tron_trx"
+	PayTokenIdBNB       PayTokenId = "bsc_bnb"
+	PayTokenIdMATIC     PayTokenId = "polygon_matic"
+	PayTokenIdDOGE      PayTokenId = "doge_doge"
+	PayTokenIdDAS       PayTokenId = "ckb_das"
+	PayTokenIdCKB       PayTokenId = "ckb_ckb"
+	PayTokenIdInternal  PayTokenId = "ckb_internal"
+	PayTokenIdCoupon    PayTokenId = "coupon"
 )
 
 type PayStatus int

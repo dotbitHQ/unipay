@@ -10,10 +10,13 @@ import (
 	"github.com/dotbitHQ/das-lib/common"
 	"github.com/dotbitHQ/das-lib/core"
 	"github.com/dotbitHQ/das-lib/txbuilder"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/nervosnetwork/ckb-sdk-go/address"
 	"github.com/nervosnetwork/ckb-sdk-go/indexer"
 	"github.com/nervosnetwork/ckb-sdk-go/types"
 	"github.com/shopspring/decimal"
+	"math/big"
+	"strings"
 	"testing"
 	"unipay/config"
 )
@@ -122,14 +125,14 @@ func TestCkbTx(t *testing.T) {
 }
 
 func TestEvmTx(t *testing.T) {
-	chainEvm, err := chain_evm.NewChainEvm(context.Background(), nodePolygon, addFee)
+	chainEvm, err := chain_evm.NewChainEvm(context.Background(), node, addFee)
 	if err != nil {
 		t.Fatal(err)
 	}
 	from := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
 	to := "0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"
-	value := decimal.NewFromInt(1e15)
-	data := []byte("62912cf0174b4c35cc10d2abcd2de9aa")
+	value := decimal.NewFromInt(5407802377269926)
+	data := []byte("569ffc5b4fc347194e49ac8d7a63f7c3")
 	nonce, err := chainEvm.NonceAt(from)
 	if err != nil {
 		t.Fatal(err)
@@ -194,4 +197,71 @@ func TestDogeTx(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println("hash:", hash)
+}
+
+func TestErc20Tx(t *testing.T) {
+	chainEvm, err := chain_evm.NewChainEvm(context.Background(), node, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	from := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
+	to := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
+	contract := "0xBA62BCfcAaFc6622853cca2BE6Ac7d845BC0f2Dc"
+
+	value := decimal.NewFromBigInt(new(big.Int).SetUint64(1e18), 0)
+	fmt.Println(value.Coefficient().String())
+	data, err := chain_evm.PackMessage("transfer", ethcommon.HexToAddress(to), value.Coefficient())
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(common.Bytes2Hex(data))
+	//0xa9059cbb00000000000000000000000015a33588908cf8edb27d1abe3852bf287abd38910000000000000000000000000000000000000000000000000de0b6b3a7640000
+	//0xa9059cbb00000000000000000000000015a33588908cf8edb27d1abe3852bf287abd38910000000000000000000000000000000000000000000000000de0b6b3a7640000
+
+	nonce, err := chainEvm.NonceAt(from)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gasPrice, gasLimit, err := chainEvm.EstimateGas(from, contract, decimal.Zero, data, chainEvm.RefundAddFee)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(gasPrice.Mul(gasLimit).String())
+	tx, err := chainEvm.NewTransaction(from, contract, decimal.Zero, data, nonce, gasPrice, gasLimit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tx, err = chainEvm.SignWithPrivateKey(privateKey, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = chainEvm.SendTransaction(tx); err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("hash:", tx.Hash().String())
+}
+
+func TestTx(t *testing.T) {
+	node = "https://rpc.ankr.com/eth"
+	chainEvm, err := chain_evm.NewChainEvm(context.Background(), node, addFee)
+	if err != nil {
+		t.Fatal(err)
+	}
+	block, err := chainEvm.GetBlockByNumber(15790501)
+	if err != nil {
+		t.Fatal(err)
+	}
+	addr := ""
+	for _, tx := range block.Transactions {
+		if strings.EqualFold(tx.To, "0xdAC17F958D2ee523a2206206994597C13D831ec7") {
+			fmt.Println(tx.From, tx.Input, tx.Value)
+			fmt.Println(len(tx.Input), len(common.Hex2Bytes(tx.Input)), len(tx.Input[10:74]), len(addr))
+			fmt.Println(tx.Input[:10])
+			fmt.Println(tx.Input[10:74])
+			fmt.Println(tx.Input[34:74])
+			fmt.Println(tx.Input[74:])
+			amount := decimal.NewFromBigInt(new(big.Int).SetBytes(common.Hex2Bytes(tx.Input)[36:]), 0)
+			fmt.Println(amount.String())
+		}
+	}
 }

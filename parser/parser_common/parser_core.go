@@ -19,6 +19,8 @@ type ParserCore struct {
 	ParserType         tables.ParserType
 	PayTokenId         tables.PayTokenId
 	Address            string
+	ContractAddress    string
+	ContractPayTokenId tables.PayTokenId
 	CurrentBlockNumber uint64
 	ConcurrencyNum     uint64
 	ConfirmNum         uint64

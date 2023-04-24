@@ -3,11 +3,13 @@ package parser_evm
 import (
 	"fmt"
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
+	dascommon "github.com/dotbitHQ/das-lib/common"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/scorpiotzh/mylog"
 	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
+	"math/big"
 	"strings"
 	"sync"
 	"time"
@@ -134,6 +136,7 @@ func (p *ParserEvm) ConcurrentParsing(pc *parser_common.ParserCore) error {
 
 func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.ParserCore) error {
 	parserType, payTokenId, addr := pc.ParserType, pc.PayTokenId, pc.Address
+	contractUSDT, contractPayTokenId := pc.ContractAddress, pc.ContractPayTokenId
 	if block == nil {
 		return fmt.Errorf("block is nil")
 	}
@@ -193,8 +196,42 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 			if err := pc.HandlePayment(paymentInfo, order); err != nil {
 				return fmt.Errorf("HandlePayment err: %s", err.Error())
 			}
+		case strings.ToLower(contractUSDT):
+			if len(tx.Input) != 138 || !strings.Contains(tx.Input, "a9059cbb") {
+				continue
+			}
+			if !strings.EqualFold(tx.Input[34:74], addr[2:]) {
+				continue
+			}
+			amount := decimal.NewFromBigInt(new(big.Int).SetBytes(dascommon.Hex2Bytes(tx.Input)[36:]), 0)
+			log.Info("parsingBlockData:", contractPayTokenId, tx.From, amount.String())
+			order, err := pc.DbDao.GetOrderByAddrWithAmount(tx.From, contractPayTokenId, amount)
+			if err != nil {
+				return fmt.Errorf("GetOrderByAddrWithAmount err: %s", err.Error())
+			} else if order.Id == 0 {
+				log.Warn("order not exist:", contractPayTokenId, tx.From, amount)
+				continue
+			}
+			if order.PayTokenId != contractPayTokenId {
+				log.Warn("order pay token id not match", order.OrderId, order.PayTokenId, contractPayTokenId)
+				continue
+			}
+			// change the status to confirm
+			paymentInfo := tables.TablePaymentInfo{
+				PayHash:       tx.Hash,
+				OrderId:       order.OrderId,
+				PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
+				AlgorithmId:   order.AlgorithmId,
+				Timestamp:     time.Now().UnixMilli(),
+				Amount:        order.Amount,
+				PayTokenId:    order.PayTokenId,
+				PayHashStatus: tables.PayHashStatusConfirm,
+				RefundStatus:  tables.RefundStatusDefault,
+			}
+			if err := pc.HandlePayment(paymentInfo, order); err != nil {
+				return fmt.Errorf("HandlePayment err: %s", err.Error())
+			}
 		}
-		continue
 	}
 	return nil
 }
