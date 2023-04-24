@@ -17,9 +17,9 @@ var (
 	cta                      = core.ChainTypeAddress{
 		Type: "blockchain",
 		KeyInfo: core.KeyInfo{
-			CoinType: common.CoinTypeDogeCoin,
+			CoinType: common.CoinTypeEth,
 			ChainId:  "",
-			Key:      "DQaRQ9s28U7EogPcDZudwZc4wD1NucZr2g",
+			Key:      "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891",
 		},
 	}
 )
@@ -28,8 +28,8 @@ func TestOrderCreate(t *testing.T) {
 	req := handle.ReqOrderCreate{
 		ChainTypeAddress: cta,
 		BusinessId:       BusinessIdAutoSubAccount,
-		Amount:           decimal.NewFromInt(2e8),
-		PayTokenId:       tables.PayTokenIdDOGE,
+		Amount:           decimal.NewFromInt(1e18),
+		PayTokenId:       tables.PayTokenIdErc20USDT,
 	}
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/create")
 

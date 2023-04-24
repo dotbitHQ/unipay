@@ -205,7 +205,7 @@ func TestErc20Tx(t *testing.T) {
 		t.Fatal(err)
 	}
 	from := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
-	to := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
+	to := "0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"
 	contract := "0xBA62BCfcAaFc6622853cca2BE6Ac7d845BC0f2Dc"
 
 	value := decimal.NewFromBigInt(new(big.Int).SetUint64(1e18), 0)
