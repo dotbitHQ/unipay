@@ -108,7 +108,7 @@ type EvmNode struct {
 func GetPaymentAddress(payTokenId tables.PayTokenId) (string, error) {
 	addr := ""
 	switch payTokenId {
-	case tables.PayTokenIdETH:
+	case tables.PayTokenIdETH, tables.PayTokenIdErc20USDT:
 		addr = Cfg.Chain.Eth.Address
 	case tables.PayTokenIdTRX:
 		addr = Cfg.Chain.Tron.Address
