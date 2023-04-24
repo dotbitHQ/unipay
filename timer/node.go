@@ -45,6 +45,7 @@ func (t *ToolTimer) doCheckNode() error {
 			}
 		}
 		nodeMap[v.ParserType] = v.BlockNumber
+		log.Info("doCheckNode:", v.ParserType, v.BlockNumber)
 	}
 	return nil
 }
