@@ -84,6 +84,7 @@ type CfgServer struct {
 			Private  string `json:"private" yaml:"private"`
 			User     string `json:"user" yaml:"user"`
 			Password string `json:"password" yaml:"password"`
+			Proxy    string `json:"proxy" yaml:"proxy"`
 		} `json:"doge" yaml:"doge"`
 	} `json:"chain" yaml:"chain"`
 }

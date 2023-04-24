@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"github.com/dotbitHQ/das-lib/bitcoin"
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
 	"github.com/dotbitHQ/das-lib/common"
@@ -14,10 +15,13 @@ import (
 	"github.com/nervosnetwork/ckb-sdk-go/types"
 	"github.com/shopspring/decimal"
 	"testing"
+	"unipay/config"
 )
 
 var (
 	node, addFee = "https://rpc.ankr.com/eth_goerli", float64(1.5)
+	nodeBsc      = "https://rpc.ankr.com/bsc_testnet_chapel"
+	nodePolygon  = "https://rpc.ankr.com/polygon_mumbai"
 	nodeTron     = "grpc.nile.trongrid.io:50051"
 	privateKey   = ""
 )
@@ -118,14 +122,14 @@ func TestCkbTx(t *testing.T) {
 }
 
 func TestEvmTx(t *testing.T) {
-	chainEvm, err := chain_evm.NewChainEvm(context.Background(), node, addFee)
+	chainEvm, err := chain_evm.NewChainEvm(context.Background(), nodePolygon, addFee)
 	if err != nil {
 		t.Fatal(err)
 	}
 	from := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
 	to := "0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"
-	value := decimal.NewFromInt(1e16)
-	data := []byte("f6d42e7e07bee6aab966c9c4e8f39045")
+	value := decimal.NewFromInt(1e15)
+	data := []byte("62912cf0174b4c35cc10d2abcd2de9aa")
 	nonce, err := chainEvm.NonceAt(from)
 	if err != nil {
 		t.Fatal(err)
@@ -134,6 +138,7 @@ func TestEvmTx(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println(gasPrice.Mul(gasLimit).String())
 	tx, err := chainEvm.NewTransaction(from, to, value, data, nonce, gasPrice, gasLimit)
 	if err != nil {
 		t.Fatal(err)
@@ -146,4 +151,47 @@ func TestEvmTx(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println("hash:", tx.Hash().String())
+}
+
+func TestDogeTx(t *testing.T) {
+	_ = config.InitCfg("../config/config.yaml")
+	br := bitcoin.BaseRequest{
+		RpcUrl:   config.Cfg.Chain.Doge.Node,
+		User:     config.Cfg.Chain.Doge.User,
+		Password: config.Cfg.Chain.Doge.Password,
+		Proxy:    config.Cfg.Chain.Doge.Proxy,
+	}
+	txTool := bitcoin.TxTool{
+		RpcClient:        &br,
+		Ctx:              context.Background(),
+		RemoteSignClient: nil,
+		DustLimit:        bitcoin.DustLimitDoge,
+		Params:           bitcoin.GetDogeMainNetParams(),
+	}
+	// get utxo
+	addrFrom := ""
+	addrTo := ""
+	payAmount := int64(2e8)
+	orderId := "778afd143d32dbfcef3a85accb8eda64"
+	_, uos, err := txTool.GetUnspentOutputsDoge(addrFrom, privateKey, payAmount)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// transfer
+	tx, err := txTool.NewTx(uos, []string{addrTo}, []int64{payAmount}, orderId)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = txTool.LocalSignTx(tx, uos)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	hash, err := txTool.SendTx(tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("hash:", hash)
 }

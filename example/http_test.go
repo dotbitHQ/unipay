@@ -14,21 +14,22 @@ import (
 
 var (
 	BusinessIdAutoSubAccount = "auto-sub-account"
+	cta                      = core.ChainTypeAddress{
+		Type: "blockchain",
+		KeyInfo: core.KeyInfo{
+			CoinType: common.CoinTypeDogeCoin,
+			ChainId:  "",
+			Key:      "DQaRQ9s28U7EogPcDZudwZc4wD1NucZr2g",
+		},
+	}
 )
 
 func TestOrderCreate(t *testing.T) {
 	req := handle.ReqOrderCreate{
-		ChainTypeAddress: core.ChainTypeAddress{
-			Type: "blockchain",
-			KeyInfo: core.KeyInfo{
-				CoinType: common.CoinTypeTrx,
-				ChainId:  "",
-				Key:      "TFUg8zKThCj23acDSwsVjQrBVRywMMQGP1",
-			},
-		},
-		BusinessId: BusinessIdAutoSubAccount,
-		Amount:     decimal.NewFromInt(500 * 1e6),
-		PayTokenId: tables.PayTokenIdTRX,
+		ChainTypeAddress: cta,
+		BusinessId:       BusinessIdAutoSubAccount,
+		Amount:           decimal.NewFromInt(2e8),
+		PayTokenId:       tables.PayTokenIdDOGE,
 	}
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/create")
 
