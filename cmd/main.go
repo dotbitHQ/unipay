@@ -99,6 +99,7 @@ func runServer(ctx *cli.Context) error {
 		CN:    cn,
 	}
 	toolTimer.RunCallbackNotice()
+	toolTimer.RunCheckNode()
 
 	// ============= service end =============
 	toolib.ExitMonitoring(func(sig os.Signal) {

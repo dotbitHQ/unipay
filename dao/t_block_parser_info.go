@@ -37,3 +37,9 @@ func (d *DbDao) CreateBlockInfo(blockInfo tables.TableBlockParserInfo) error {
 		Modifier: "IGNORE",
 	}).Create(&blockInfo).Error
 }
+
+func (d *DbDao) GetLatestNodes() (list []tables.TableBlockParserInfo, err error) {
+	err = d.db.Select("parser_type,MAX(block_number) AS block_number").
+		Group("parser_type").Find(&list).Error
+	return
+}
