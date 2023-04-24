@@ -117,6 +117,8 @@ func GetPaymentAddress(payTokenId tables.PayTokenId) (string, error) {
 		addr = Cfg.Chain.Polygon.Address
 	case tables.PayTokenIdDAS, tables.PayTokenIdCKB:
 		addr = Cfg.Chain.Ckb.Address
+	case tables.PayTokenIdDOGE:
+		addr = Cfg.Chain.Doge.Address
 	default:
 		return "", fmt.Errorf("unknow pay token id[%s]", payTokenId)
 	}
