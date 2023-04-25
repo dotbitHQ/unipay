@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	node, addFee = "https://rpc.ankr.com/eth_goerli", float64(1.5)
+	node, addFee = "https://rpc.ankr.com/eth_goerli", float64(2)
 	nodeBsc      = "https://rpc.ankr.com/bsc_testnet_chapel"
 	nodePolygon  = "https://rpc.ankr.com/polygon_mumbai"
 	nodeTron     = "grpc.nile.trongrid.io:50051"
@@ -200,23 +200,21 @@ func TestDogeTx(t *testing.T) {
 }
 
 func TestErc20Tx(t *testing.T) {
-	chainEvm, err := chain_evm.NewChainEvm(context.Background(), node, 5)
+	chainEvm, err := chain_evm.NewChainEvm(context.Background(), nodeBsc, addFee)
 	if err != nil {
 		t.Fatal(err)
 	}
-	from := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
-	to := "0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"
-	contract := "0xBA62BCfcAaFc6622853cca2BE6Ac7d845BC0f2Dc"
+	from := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"     //"0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
+	to := "0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"       //"0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"
+	contract := "0x5Efb0D565898be6748920db2c3BdC22BDFd5c187" //"0xDf954C7D93E300183836CdaA01a07a1743F183EC"
 
-	value := decimal.NewFromBigInt(new(big.Int).SetUint64(1e18), 0)
+	value := decimal.NewFromBigInt(new(big.Int).SetUint64(5*1e6), 0)
 	fmt.Println(value.Coefficient().String())
 	data, err := chain_evm.PackMessage("transfer", ethcommon.HexToAddress(to), value.Coefficient())
 	if err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println(common.Bytes2Hex(data))
-	//0xa9059cbb00000000000000000000000015a33588908cf8edb27d1abe3852bf287abd38910000000000000000000000000000000000000000000000000de0b6b3a7640000
-	//0xa9059cbb00000000000000000000000015a33588908cf8edb27d1abe3852bf287abd38910000000000000000000000000000000000000000000000000de0b6b3a7640000
 
 	nonce, err := chainEvm.NonceAt(from)
 	if err != nil {
