@@ -12,6 +12,15 @@ type DbDao struct {
 	db *gorm.DB
 }
 
+func NewGormDBNotAutoMigrate(dbMysql config.DbMysql) (*DbDao, error) {
+	db, err := toolib.NewGormDB(dbMysql.Addr, dbMysql.User, dbMysql.Password, dbMysql.DbName, 100, 100)
+	if err != nil {
+		return nil, fmt.Errorf("toolib.NewGormDB err: %s", err.Error())
+	}
+
+	return &DbDao{db: db}, nil
+}
+
 func NewGormDB(dbMysql config.DbMysql) (*DbDao, error) {
 	db, err := toolib.NewGormDB(dbMysql.Addr, dbMysql.User, dbMysql.Password, dbMysql.DbName, 100, 100)
 	if err != nil {

@@ -86,11 +86,11 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 	}
 
 	if err = p.chainEvm.SendTransaction(tx); err != nil {
+		e = fmt.Errorf("SendTx err: %s", err.Error())
 		if err = t.DbDao.UpdateSinglePaymentToUnRefunded(payHash); err != nil {
 			log.Info("UpdateSinglePaymentToUnRefunded err: ", err.Error(), payHash)
 			notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "refundEvm", fmt.Sprintf("%s\n%s", payHash, err.Error()))
 		}
-		e = fmt.Errorf("SendTx err: %s", err.Error())
 		return
 	}
 

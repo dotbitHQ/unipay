@@ -54,7 +54,7 @@ func runServer(ctx *cli.Context) error {
 	// ============= service start =============
 
 	// db
-	dbDao, err := dao.NewGormDB(config.Cfg.DB.Mysql)
+	dbDao, err := dao.NewGormDBNotAutoMigrate(config.Cfg.DB.Mysql)
 	if err != nil {
 		return fmt.Errorf("dao.NewGormDB err: %s", err.Error())
 	}
