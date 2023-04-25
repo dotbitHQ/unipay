@@ -112,7 +112,7 @@ func GetPaymentAddress(payTokenId tables.PayTokenId) (string, error) {
 		addr = Cfg.Chain.Eth.Address
 	case tables.PayTokenIdTRX:
 		addr = Cfg.Chain.Tron.Address
-	case tables.PayTokenIdBNB:
+	case tables.PayTokenIdBNB, tables.PayTokenIdBep20USDT:
 		addr = Cfg.Chain.Bsc.Address
 	case tables.PayTokenIdMATIC:
 		addr = Cfg.Chain.Polygon.Address

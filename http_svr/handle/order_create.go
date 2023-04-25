@@ -21,8 +21,9 @@ type ReqOrderCreate struct {
 }
 
 type RespOrderCreate struct {
-	OrderId        string `json:"order_id"`
-	PaymentAddress string `json:"payment_address"`
+	OrderId         string `json:"order_id"`
+	PaymentAddress  string `json:"payment_address"`
+	ContractAddress string `json:"contract_address"`
 }
 
 func (h *HttpHandle) OrderCreate(ctx *gin.Context) {
@@ -94,6 +95,7 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 	//
 	resp.OrderId = orderInfo.OrderId
 	resp.PaymentAddress = paymentAddress
+	resp.ContractAddress = req.PayTokenId.GetContractAddress(config.Cfg.Server.Net)
 
 	apiResp.ApiRespOK(resp)
 	return nil
