@@ -224,7 +224,7 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 			} else if ok {
 				refundNonceETH++
 			}
-		case tables.PayTokenIdBNB:
+		case tables.PayTokenIdBNB, tables.PayTokenIdBep20USDT:
 			if ok, err := t.refundEvm(refundEvmParam{
 				info:        list[i],
 				fromAddr:    config.Cfg.Chain.Bsc.Address,
