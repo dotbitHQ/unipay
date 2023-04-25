@@ -32,7 +32,7 @@ func (t *ToolTimer) doCallbackNotice() error {
 			for notice := range ch {
 				businessId, eventInfo, er := t.CN.GetEventInfo(notice)
 				if er != nil {
-					log.Error("GetEventInfo err: ", er.Error(), notice.OrderId)
+					log.Error("GetEventInfo err: ", er.Error(), notice.PayHash)
 					continue
 				}
 				if businessId != "" && eventInfo.OrderId != "" {

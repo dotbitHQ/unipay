@@ -77,7 +77,6 @@ func (p *ParserCore) HandlePayment(paymentInfo tables.TablePaymentInfo, orderInf
 	noticeInfo := tables.TableNoticeInfo{
 		EventType:    tables.EventTypeOrderPay,
 		PayHash:      paymentInfo.PayHash,
-		OrderId:      paymentInfo.OrderId,
 		NoticeCount:  0,
 		NoticeStatus: tables.NoticeStatusDefault,
 		Timestamp:    time.Now().UnixMilli(),

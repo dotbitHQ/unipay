@@ -25,7 +25,7 @@ func (c *CallbackNotice) CallbackNotice(notice tables.TableNoticeInfo, paymentIn
 		BusinessId: orderInfo.BusinessId,
 		EventList: []EventInfo{{
 			EventType:    notice.EventType,
-			OrderId:      notice.OrderId,
+			OrderId:      orderInfo.OrderId,
 			PayStatus:    orderInfo.PayStatus,
 			PayHash:      paymentInfo.PayHash,
 			RefundStatus: paymentInfo.RefundStatus,
@@ -92,7 +92,7 @@ func (c *CallbackNotice) GetEventInfo(notice tables.TableNoticeInfo) (businessId
 	case 3: // 300s
 		timestamp += 300 * 1e3
 	default:
-		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateNoticeStatusToFail", notice.OrderId)
+		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateNoticeStatusToFail", notice.PayHash)
 		if err := c.DbDao.UpdateNoticeStatusToFail(notice.Id); err != nil {
 			e = fmt.Errorf("UpdateNoticeStatusToFail err: %s", err.Error())
 			return
@@ -105,29 +105,29 @@ func (c *CallbackNotice) GetEventInfo(notice tables.TableNoticeInfo) (businessId
 		return
 	}
 
+	// get payment info
+	paymentInfo, err := c.DbDao.GetPaymentInfoByPayHash(notice.PayHash)
+	if err != nil {
+		e = fmt.Errorf("GetPaymentInfoByPayHash err: %s", err.Error())
+		return
+	} else if paymentInfo.Id == 0 {
+		e = fmt.Errorf("payment not exist[%s]", notice.PayHash)
+		return
+	}
+
 	// get order info
-	orderInfo, err := c.DbDao.GetOrderInfoByOrderId(notice.OrderId)
+	orderInfo, err := c.DbDao.GetOrderInfoByOrderId(paymentInfo.OrderId)
 	if err != nil {
 		e = fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
 		return
 	} else if orderInfo.Id == 0 {
-		e = fmt.Errorf("order not exist[%s]", notice.OrderId)
-		return
-	}
-
-	// get payment info
-	paymentInfo, err := c.DbDao.GetLatestPaymentInfo(notice.OrderId)
-	if err != nil {
-		e = fmt.Errorf("GetLatestPaymentInfo err: %s", err.Error())
-		return
-	} else if paymentInfo.Id == 0 {
-		e = fmt.Errorf("payment not exist[%s]", notice.OrderId)
+		e = fmt.Errorf("order not exist[%s]", paymentInfo.OrderId)
 		return
 	}
 
 	eventInfo = EventInfo{
 		EventType:    notice.EventType,
-		OrderId:      notice.OrderId,
+		OrderId:      orderInfo.OrderId,
 		PayStatus:    orderInfo.PayStatus,
 		PayHash:      paymentInfo.PayHash,
 		RefundStatus: paymentInfo.RefundStatus,

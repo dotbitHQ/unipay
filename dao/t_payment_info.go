@@ -143,3 +143,8 @@ func (d *DbDao) GetPaymentListByOrderIds(orderIds []string) (list []tables.Table
 		Order("order_id,id").Find(&list).Error
 	return
 }
+
+func (d *DbDao) GetPaymentInfoByPayHash(payHash string) (info tables.TablePaymentInfo, err error) {
+	err = d.db.Where("pay_hash=?", payHash).Find(&info).Error
+	return
+}

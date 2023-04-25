@@ -11,7 +11,6 @@ type TableNoticeInfo struct {
 	NoticeId     string       `json:"notice_id" gorm:"column:notice_id; uniqueIndex:uk_notice_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
 	EventType    EventType    `json:"event_type" gorm:"column:event_type; type:varchar(255) NOT NULL DEFAULT '' COMMENT 'ORDER.PAY, ORDER.REFUND';"`
 	PayHash      string       `json:"pay_hash" gorm:"column:pay_hash; index:k_pay_hash; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
-	OrderId      string       `json:"order_id" gorm:"column:order_id; index:k_order_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
 	NoticeCount  int          `json:"notice_count" gorm:"column:notice_count; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '';"`
 	NoticeStatus NoticeStatus `json:"notice_status" gorm:"column:notice_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Default 1-OK 2-Fail';"`
 	Timestamp    int64        `json:"timestamp" gorm:"column:timestamp; index:k_timestamp; type:bigint(20) NOT NULL DEFAULT '0' COMMENT '';"`

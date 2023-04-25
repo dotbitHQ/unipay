@@ -92,7 +92,6 @@ func (t *ToolRefund) addCallbackNotice(list []tables.TablePaymentInfo) error {
 		notice := tables.TableNoticeInfo{
 			EventType:    tables.EventTypeOrderRefund,
 			PayHash:      v.PayHash,
-			OrderId:      v.OrderId,
 			NoticeCount:  0,
 			NoticeStatus: tables.NoticeStatusDefault,
 			Timestamp:    time.Now().UnixMilli(),
