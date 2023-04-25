@@ -12,6 +12,7 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/scorpiotzh/mylog"
 	"sync"
+	"time"
 	"unipay/config"
 	"unipay/dao"
 )
@@ -100,4 +101,21 @@ func (t *ToolRefund) RunRefund() error {
 	}
 	t.cron.Start()
 	return nil
+}
+
+func (d *ToolRefund) RunRefundOnce() {
+	tickerNow := time.NewTicker(time.Second * 10)
+	go func() {
+		select {
+		case <-tickerNow.C:
+			log.Info("RunRefundOnce start")
+			if err := d.doRefund(); err != nil {
+				log.Error("doRefund err: %s", err.Error())
+			}
+			log.Info("RunRefundOnce end")
+		case <-d.Ctx.Done():
+			log.Info("RunRefundOnce done")
+			return
+		}
+	}()
 }

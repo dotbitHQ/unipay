@@ -76,6 +76,7 @@ func runServer(ctx *cli.Context) error {
 	if err := toolRefund.InitRefundInfo(); err != nil {
 		return fmt.Errorf("InitRefundInfo err: %s", err.Error())
 	}
+	toolRefund.RunRefundOnce()
 	if err := toolRefund.RunRefund(); err != nil {
 		return fmt.Errorf("RunRefund err: %s", err.Error())
 	}
