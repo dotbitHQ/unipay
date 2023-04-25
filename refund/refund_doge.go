@@ -90,12 +90,14 @@ func (t *ToolRefund) addCallbackNotice(list []tables.TablePaymentInfo) error {
 	var noticeList []tables.TableNoticeInfo
 	for _, v := range list {
 		notice := tables.TableNoticeInfo{
-			OrderId:      v.OrderId,
 			EventType:    tables.EventTypeOrderRefund,
+			PayHash:      v.PayHash,
+			OrderId:      v.OrderId,
 			NoticeCount:  0,
 			NoticeStatus: tables.NoticeStatusDefault,
 			Timestamp:    time.Now().UnixMilli(),
 		}
+		notice.InitNoticeId()
 		noticeList = append(noticeList, notice)
 	}
 

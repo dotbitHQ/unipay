@@ -75,12 +75,14 @@ func (p *ParserCore) HandleConcurrentParsingOK(blockList []tables.TableBlockPars
 
 func (p *ParserCore) HandlePayment(paymentInfo tables.TablePaymentInfo, orderInfo tables.TableOrderInfo) error {
 	noticeInfo := tables.TableNoticeInfo{
-		OrderId:      paymentInfo.OrderId,
 		EventType:    tables.EventTypeOrderPay,
+		PayHash:      paymentInfo.PayHash,
+		OrderId:      paymentInfo.OrderId,
 		NoticeCount:  0,
 		NoticeStatus: tables.NoticeStatusDefault,
 		Timestamp:    time.Now().UnixMilli(),
 	}
+	noticeInfo.InitNoticeId()
 
 	orderInfo.PayStatus = tables.PayStatusPaid
 	if err := p.CN.CallbackNotice(noticeInfo, paymentInfo, orderInfo); err != nil {
