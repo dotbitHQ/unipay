@@ -61,12 +61,14 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 		return
 	}
 	if private != "" {
+		log.Info("refundEvm private")
 		tx, err = p.chainEvm.SignWithPrivateKey(private, tx)
 		if err != nil {
 			e = fmt.Errorf("SignWithPrivateKey err:%s", err.Error())
 			return
 		}
 	} else if t.remoteSignClient != nil {
+		log.Info("refundEvm remoteSignClient")
 		tx, err = t.remoteSignClient.SignEvmTx(remote_sign.SignMethodEvm, fromAddr, tx)
 		if err != nil {
 			e = fmt.Errorf("SignEvmTx err: %s [%s]", err.Error(), p.info.PayTokenId)
