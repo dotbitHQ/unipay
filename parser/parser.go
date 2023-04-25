@@ -69,10 +69,6 @@ func (t *ToolParser) initParserEth() error {
 	if err != nil {
 		return fmt.Errorf("chain_evm.NewChainEvm eth err: %s", err.Error())
 	}
-	contractAddress := "0xdAC17F958D2ee523a2206206994597C13D831ec7"
-	if config.Cfg.Server.Net != common.DasNetTypeMainNet {
-		contractAddress = "0xBA62BCfcAaFc6622853cca2BE6Ac7d845BC0f2Dc"
-	}
 	t.parserCommonMap[tables.ParserTypeETH] = &parser_common.ParserCommon{
 		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
@@ -83,7 +79,7 @@ func (t *ToolParser) initParserEth() error {
 			PayTokenId:         tables.PayTokenIdETH,
 			Address:            config.Cfg.Chain.Eth.Address,
 			ContractPayTokenId: tables.PayTokenIdErc20USDT,
-			ContractAddress:    contractAddress,
+			ContractAddress:    tables.PayTokenIdErc20USDT.GetContractAddress(config.Cfg.Server.Net),
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     5,
 			ConfirmNum:         2,
@@ -113,6 +109,8 @@ func (t *ToolParser) initParserBsc() error {
 			ParserType:         tables.ParserTypeBSC,
 			PayTokenId:         tables.PayTokenIdBNB,
 			Address:            config.Cfg.Chain.Bsc.Address,
+			ContractPayTokenId: tables.PayTokenIdBep20USDT,
+			ContractAddress:    tables.PayTokenIdBep20USDT.GetContractAddress(config.Cfg.Server.Net),
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     10,
 			ConfirmNum:         10,

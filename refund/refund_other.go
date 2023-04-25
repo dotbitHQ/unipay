@@ -209,7 +209,7 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 	// refund
 	for i, v := range list {
 		switch v.PayTokenId {
-		case tables.PayTokenIdETH:
+		case tables.PayTokenIdETH, tables.PayTokenIdErc20USDT:
 			if ok, err := t.refundEvm(refundEvmParam{
 				info:        list[i],
 				fromAddr:    config.Cfg.Chain.Eth.Address,

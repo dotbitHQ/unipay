@@ -38,6 +38,7 @@ const (
 	PayTokenIdErc20USDT PayTokenId = "eth_erc20_usdt"
 	PayTokenIdTRX       PayTokenId = "tron_trx"
 	PayTokenIdBNB       PayTokenId = "bsc_bnb"
+	PayTokenIdBep20USDT PayTokenId = "bsc_bep20_usdt"
 	PayTokenIdMATIC     PayTokenId = "polygon_matic"
 	PayTokenIdDOGE      PayTokenId = "doge_doge"
 	PayTokenIdDAS       PayTokenId = "ckb_das"
@@ -45,6 +46,26 @@ const (
 	PayTokenIdInternal  PayTokenId = "ckb_internal"
 	PayTokenIdCoupon    PayTokenId = "coupon"
 )
+
+func (p PayTokenId) GetContractAddress(net common.DasNetType) string {
+	contract := ""
+	if net == common.DasNetTypeMainNet {
+		switch p {
+		case PayTokenIdErc20USDT:
+			contract = "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+		case PayTokenIdBep20USDT:
+			contract = "0x55d398326f99059fF775485246999027B3197955"
+		}
+	} else {
+		switch p {
+		case PayTokenIdErc20USDT:
+			contract = "0xDf954C7D93E300183836CdaA01a07a1743F183EC"
+		case PayTokenIdBep20USDT:
+			contract = "0x5Efb0D565898be6748920db2c3BdC22BDFd5c187"
+		}
+	}
+	return contract
+}
 
 type PayStatus int
 
