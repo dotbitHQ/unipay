@@ -57,15 +57,15 @@ func TestOrderRefund(t *testing.T) {
 	fmt.Println(toolib.JsonString(&data))
 }
 
-func TestOrderInfo(t *testing.T) {
-	req := handle.ReqOrderInfo{
+func TestPaymentInfo(t *testing.T) {
+	req := handle.ReqPaymentInfo{
 		BusinessId:  "auto-sub-account",
 		OrderIdList: []string{},
 		PayHashList: []string{},
 	}
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/info")
 
-	var data handle.RespOrderInfo
+	var data handle.RespPaymentInfo
 	if err := http_api.SendReq(url, req, &data); err != nil {
 		t.Fatal(err)
 	}

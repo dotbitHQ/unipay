@@ -206,9 +206,9 @@ func TestErc20Tx(t *testing.T) {
 	}
 	from := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"     //"0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
 	to := "0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"       //"0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"
-	contract := "0x5Efb0D565898be6748920db2c3BdC22BDFd5c187" //"0xDf954C7D93E300183836CdaA01a07a1743F183EC"
+	contract := "0xDf954C7D93E300183836CdaA01a07a1743F183EC" //"0x5Efb0D565898be6748920db2c3BdC22BDFd5c187" //"0xDf954C7D93E300183836CdaA01a07a1743F183EC"
 
-	value := decimal.NewFromBigInt(new(big.Int).SetUint64(5*1e6), 0)
+	value := decimal.NewFromBigInt(new(big.Int).SetUint64(10053551), 0)
 	fmt.Println(value.Coefficient().String())
 	data, err := chain_evm.PackMessage("transfer", ethcommon.HexToAddress(to), value.Coefficient())
 	if err != nil {
