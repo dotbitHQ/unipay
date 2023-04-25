@@ -103,17 +103,17 @@ func (t *ToolRefund) RunRefund() error {
 	return nil
 }
 
-func (d *ToolRefund) RunRefundOnce() {
+func (t *ToolRefund) RunRefundOnce() {
 	tickerNow := time.NewTicker(time.Second * 10)
 	go func() {
 		select {
 		case <-tickerNow.C:
 			log.Info("RunRefundOnce start")
-			if err := d.doRefund(); err != nil {
+			if err := t.doRefund(); err != nil {
 				log.Error("doRefund err: %s", err.Error())
 			}
 			log.Info("RunRefundOnce end")
-		case <-d.Ctx.Done():
+		case <-t.Ctx.Done():
 			log.Info("RunRefundOnce done")
 			return
 		}
