@@ -6,25 +6,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/scorpiotzh/toolib"
 	"net/http"
-	"unipay/tables"
+	"unipay/config"
 )
 
 type ReqOrderInfo struct {
-	BusinessId  string   `json:"business_id"`
-	OrderIdList []string `json:"order_id_list"`
-	PayHashList []string `json:"pay_hash_list"`
+	BusinessId string `json:"business_id"`
+	OrderId    string `json:"order_id"`
 }
 
 type RespOrderInfo struct {
-	PaymentList []PaymentInfo `json:"payment_list"`
-}
-
-type PaymentInfo struct {
-	OrderId       string               `json:"order_id"`
-	PayHash       string               `json:"pay_hash"`
-	PayHashStatus tables.PayHashStatus `json:"pay_hash_status"`
-	RefundHash    string               `json:"refund_hash"`
-	RefundStatus  tables.RefundStatus  `json:"refund_status"`
+	OrderId         string `json:"order_id"`
+	PaymentAddress  string `json:"payment_address"`
+	ContractAddress string `json:"contract_address"`
 }
 
 func (h *HttpHandle) OrderInfo(ctx *gin.Context) {
@@ -53,7 +46,6 @@ func (h *HttpHandle) OrderInfo(ctx *gin.Context) {
 
 func (h *HttpHandle) doOrderInfo(req *ReqOrderInfo, apiResp *http_api.ApiResp) error {
 	var resp RespOrderInfo
-	resp.PaymentList = make([]PaymentInfo, 0)
 
 	// check business_id
 	checkBusinessIds(req.BusinessId, apiResp)
@@ -61,42 +53,20 @@ func (h *HttpHandle) doOrderInfo(req *ReqOrderInfo, apiResp *http_api.ApiResp) e
 		return nil
 	}
 
-	// get payment list by order id
-	list, err := h.DbDao.GetPaymentListByOrderIds(req.OrderIdList)
+	orderInfo, err := h.DbDao.GetOrderInfo(req.OrderId, req.BusinessId)
 	if err != nil {
-		apiResp.ApiRespErr(http_api.ApiCodeDbError, "failed to get payment info")
-		return fmt.Errorf("GetPaymentListByOrderIds err: %s", err.Error())
+		apiResp.ApiRespErr(http_api.ApiCodeDbError, "failed to get order info")
+		return fmt.Errorf("GetOrderInfo err: %s", err.Error())
 	}
-	var paymentMap = make(map[string]PaymentInfo)
-	for _, v := range list {
-		paymentMap[v.PayHash] = PaymentInfo{
-			OrderId:       v.OrderId,
-			PayHash:       v.PayHash,
-			PayHashStatus: v.PayHashStatus,
-			RefundHash:    v.RefundHash,
-			RefundStatus:  v.RefundStatus,
-		}
+	paymentAddress, err := config.GetPaymentAddress(orderInfo.PayTokenId)
+	if err != nil {
+		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, err.Error())
+		return nil
 	}
 
-	// get payment list by pay hash
-	list, err = h.DbDao.GetPaymentByPayHashList(req.PayHashList)
-	if err != nil {
-		apiResp.ApiRespErr(http_api.ApiCodeDbError, "failed to get payment info")
-		return fmt.Errorf("GetPaymentByPayHashList err: %s", err.Error())
-	}
-	for _, v := range list {
-		paymentMap[v.PayHash] = PaymentInfo{
-			OrderId:       v.OrderId,
-			PayHash:       v.PayHash,
-			PayHashStatus: v.PayHashStatus,
-			RefundHash:    v.RefundHash,
-			RefundStatus:  v.RefundStatus,
-		}
-	}
-
-	for k := range paymentMap {
-		resp.PaymentList = append(resp.PaymentList, paymentMap[k])
-	}
+	resp.OrderId = req.OrderId
+	resp.PaymentAddress = paymentAddress
+	resp.ContractAddress = orderInfo.PayTokenId.GetContractAddress(config.Cfg.Server.Net)
 
 	apiResp.ApiRespOK(resp)
 	return nil
