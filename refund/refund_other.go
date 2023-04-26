@@ -178,6 +178,11 @@ func (t *ToolRefund) refundTron(info tables.TablePaymentInfo) error {
 		return fmt.Errorf("SendTx err: %s", err.Error())
 	}
 
+	// callback notice
+	if err = t.addCallbackNotice([]tables.TablePaymentInfo{info}); err != nil {
+		log.Error("addCallbackNotice err:", err.Error())
+	}
+
 	return nil
 }
 
