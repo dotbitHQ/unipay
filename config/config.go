@@ -139,7 +139,10 @@ func InitDasCore(ctx context.Context, wg *sync.WaitGroup) (*core.DasCore, *dasca
 
 	// das init
 	net := Cfg.Server.Net
-	env := core.InitEnvOpt(net, common.DasContractNameConfigCellType)
+	env := core.InitEnvOpt(net,
+		common.DasContractNameConfigCellType,
+		common.DasContractNameDispatchCellType,
+		common.DasContractNameBalanceCellType)
 	ops := []core.DasCoreOption{
 		core.WithClient(ckbClient),
 		core.WithDasContractArgs(env.ContractArgs),
