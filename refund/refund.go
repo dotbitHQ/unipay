@@ -66,19 +66,26 @@ func (t *ToolRefund) InitRefundInfo() error {
 	}
 	t.chainEth = chainEth
 
-	//bsc
+	// bsc
 	chainBsc, err := chain_evm.NewChainEvm(t.Ctx, config.Cfg.Chain.Bsc.Node, config.Cfg.Chain.Bsc.RefundAddFee)
 	if err != nil {
 		return fmt.Errorf("NewChainEvm bsc err: %s", err.Error())
 	}
 	t.chainBsc = chainBsc
 
-	//polygon
+	// polygon
 	chainPolygon, err := chain_evm.NewChainEvm(t.Ctx, config.Cfg.Chain.Polygon.Node, config.Cfg.Chain.Polygon.RefundAddFee)
 	if err != nil {
 		return fmt.Errorf("NewChainEvm polygon err: %s", err.Error())
 	}
 	t.chainPolygon = chainPolygon
+
+	// tron
+	chainTron, err := chain_tron.NewChainTron(t.Ctx, config.Cfg.Chain.Tron.Node)
+	if err != nil {
+		return fmt.Errorf("chain_ckb.NewChainTron tron err: %s", err.Error())
+	}
+	t.chainTron = chainTron
 	return nil
 }
 
