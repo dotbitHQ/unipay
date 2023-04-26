@@ -68,7 +68,7 @@ func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo, noticeI
 }
 
 func (d *DbDao) GetRefundListWithin3d() (list []tables.TablePaymentInfo, err error) {
-	timestamp := time.Now().Add(time.Hour * 24 * 3).Unix()
+	timestamp := time.Now().Add(time.Hour * 24 * 3).UnixMilli()
 	err = d.db.Where("timestamp>=? AND pay_hash_status=? AND refund_status=?",
 		timestamp, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).Find(&list).Error
 	return

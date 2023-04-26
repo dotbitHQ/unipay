@@ -14,10 +14,12 @@ import (
 	"github.com/nervosnetwork/ckb-sdk-go/address"
 	"github.com/nervosnetwork/ckb-sdk-go/indexer"
 	"github.com/nervosnetwork/ckb-sdk-go/types"
+	"github.com/robfig/cron/v3"
 	"github.com/shopspring/decimal"
 	"math/big"
 	"strings"
 	"testing"
+	"time"
 	"unipay/config"
 )
 
@@ -200,7 +202,7 @@ func TestDogeTx(t *testing.T) {
 }
 
 func TestErc20Tx(t *testing.T) {
-	chainEvm, err := chain_evm.NewChainEvm(context.Background(), nodeBsc, addFee)
+	chainEvm, err := chain_evm.NewChainEvm(context.Background(), node, addFee)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -208,7 +210,7 @@ func TestErc20Tx(t *testing.T) {
 	to := "0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"       //"0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"
 	contract := "0xDf954C7D93E300183836CdaA01a07a1743F183EC" //"0x5Efb0D565898be6748920db2c3BdC22BDFd5c187" //"0xDf954C7D93E300183836CdaA01a07a1743F183EC"
 
-	value := decimal.NewFromBigInt(new(big.Int).SetUint64(10053551), 0)
+	value := decimal.NewFromBigInt(new(big.Int).SetUint64(20053551), 0)
 	fmt.Println(value.Coefficient().String())
 	data, err := chain_evm.PackMessage("transfer", ethcommon.HexToAddress(to), value.Coefficient())
 	if err != nil {
@@ -262,4 +264,16 @@ func TestTx(t *testing.T) {
 			fmt.Println(amount.String())
 		}
 	}
+}
+
+func TestCron(t *testing.T) {
+	c := cron.New(cron.WithSeconds())
+	_, err := c.AddFunc("0 30 */1 * * *", func() {
+		fmt.Println(time.Now().String())
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Start()
+	select {}
 }
