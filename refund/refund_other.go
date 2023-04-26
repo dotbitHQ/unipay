@@ -6,7 +6,9 @@ import (
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
 	"github.com/dotbitHQ/das-lib/common"
 	"github.com/dotbitHQ/das-lib/remote_sign"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/fbsobreira/gotron-sdk/pkg/address"
+	"github.com/shopspring/decimal"
 	"strings"
 	"unipay/config"
 	"unipay/notify"
@@ -36,23 +38,44 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 	private := p.private
 	toAddr := p.info.PayAddress
 	payHash := p.info.PayHash
+	gasPrice, gasLimit, fee := decimal.Zero, decimal.Zero, decimal.Zero
+	var err error
 
-	// tx fee
-	gasPrice, gasLimit, err := p.chainEvm.EstimateGas(fromAddr, toAddr, refundAmount, data, addFee)
-	if err != nil {
-		e = fmt.Errorf("EstimateGas err: %s", err.Error())
-		return
-	}
-	fee := gasPrice.Mul(gasLimit)
-	if refundAmount.Cmp(fee) == -1 {
-		if err = t.DbDao.UpdateSinglePaymentToRefunded(payHash, "", 0); err != nil {
-			log.Error("UpdateSinglePaymentToRefunded err: ", err.Error(), payHash)
+	switch p.info.PayTokenId {
+	case tables.PayTokenIdErc20USDT, tables.PayTokenIdBep20USDT:
+		data, err = chain_evm.PackMessage("transfer", ethcommon.HexToAddress(toAddr), refundAmount.Coefficient())
+		if err != nil {
+			e = fmt.Errorf("chain_evm.PackMessage err: %s", err.Error())
+			return
 		}
-		return
-	} else {
-		refundAmount = refundAmount.Sub(fee)
+		contract := p.info.PayTokenId.GetContractAddress(config.Cfg.Server.Net)
+		gasPrice, gasLimit, err = p.chainEvm.EstimateGas(fromAddr, contract, decimal.Zero, data, addFee)
+		if err != nil {
+			e = fmt.Errorf("p.chainEvm.EstimateGas err: %s", err.Error())
+			return
+		}
+		fee = gasPrice.Mul(gasLimit)
+		toAddr = contract
+		refundAmount = decimal.Zero
+		// todo fee more than refundAmount
+	default:
+		// tx fee
+		gasPrice, gasLimit, err = p.chainEvm.EstimateGas(fromAddr, toAddr, refundAmount, data, addFee)
+		if err != nil {
+			e = fmt.Errorf("EstimateGas err: %s", err.Error())
+			return
+		}
+		fee = gasPrice.Mul(gasLimit)
+		if refundAmount.Cmp(fee) == -1 {
+			if err = t.DbDao.UpdateSinglePaymentToRefunded(payHash, "", 0); err != nil {
+				log.Error("UpdateSinglePaymentToRefunded err: ", err.Error(), payHash)
+			}
+			return
+		} else {
+			refundAmount = refundAmount.Sub(fee)
+		}
 	}
-	log.Info("refundEvm:", p.info.OrderId, p.info.Amount, refundAmount, fee)
+	log.Info("refundEvm:", p.info.OrderId, p.info.PayTokenId, p.info.Amount, refundAmount, fee)
 
 	// build tx
 	tx, err := p.chainEvm.NewTransaction(fromAddr, toAddr, refundAmount, data, refundNonce, gasPrice, gasLimit)
