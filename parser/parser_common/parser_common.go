@@ -3,6 +3,7 @@ package parser_common
 import (
 	"fmt"
 	"github.com/scorpiotzh/mylog"
+	"strings"
 	"sync/atomic"
 	"time"
 	"unipay/config"
@@ -73,7 +74,9 @@ func (p *ParserCommon) Parser() {
 				nowTime := time.Now()
 				if err := p.PA.SingleParsing(p.PC); err != nil {
 					log.Error("SingleParsing err:", parserType, err.Error(), p.PC.CurrentBlockNumber)
-					notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("Parser %d", parserType), err.Error())
+					if !strings.Contains(err.Error(), "data is nil") {
+						notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("Parser %d", parserType), err.Error())
+					}
 				}
 				log.Warn("Parsing time:", parserType, time.Since(nowTime).Seconds())
 				time.Sleep(time.Second * 5)
