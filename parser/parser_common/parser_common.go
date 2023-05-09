@@ -66,7 +66,9 @@ func (p *ParserCommon) Parser() {
 				nowTime := time.Now()
 				if err := p.PA.ConcurrentParsing(p.PC); err != nil {
 					log.Error("ConcurrentParsing err:", parserType, err.Error(), p.PC.CurrentBlockNumber)
-					notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("Parser %d", parserType), err.Error())
+					if !strings.Contains(err.Error(), "data is nil") {
+						notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("Parser %d", parserType), err.Error())
+					}
 				}
 				log.Warn("ConcurrentParsing time:", parserType, time.Since(nowTime).Seconds())
 				time.Sleep(time.Second * 1)
