@@ -144,12 +144,6 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 		if len(tx.Transaction.RawData.Contract) != 1 {
 			continue
 		}
-		orderId := chain_tron.GetMemo(tx.Transaction.RawData.Data)
-		if orderId == "" {
-			continue
-		} else if len(orderId) > 64 {
-			continue
-		}
 
 		switch tx.Transaction.RawData.Contract[0].Type {
 		case core.Transaction_Contract_TransferContract:
@@ -158,11 +152,17 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 				log.Error(" proto.Unmarshal err:", err.Error())
 				continue
 			}
+			orderId := chain_tron.GetMemo(tx.Transaction.RawData.Data)
 			fromAddr, toAddr := hex.EncodeToString(instance.OwnerAddress), hex.EncodeToString(instance.ToAddress)
 			if toAddr != addr {
 				continue
 			}
-			log.Info("parsingBlockData orderId:", orderId, hex.EncodeToString(tx.Txid))
+			log.Info("parsingBlockData:", parserType, orderId, hex.EncodeToString(tx.Txid))
+			if orderId == "" {
+				continue
+			} else if len(orderId) > 64 {
+				continue
+			}
 
 			// check order id
 			order, err := pc.DbDao.GetOrderInfoByOrderId(orderId)
