@@ -12,7 +12,7 @@ import (
 type ReqPaymentInfo struct {
 	BusinessId  string   `json:"business_id"`
 	OrderIdList []string `json:"order_id_list"`
-	PayHashList []string `json:"pay_hash_list"`
+	PayHashList []string `json:"pay_hash_list"` // todo refund -> order id
 }
 
 type RespPaymentInfo struct {

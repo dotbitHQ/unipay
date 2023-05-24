@@ -87,9 +87,12 @@ func (c *CallbackNotice) GetEventInfo(notice tables.TableNoticeInfo) (businessId
 		timestamp += 30 * 1e3
 	case 1: // 60s
 		timestamp += 60 * 1e3
-	case 2: // 120s
+	case 2: // 10 min
 		timestamp += 120 * 1e3
-	case 3: // 300s
+	case 3: // 6 h
+		timestamp += 300 * 1e3
+	case 4:
+		// todo 1 d
 		timestamp += 300 * 1e3
 	default:
 		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateNoticeStatusToFail", notice.PayHash)

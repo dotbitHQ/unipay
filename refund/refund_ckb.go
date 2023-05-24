@@ -50,7 +50,7 @@ func (t *ToolRefund) doRefundCkb(list []tables.TablePaymentInfo) error {
 		if err != nil {
 			return fmt.Errorf("address.Parse err: %s", err.Error())
 		}
-
+		// NOTE check amount
 		payHashList = append(payHashList, v.PayHash)
 		totalAmount = totalAmount.Add(v.Amount)
 		output := types.CellOutput{
@@ -63,7 +63,6 @@ func (t *ToolRefund) doRefundCkb(list []tables.TablePaymentInfo) error {
 		}
 		txParams.Outputs = append(txParams.Outputs, &output)
 		txParams.OutputsData = append(txParams.OutputsData, []byte(""))
-
 	}
 
 	// inputs

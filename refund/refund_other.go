@@ -43,6 +43,23 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 
 	switch p.info.PayTokenId {
 	case tables.PayTokenIdErc20USDT, tables.PayTokenIdBep20USDT:
+		feeUSDT := decimal.NewFromInt(5 * 1e6)
+		if p.info.PayTokenId == tables.PayTokenIdErc20USDT {
+			feeUSDT = decimal.NewFromInt(5 * 1e6)
+		} else if p.info.PayTokenId == tables.PayTokenIdBep20USDT {
+			feeUSDT = decimal.NewFromInt(1 * 1e6)
+		} else {
+			feeUSDT = decimal.NewFromInt(5 * 1e6)
+		}
+		if refundAmount.Cmp(feeUSDT) != 1 {
+			// NOTE fee more than refundAmount
+			if err = t.DbDao.UpdateRefundStatusToRejected(payHash); err != nil {
+				log.Error("UpdateRefundStatusToRejected err: ", err.Error(), payHash)
+			}
+			return
+		}
+		refundAmount = refundAmount.Sub(feeUSDT)
+
 		data, err = chain_evm.PackMessage("transfer", ethcommon.HexToAddress(toAddr), refundAmount.Coefficient())
 		if err != nil {
 			e = fmt.Errorf("chain_evm.PackMessage err: %s", err.Error())
@@ -57,7 +74,7 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 		fee = gasPrice.Mul(gasLimit)
 		toAddr = contract
 		refundAmount = decimal.Zero
-		// todo fee more than refundAmount
+		return
 	default:
 		// tx fee
 		gasPrice, gasLimit, err = p.chainEvm.EstimateGas(fromAddr, toAddr, refundAmount, data, addFee)
@@ -66,9 +83,11 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 			return
 		}
 		fee = gasPrice.Mul(gasLimit)
-		if refundAmount.Cmp(fee) == -1 {
-			if err = t.DbDao.UpdateSinglePaymentToRefunded(payHash, "", 0); err != nil {
-				log.Error("UpdateSinglePaymentToRefunded err: ", err.Error(), payHash)
+
+		// NOTE fee more than refundAmount
+		if refundAmount.Cmp(fee) != 1 {
+			if err = t.DbDao.UpdateRefundStatusToRejected(payHash); err != nil {
+				log.Error("UpdateRefundStatusToRejected err: ", err.Error(), payHash)
 			}
 			return
 		} else {

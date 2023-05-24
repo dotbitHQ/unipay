@@ -181,7 +181,7 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				continue
 			}
 
-			// change the status to confirm
+			// change the status to confirm // todo merge 1
 			paymentInfo := tables.TablePaymentInfo{
 				PayHash:       tx.Hash,
 				OrderId:       order.OrderId,
@@ -197,15 +197,15 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				return fmt.Errorf("HandlePayment err: %s", err.Error())
 			}
 		case strings.ToLower(contractUSDT):
-			if len(tx.Input) != 138 || !strings.Contains(tx.Input, "a9059cbb") {
+			if len(tx.Input) != 138 || !strings.Contains(tx.Input, "a9059cbb") { // todo  transfer remark
 				continue
 			}
-			if !strings.EqualFold(tx.Input[34:74], addr[2:]) {
+			if !strings.EqualFold(tx.Input[34:74], addr[2:]) { // todo first check
 				continue
 			}
 			amount := decimal.NewFromBigInt(new(big.Int).SetBytes(dascommon.Hex2Bytes(tx.Input)[36:]), 0)
 			log.Info("parsingBlockData:", contractPayTokenId, tx.From, amount.String())
-			order, err := pc.DbDao.GetOrderByAddrWithAmount(tx.From, contractPayTokenId, amount)
+			order, err := pc.DbDao.GetOrderByAddrWithAmount(tx.From, contractPayTokenId, amount) // todo del decimals  5.001234 5.001234
 			if err != nil {
 				return fmt.Errorf("GetOrderByAddrWithAmount err: %s", err.Error())
 			} else if order.Id == 0 {
@@ -216,7 +216,7 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				log.Warn("order pay token id not match", order.OrderId, order.PayTokenId, contractPayTokenId)
 				continue
 			}
-			// change the status to confirm
+			// change the status to confirm // todo merge 2
 			paymentInfo := tables.TablePaymentInfo{
 				PayHash:       tx.Hash,
 				OrderId:       order.OrderId,

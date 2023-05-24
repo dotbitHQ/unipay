@@ -28,6 +28,7 @@ func (t *ToolRefund) doRefundDoge(list []tables.TablePaymentInfo) error {
 		if err != nil {
 			return fmt.Errorf("Base58CheckEncode err: %s", err.Error())
 		}
+		// NOTE check amount
 		payHashList = append(payHashList, v.PayHash)
 		addresses = append(addresses, dogeAddr)
 		value := v.Amount.IntPart()

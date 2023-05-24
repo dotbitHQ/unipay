@@ -95,6 +95,15 @@ func (d *DbDao) UpdateSinglePaymentToRefunded(payHash string, refundHash string,
 		}).Error
 }
 
+func (d *DbDao) UpdateRefundStatusToRejected(payHash string) error {
+	return d.db.Model(tables.TablePaymentInfo{}).
+		Where("pay_hash=? AND pay_hash_status=? AND refund_status=?",
+			payHash, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).
+		Updates(map[string]interface{}{
+			"refund_status": tables.RefundStatusRefuseToRefund,
+		}).Error
+}
+
 func (d *DbDao) UpdatePaymentListToUnRefunded(payHashList []string) error {
 	return d.db.Model(tables.TablePaymentInfo{}).
 		Where("pay_hash IN(?) AND pay_hash_status=? AND refund_status=?",

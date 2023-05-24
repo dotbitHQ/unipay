@@ -42,8 +42,9 @@ const (
 type RefundStatus int
 
 const (
-	RefundStatusDefault   RefundStatus = 0
-	RefundStatusUnRefund  RefundStatus = 1
-	RefundStatusRefunding RefundStatus = 2
-	RefundStatusRefunded  RefundStatus = 3
+	RefundStatusDefault        RefundStatus = 0
+	RefundStatusUnRefund       RefundStatus = 1
+	RefundStatusRefunding      RefundStatus = 2
+	RefundStatusRefunded       RefundStatus = 3
+	RefundStatusRefuseToRefund RefundStatus = 4
 )
