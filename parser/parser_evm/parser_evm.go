@@ -180,21 +180,8 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				}
 				continue
 			}
-
-			// change the status to confirm // todo merge 1
-			paymentInfo := tables.TablePaymentInfo{
-				PayHash:       tx.Hash,
-				OrderId:       order.OrderId,
-				PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
-				AlgorithmId:   order.AlgorithmId,
-				Timestamp:     time.Now().UnixMilli(),
-				Amount:        order.Amount,
-				PayTokenId:    order.PayTokenId,
-				PayHashStatus: tables.PayHashStatusConfirm,
-				RefundStatus:  tables.RefundStatusDefault,
-			}
-			if err := pc.HandlePayment(paymentInfo, order); err != nil {
-				return fmt.Errorf("HandlePayment err: %s", err.Error())
+			if err := p.doPayment(order, tx, pc); err != nil {
+				return fmt.Errorf("doPayment err: %s", err.Error())
 			}
 		case strings.ToLower(contractUSDT):
 			if len(tx.Input) != 138 || !strings.Contains(tx.Input, "a9059cbb") { // todo  transfer remark
@@ -216,22 +203,29 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				log.Warn("order pay token id not match", order.OrderId, order.PayTokenId, contractPayTokenId)
 				continue
 			}
-			// change the status to confirm // todo merge 2
-			paymentInfo := tables.TablePaymentInfo{
-				PayHash:       tx.Hash,
-				OrderId:       order.OrderId,
-				PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
-				AlgorithmId:   order.AlgorithmId,
-				Timestamp:     time.Now().UnixMilli(),
-				Amount:        order.Amount,
-				PayTokenId:    order.PayTokenId,
-				PayHashStatus: tables.PayHashStatusConfirm,
-				RefundStatus:  tables.RefundStatusDefault,
-			}
-			if err := pc.HandlePayment(paymentInfo, order); err != nil {
-				return fmt.Errorf("HandlePayment err: %s", err.Error())
+			if err := p.doPayment(order, tx, pc); err != nil {
+				return fmt.Errorf("doPayment err: %s", err.Error())
 			}
 		}
+	}
+	return nil
+}
+
+func (p *ParserEvm) doPayment(order tables.TableOrderInfo, tx chain_evm.Transaction, pc *parser_common.ParserCore) error {
+	// change the status to confirm
+	paymentInfo := tables.TablePaymentInfo{
+		PayHash:       tx.Hash,
+		OrderId:       order.OrderId,
+		PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
+		AlgorithmId:   order.AlgorithmId,
+		Timestamp:     time.Now().UnixMilli(),
+		Amount:        order.Amount,
+		PayTokenId:    order.PayTokenId,
+		PayHashStatus: tables.PayHashStatusConfirm,
+		RefundStatus:  tables.RefundStatusDefault,
+	}
+	if err := pc.HandlePayment(paymentInfo, order); err != nil {
+		return fmt.Errorf("HandlePayment err: %s", err.Error())
 	}
 	return nil
 }
