@@ -89,10 +89,13 @@ func (c *CallbackNotice) GetEventInfo(notice tables.TableNoticeInfo) (businessId
 		timestamp += 60 * 1e3
 	case 2: // 5 min
 		timestamp += 300 * 1e3
+		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateNoticeStatusToFail", notice.PayHash)
 	case 3: // 1 h
 		timestamp += 3600 * 1e3
+		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateNoticeStatusToFail", notice.PayHash)
 	case 4: // 12 h
 		timestamp += 43200 * 1e3
+		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateNoticeStatusToFail", notice.PayHash)
 	default:
 		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateNoticeStatusToFail", notice.PayHash)
 		if err := c.DbDao.UpdateNoticeStatusToFail(notice.Id); err != nil {
