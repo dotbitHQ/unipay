@@ -17,9 +17,9 @@ var (
 	cta                      = core.ChainTypeAddress{
 		Type: "blockchain",
 		KeyInfo: core.KeyInfo{
-			CoinType: common.CoinTypeBSC,
+			CoinType: common.CoinTypeTrx,
 			ChainId:  "",
-			Key:      "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891",
+			Key:      "TQoLh9evwUmZKxpD1uhFttsZk3EBs8BksV",
 		},
 	}
 )
@@ -29,9 +29,11 @@ func TestOrderCreate(t *testing.T) {
 		ChainTypeAddress: cta,
 		BusinessId:       BusinessIdAutoSubAccount,
 		Amount:           decimal.NewFromInt(5 * 1e6),
-		PayTokenId:       tables.PayTokenIdBep20USDT,
+		PayTokenId:       tables.PayTokenIdTrc20USDT,
 	}
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/create")
+
+	fmt.Printf("curl -X POST %s -d'%s'\n", url, toolib.JsonString(req))
 
 	var data handle.RespOrderCreate
 	if err := http_api.SendReq(url, req, &data); err != nil {

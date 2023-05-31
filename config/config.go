@@ -110,7 +110,7 @@ func GetPaymentAddress(payTokenId tables.PayTokenId) (string, error) {
 	switch payTokenId {
 	case tables.PayTokenIdETH, tables.PayTokenIdErc20USDT:
 		addr = Cfg.Chain.Eth.Address
-	case tables.PayTokenIdTRX:
+	case tables.PayTokenIdTRX, tables.PayTokenIdTrc20USDT:
 		addr = Cfg.Chain.Tron.Address
 	case tables.PayTokenIdBNB, tables.PayTokenIdBep20USDT:
 		addr = Cfg.Chain.Bsc.Address
