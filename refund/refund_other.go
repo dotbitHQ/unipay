@@ -7,7 +7,7 @@ import (
 	"github.com/dotbitHQ/das-lib/common"
 	"github.com/dotbitHQ/das-lib/remote_sign"
 	ethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/fbsobreira/gotron-sdk/pkg/address"
+	"github.com/fbsobreira/gotron-sdk/pkg/proto/api"
 	"github.com/shopspring/decimal"
 	"strings"
 	"unipay/config"
@@ -156,17 +156,32 @@ func (t *ToolRefund) refundTron(info tables.TablePaymentInfo) error {
 	payHash := info.PayHash
 	payTokenId := info.PayTokenId
 	fromHex := config.Cfg.Chain.Tron.Address
+	var err error
+
 	if strings.HasPrefix(fromHex, common.TronBase58PreFix) {
-		if fromData, err := address.Base58ToAddress(fromHex); err != nil {
-			return fmt.Errorf("address.Base58ToAddress err: %s", err.Error())
-		} else {
-			fromHex = hex.EncodeToString(fromData)
+		if fromHex, err = common.TronBase58ToHex(fromHex); err != nil {
+			return fmt.Errorf("TronBase58ToHex err: %s", err.Error())
 		}
 	}
+	var tx *api.TransactionExtention
+	switch payTokenId {
+	case tables.PayTokenIdTrc20USDT:
+		contractHex := payTokenId.GetContractAddress(config.Cfg.Server.Net)
+		if contractHex, err = common.TronBase58ToHex(contractHex); err != nil {
+			return fmt.Errorf("TronBase58ToHex err: %s", err.Error())
+		}
 
-	tx, err := t.chainTron.CreateTransaction(fromHex, toAddr, orderId, amount.IntPart())
-	if err != nil {
-		return fmt.Errorf("CreateTransaction err: %s", err.Error())
+		tx, err = t.chainTron.TransferTrc20(contractHex, fromHex, toAddr, amount.IntPart(), 20*1e6)
+		if err != nil {
+			return fmt.Errorf("TransferTrc20 err: %s", err.Error())
+		}
+	case tables.PayTokenIdTRX:
+		tx, err = t.chainTron.CreateTransaction(fromHex, toAddr, orderId, amount.IntPart())
+		if err != nil {
+			return fmt.Errorf("CreateTransaction err: %s", err.Error())
+		}
+	default:
+		return fmt.Errorf("unknow pay token id[%s]", payTokenId)
 	}
 
 	if config.Cfg.Chain.Tron.Private != "" {
