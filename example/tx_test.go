@@ -11,6 +11,8 @@ import (
 	"github.com/dotbitHQ/das-lib/core"
 	"github.com/dotbitHQ/das-lib/txbuilder"
 	ethcommon "github.com/ethereum/go-ethereum/common"
+	trxCore "github.com/fbsobreira/gotron-sdk/pkg/proto/core"
+	"github.com/golang/protobuf/proto"
 	"github.com/nervosnetwork/ckb-sdk-go/address"
 	"github.com/nervosnetwork/ckb-sdk-go/indexer"
 	"github.com/nervosnetwork/ckb-sdk-go/types"
@@ -30,6 +32,78 @@ var (
 	nodeTron     = "grpc.nile.trongrid.io:50051"
 	privateKey   = ""
 )
+
+func TestTrc20(t *testing.T) {
+	chainTron, err := chain_tron.NewChainTron(context.Background(), nodeTron)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contractHex, _ := common.TronBase58ToHex("TKMVcZtc1kyb2qFruhgd91mRCPNhPRRrsw")
+	fromHex, _ := common.TronBase58ToHex("TQoLh9evwUmZKxpD1uhFttsZk3EBs8BksV")
+	toHex, _ := common.TronBase58ToHex("TFUg8zKThCj23acDSwsVjQrBVRywMMQGP1")
+	tx, err := chainTron.TransferTrc20(contractHex, fromHex, toHex, 5*1e6, 20*1e6)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := chainTron.LocalSign(tx, privateKey); err != nil {
+		t.Fatal(err)
+	}
+
+	err = chainTron.SendTransaction(tx.Transaction)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(hex.EncodeToString(tx.Txid))
+}
+
+func TestTrc20Tx(t *testing.T) {
+	contractHex, _ := common.TronBase58ToHex("TKMVcZtc1kyb2qFruhgd91mRCPNhPRRrsw")
+	fromHex, _ := common.TronBase58ToHex("TQoLh9evwUmZKxpD1uhFttsZk3EBs8BksV")
+	toHex, _ := common.TronBase58ToHex("TFUg8zKThCj23acDSwsVjQrBVRywMMQGP1")
+	fmt.Println(contractHex)
+	fmt.Println(fromHex)
+	fmt.Println(toHex)
+
+	chainTron, err := chain_tron.NewChainTron(context.Background(), nodeTron)
+	if err != nil {
+		t.Fatal(err)
+	}
+	block, err := chainTron.GetBlockByNumber(37205924)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, v := range block.Transactions {
+		if len(v.Transaction.RawData.Contract) != 1 {
+			continue
+		}
+		switch v.Transaction.RawData.Contract[0].Type {
+		case trxCore.Transaction_Contract_TriggerSmartContract:
+			fmt.Println(hex.EncodeToString(v.Txid))
+			smart := trxCore.TriggerSmartContract{}
+			if err := proto.Unmarshal(v.Transaction.RawData.Contract[0].Parameter.Value, &smart); err != nil {
+				t.Fatal(err)
+			}
+			fHex, cHex := hex.EncodeToString(smart.OwnerAddress), hex.EncodeToString(smart.ContractAddress)
+			fmt.Println(fHex) // from
+			fmt.Println(cHex) // contract
+			fmt.Println(len(smart.Data))
+			data := common.Bytes2Hex(smart.Data)
+			fmt.Println(data)
+			// a9059cbb is the hex str of transfer
+			if len(smart.Data) != 68 || !strings.Contains(data, "a9059cbb") {
+				continue
+			}
+			fmt.Println(hex.EncodeToString(smart.Data[0:16]))
+			tHex := hex.EncodeToString(smart.Data[16:36])
+			fmt.Println(tHex)
+			amount := decimal.NewFromBigInt(new(big.Int).SetBytes(smart.Data[36:]), 0)
+			fmt.Println(amount)
+			//if !strings.EqualFold(data[34:74], addr[2:]) {
+			//	continue
+			//}
+		}
+	}
+}
 
 func TestTron(t *testing.T) {
 	chainTron, err := chain_tron.NewChainTron(context.Background(), nodeTron)

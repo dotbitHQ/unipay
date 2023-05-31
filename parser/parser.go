@@ -167,6 +167,10 @@ func (t *ToolParser) initParserTron() error {
 			return fmt.Errorf("TronBase58ToHex err: %s", err.Error())
 		}
 	}
+	contractAddress := tables.PayTokenIdTrc20USDT.GetContractAddress(config.Cfg.Server.Net)
+	if contractAddress, err = common.TronBase58ToHex(contractAddress); err != nil {
+		return fmt.Errorf("TronBase58ToHex err: %s", err.Error())
+	}
 	t.parserCommonMap[tables.ParserTypeTRON] = &parser_common.ParserCommon{
 		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
@@ -176,6 +180,8 @@ func (t *ToolParser) initParserTron() error {
 			ParserType:         tables.ParserTypeTRON,
 			PayTokenId:         tables.PayTokenIdTRX,
 			Address:            address,
+			ContractPayTokenId: tables.PayTokenIdTrc20USDT,
+			ContractAddress:    contractAddress,
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     10,
 			ConfirmNum:         10,

@@ -185,7 +185,7 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 			}
 		case strings.ToLower(contractUSDT):
 			// a9059cbb is the hex str of transfer
-			if len(tx.Input) != 138 || !strings.Contains(tx.Input, "a9059cbb") {
+			if len(tx.Input) != 138 || !strings.Contains(tx.Input, "a9059cbb0000") {
 				continue
 			}
 			if !strings.EqualFold(tx.Input[34:74], addr[2:]) {

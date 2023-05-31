@@ -10,6 +10,8 @@ import (
 	"github.com/scorpiotzh/mylog"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
+	"math/big"
+	"strings"
 	"sync"
 	"time"
 	"unipay/parser/parser_common"
@@ -140,6 +142,7 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 	if block == nil {
 		return fmt.Errorf("block is nil")
 	}
+	contractUSDT, contractPayTokenId := pc.ContractAddress, pc.ContractPayTokenId
 	for _, tx := range block.Transactions {
 		if len(tx.Transaction.RawData.Contract) != 1 {
 			continue
@@ -197,23 +200,63 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 				continue
 			}
 			// change the status to confirm
-			paymentInfo := tables.TablePaymentInfo{
-				PayHash:       hex.EncodeToString(tx.Txid),
-				OrderId:       order.OrderId,
-				PayAddress:    fromAddr,
-				AlgorithmId:   order.AlgorithmId,
-				Timestamp:     time.Now().UnixMilli(),
-				Amount:        order.Amount,
-				PayTokenId:    order.PayTokenId,
-				PayHashStatus: tables.PayHashStatusConfirm,
-				RefundStatus:  tables.RefundStatusDefault,
-			}
-			if err := pc.HandlePayment(paymentInfo, order); err != nil {
-				return fmt.Errorf("HandlePayment err: %s", err.Error())
+			if err := p.doPayment(order, hex.EncodeToString(tx.Txid), fromAddr, pc); err != nil {
+				return fmt.Errorf("doPayment err: %s", err.Error())
 			}
 		case core.Transaction_Contract_TransferAssetContract:
 		case core.Transaction_Contract_TriggerSmartContract:
+			smart := core.TriggerSmartContract{}
+			if err := proto.Unmarshal(tx.Transaction.RawData.Contract[0].Parameter.Value, &smart); err != nil {
+				log.Error(" proto.Unmarshal err:", err.Error())
+				continue
+			}
+			fromHex, contractHex := hex.EncodeToString(smart.OwnerAddress), hex.EncodeToString(smart.ContractAddress)
+			if contractHex != contractUSDT {
+				continue
+			}
+			data := hex.EncodeToString(smart.Data)
+			if len(smart.Data) != 68 || !strings.Contains(data, "a9059cbb0000") {
+				continue
+			}
+			toHex := hex.EncodeToString(smart.Data[16:36])
+			amount := decimal.NewFromBigInt(new(big.Int).SetBytes(smart.Data[36:]), 0)
+			log.Info("parsingBlockData:", contractPayTokenId, fromHex, amount.String())
+			if toHex != addr {
+				continue
+			}
+			order, err := pc.DbDao.GetOrderByAddrWithAmount(fromHex, contractPayTokenId, amount)
+			if err != nil {
+				return fmt.Errorf("GetOrderByAddrWithAmount err: %s", err.Error())
+			} else if order.Id == 0 {
+				log.Warn("order not exist:", contractPayTokenId, fromHex, amount)
+				continue
+			}
+			if order.PayTokenId != contractPayTokenId {
+				log.Warn("order pay token id not match", order.OrderId, order.PayTokenId, contractPayTokenId)
+				continue
+			}
+			if err := p.doPayment(order, hex.EncodeToString(tx.Txid), fromHex, pc); err != nil {
+				return fmt.Errorf("doPayment err: %s", err.Error())
+			}
 		}
+	}
+	return nil
+}
+
+func (p *ParserTron) doPayment(order tables.TableOrderInfo, txId, fromHex string, pc *parser_common.ParserCore) error {
+	paymentInfo := tables.TablePaymentInfo{
+		PayHash:       txId,
+		OrderId:       order.OrderId,
+		PayAddress:    fromHex,
+		AlgorithmId:   order.AlgorithmId,
+		Timestamp:     time.Now().UnixMilli(),
+		Amount:        order.Amount,
+		PayTokenId:    order.PayTokenId,
+		PayHashStatus: tables.PayHashStatusConfirm,
+		RefundStatus:  tables.RefundStatusDefault,
+	}
+	if err := pc.HandlePayment(paymentInfo, order); err != nil {
+		return fmt.Errorf("HandlePayment err: %s", err.Error())
 	}
 	return nil
 }

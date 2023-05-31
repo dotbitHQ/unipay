@@ -21,7 +21,7 @@ func (d *DbDao) GetOrderInfoByOrderId(orderId string) (info tables.TableOrderInf
 }
 
 func (d *DbDao) GetOrderByAddrWithAmount(addr string, payTokenId tables.PayTokenId, amount decimal.Decimal) (order tables.TableOrderInfo, err error) {
-	err = d.db.Where("pay_address=? AND pay_token_id=? AND amount=?", addr, payTokenId, amount).
+	err = d.db.Where("pay_address=? AND pay_token_id=? AND amount=? AND pay_status=?", addr, payTokenId, amount, tables.PayStatusUnpaid).
 		Order("id DESC").Limit(1).Find(&order).Error
 	return
 }
