@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
+	"github.com/dotbitHQ/das-lib/common"
 	"github.com/fbsobreira/gotron-sdk/pkg/proto/api"
 	"github.com/fbsobreira/gotron-sdk/pkg/proto/core"
 	"github.com/golang/protobuf/proto"
@@ -215,12 +216,13 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 				continue
 			}
 			data := hex.EncodeToString(smart.Data)
+			toHex := common.TronPreFix + hex.EncodeToString(smart.Data[16:36])
+			amount := decimal.NewFromBigInt(new(big.Int).SetBytes(smart.Data[36:]), 0)
+
+			log.Info("parsingBlockData:", fromHex, contractHex, toHex, amount.String())
 			if len(smart.Data) != 68 || !strings.Contains(data, "a9059cbb0000") {
 				continue
 			}
-			toHex := hex.EncodeToString(smart.Data[16:36])
-			amount := decimal.NewFromBigInt(new(big.Int).SetBytes(smart.Data[36:]), 0)
-			log.Info("parsingBlockData:", contractPayTokenId, fromHex, amount.String())
 			if toHex != addr {
 				continue
 			}
