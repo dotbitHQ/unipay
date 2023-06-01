@@ -166,6 +166,15 @@ func (t *ToolRefund) refundTron(info tables.TablePaymentInfo) error {
 	var tx *api.TransactionExtention
 	switch payTokenId {
 	case tables.PayTokenIdTrc20USDT:
+		//feeUSDT := decimal.NewFromInt(1e6)
+		//if amount.Cmp(feeUSDT) != 1 {
+		//	// NOTE fee more than refundAmount
+		//	if err = t.DbDao.UpdateRefundStatusToRejected(payHash); err != nil {
+		//		log.Error("UpdateRefundStatusToRejected err: ", err.Error(), payHash)
+		//	}
+		//	return nil
+		//}
+
 		contractHex := payTokenId.GetContractAddress(config.Cfg.Server.Net)
 		if contractHex, err = common.TronBase58ToHex(contractHex); err != nil {
 			return fmt.Errorf("TronBase58ToHex err: %s", err.Error())
