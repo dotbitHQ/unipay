@@ -318,7 +318,7 @@ func (t *ToolRefund) doRefundOther(list []tables.TablePaymentInfo) error {
 			} else if ok {
 				refundNoncePolygon++
 			}
-		case tables.PayTokenIdTRX:
+		case tables.PayTokenIdTRX, tables.PayTokenIdTrc20USDT:
 			if err := t.refundTron(list[i]); err != nil {
 				log.Error("refundTron err:", err.Error(), v.PayTokenId, v.OrderId)
 				sendRefundNotify(v.Id, v.PayTokenId, v.OrderId, err.Error())
