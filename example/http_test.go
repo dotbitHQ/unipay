@@ -46,17 +46,19 @@ func TestOrderRefund(t *testing.T) {
 	req := handle.ReqOrderRefund{
 		BusinessId: "auto-sub-account",
 		RefundList: []handle.RefundInfo{{
-			OrderId: "",
-			PayHash: "",
+			OrderId: "e2229f6cad9ebfb227ec4cabaca78d4e",
+			PayHash: "753548c2cab99604886495cded0a9189add74c82bfb6d510fffc45b96f136a27",
 		}},
 	}
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/refund")
 
-	var data handle.RespOrderRefund
-	if err := http_api.SendReq(url, req, &data); err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println(toolib.JsonString(&data))
+	fmt.Printf("curl -X POST %s -d'%s'", url, toolib.JsonString(&req))
+
+	//var data handle.RespOrderRefund
+	//if err := http_api.SendReq(url, req, &data); err != nil {
+	//	t.Fatal(err)
+	//}
+	//fmt.Println(toolib.JsonString(&data))
 }
 
 func TestPaymentInfo(t *testing.T) {

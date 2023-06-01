@@ -26,7 +26,7 @@ func (t *ToolRefund) doRefund() error {
 		case tables.PayTokenIdCKB, tables.PayTokenIdDAS:
 			ckbList = append(ckbList, list[i])
 		case tables.PayTokenIdETH, tables.PayTokenIdBNB,
-			tables.PayTokenIdMATIC, tables.PayTokenIdTRX,
+			tables.PayTokenIdMATIC, tables.PayTokenIdTRX, tables.PayTokenIdTrc20USDT,
 			tables.PayTokenIdErc20USDT, tables.PayTokenIdBep20USDT:
 			otherList = append(otherList, list[i])
 		case tables.PayTokenIdDOGE:
