@@ -7,6 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
+	"github.com/stripe/stripe-go/v74"
+	"github.com/stripe/stripe-go/v74/paymentintent"
 	"net/http"
 	"time"
 	"unipay/config"
@@ -24,6 +26,7 @@ type RespOrderCreate struct {
 	OrderId         string `json:"order_id"`
 	PaymentAddress  string `json:"payment_address"`
 	ContractAddress string `json:"contract_address"`
+	ClientSecret    string `json:"client_secret"`
 }
 
 func (h *HttpHandle) OrderCreate(ctx *gin.Context) {
@@ -87,11 +90,40 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 		Timestamp:   time.Now().UnixMilli(),
 	}
 	orderInfo.InitOrderId()
-
-	if err := h.DbDao.CreateOrder(orderInfo); err != nil {
-		apiResp.ApiRespErr(http_api.ApiCodeDbError, "Failed to create order")
-		return fmt.Errorf("CreateOrder err: %s", err.Error())
+	var paymentInfo tables.TablePaymentInfo
+	if req.PayTokenId == tables.PayTokenIdStripeUSD {
+		stripe.Key = config.Cfg.Server.StripeKey
+		if req.Amount.IntPart() < 50 {
+			apiResp.ApiRespErr(http_api.ApiCodeAmountIsTooLow, "Amount not less than 0.5$")
+			return nil
+		}
+		params := &stripe.PaymentIntentParams{
+			Amount:             stripe.Int64(req.Amount.IntPart()),
+			PaymentMethodTypes: stripe.StringSlice([]string{string(stripe.ChargePaymentMethodDetailsTypeCard)}),
+			Currency:           stripe.String(string(stripe.CurrencyUSD)),
+		}
+		params.Metadata = map[string]string{"order_id": orderInfo.OrderId}
+		pi, err := paymentintent.New(params)
+		if err != nil {
+			apiResp.ApiRespErr(http_api.ApiCodeError500, "Failed to create a payment intent")
+			return fmt.Errorf("paymentintent.New err: %s", err.Error())
+		}
+		paymentInfo = tables.TablePaymentInfo{
+			PayHash:     pi.ID,
+			OrderId:     orderInfo.OrderId,
+			PayAddress:  orderInfo.PayAddress,
+			AlgorithmId: orderInfo.AlgorithmId,
+			Timestamp:   time.Now().UnixMilli(),
+			Amount:      req.Amount,
+			PayTokenId:  req.PayTokenId,
+		}
+		resp.ClientSecret = pi.ClientSecret
 	}
+	if err := h.DbDao.CreateOrderInfoWithPaymentInfo(orderInfo, paymentInfo); err != nil {
+		apiResp.ApiRespErr(http_api.ApiCodeDbError, "Failed to create order")
+		return fmt.Errorf("CreateOrderInfoWithPaymentInfo err: %s", err.Error())
+	}
+
 	//
 	resp.OrderId = orderInfo.OrderId
 	resp.PaymentAddress = paymentAddress

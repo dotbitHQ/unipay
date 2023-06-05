@@ -46,6 +46,7 @@ const (
 	PayTokenIdCKB       PayTokenId = "ckb_ckb"
 	PayTokenIdInternal  PayTokenId = "ckb_internal"
 	PayTokenIdCoupon    PayTokenId = "coupon"
+	PayTokenIdStripeUSD PayTokenId = "stripe_usd"
 )
 
 func (p PayTokenId) GetContractAddress(net common.DasNetType) string {
