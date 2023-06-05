@@ -31,6 +31,10 @@ func (t *TablePaymentInfo) TableName() string {
 	return TableNamePaymentInfo
 }
 
+func GetEfficientPaymentTimestamp() int64 {
+	return time.Now().Add(-time.Hour * 24 * 3).UnixMilli()
+}
+
 type PayHashStatus int
 
 const (

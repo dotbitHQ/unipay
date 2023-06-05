@@ -13,6 +13,7 @@ import (
 	"github.com/nervosnetwork/ckb-sdk-go/rpc"
 	"github.com/scorpiotzh/mylog"
 	"github.com/scorpiotzh/toolib"
+	"github.com/stripe/stripe-go/v74"
 	"sync"
 	"time"
 	"unipay/tables"
@@ -32,6 +33,7 @@ func InitCfg(configFilePath string) error {
 		return fmt.Errorf("UnmarshalYamlFile err:%s", err.Error())
 	}
 	log.Info("config file：", toolib.JsonString(Cfg))
+	stripe.Key = Cfg.Server.StripeKey
 	return nil
 }
 
@@ -45,6 +47,7 @@ func AddCfgFileWatcher(configFilePath string) (*fsnotify.Watcher, error) {
 			log.Error("UnmarshalYamlFile err:", err.Error())
 		}
 		log.Info("config file：", toolib.JsonString(Cfg))
+		stripe.Key = Cfg.Server.StripeKey
 	})
 }
 
@@ -85,6 +88,9 @@ type CfgServer struct {
 			Password string `json:"password" yaml:"password"`
 			Proxy    string `json:"proxy" yaml:"proxy"`
 		} `json:"doge" yaml:"doge"`
+		Stripe struct {
+			Refund bool `json:"refund" yaml:"refund"`
+		} `json:"stripe" yaml:"stripe"`
 	} `json:"chain" yaml:"chain"`
 }
 

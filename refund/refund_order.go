@@ -18,6 +18,7 @@ func (t *ToolRefund) doRefund() error {
 	var ckbList []tables.TablePaymentInfo
 	var dogeList []tables.TablePaymentInfo
 	var otherList []tables.TablePaymentInfo
+	var stripeList []tables.TablePaymentInfo
 	for i, v := range list {
 		if v.PayHashStatus != tables.PayHashStatusConfirm && v.RefundStatus != tables.RefundStatusUnRefund {
 			continue
@@ -29,6 +30,8 @@ func (t *ToolRefund) doRefund() error {
 			tables.PayTokenIdMATIC, tables.PayTokenIdTRX, tables.PayTokenIdTrc20USDT,
 			tables.PayTokenIdErc20USDT, tables.PayTokenIdBep20USDT:
 			otherList = append(otherList, list[i])
+		case tables.PayTokenIdStripeUSD:
+			stripeList = append(stripeList, list[i])
 		case tables.PayTokenIdDOGE:
 			dogeList = append(dogeList, list[i])
 		default:
@@ -48,6 +51,10 @@ func (t *ToolRefund) doRefund() error {
 	if err = t.doRefundOther(otherList); err != nil {
 		log.Error("doRefundOther err: ", err.Error())
 		notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doRefundOther", err.Error())
+	}
+	if err = t.doRefundStripe(stripeList); err != nil {
+		log.Error("doRefundStripe err: ", err.Error())
+		notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doRefundStripe", err.Error())
 	}
 
 	return nil

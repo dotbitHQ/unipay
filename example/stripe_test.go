@@ -8,6 +8,7 @@ import (
 	"github.com/stripe/stripe-go/v74/balance"
 	"github.com/stripe/stripe-go/v74/customer"
 	"github.com/stripe/stripe-go/v74/paymentintent"
+	"github.com/stripe/stripe-go/v74/refund"
 	"testing"
 )
 
@@ -18,6 +19,16 @@ const (
 // https://github.com/stripe/stripe-go
 func TestStripe(t *testing.T) {
 
+}
+
+func TestRefund(t *testing.T) {
+	stripe.Key = stripeKey
+	params := stripe.RefundParams{
+		Amount:        stripe.Int64(500),
+		PaymentIntent: stripe.String(""),
+	}
+	r, _ := refund.New(&params)
+	fmt.Println(toolib.JsonString(r))
 }
 
 func TestAmount(t *testing.T) {

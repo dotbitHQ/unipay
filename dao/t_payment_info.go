@@ -157,3 +157,26 @@ func (d *DbDao) GetPaymentInfoByPayHash(payHash string) (info tables.TablePaymen
 	err = d.db.Where("pay_hash=?", payHash).Find(&info).Error
 	return
 }
+
+func (d *DbDao) GetUnPayListByTokenIdWithin3d(tokenId tables.PayTokenId) (list []tables.TablePaymentInfo, err error) {
+	timestamp := tables.GetEfficientPaymentTimestamp()
+	err = d.db.Where("timestamp>=? AND pay_token_id=? AND pay_hash_status=?",
+		timestamp, tokenId, tables.PayHashStatusPending).Find(&list).Error
+	return
+}
+
+func (d *DbDao) GetUnPayListByTokenIdMoreThan3d(tokenId tables.PayTokenId) (list []tables.TablePaymentInfo, err error) {
+	timestampStart := tables.GetEfficientPaymentTimestamp()
+	timestampEnd := time.Now().Add(-time.Hour * 24 * 4).UnixMilli()
+	err = d.db.Where("timestamp<? AND timestamp>=? AND pay_token_id=? AND pay_hash_status=?",
+		timestampStart, timestampEnd, tokenId, tables.PayHashStatusPending).Find(&list).Error
+	return
+}
+
+func (d *DbDao) UpdatePayHashStatusToFailed(payHash string) error {
+	return d.db.Model(tables.TablePaymentInfo{}).
+		Where("pay_hash=? AND pay_hash_status=?", payHash, tables.PayHashStatusPending).
+		Updates(map[string]interface{}{
+			"pay_hash_status": tables.PayHashStatusFail,
+		}).Error
+}

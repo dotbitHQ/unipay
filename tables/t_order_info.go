@@ -31,6 +31,10 @@ func (t *TableOrderInfo) TableName() string {
 	return TableNameOrderInfo
 }
 
+func GetEfficientOrderTimestamp() int64 {
+	return time.Now().Add(-time.Hour * 24 * 3).UnixMilli()
+}
+
 type PayTokenId string
 
 const (
@@ -84,7 +88,6 @@ type OrderStatus int
 
 const (
 	OrderStatusNormal OrderStatus = 0
-	OrderStatusCancel OrderStatus = 1
 )
 
 func (t *TableOrderInfo) InitOrderId() {
