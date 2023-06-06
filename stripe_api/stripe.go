@@ -5,12 +5,7 @@ import (
 	"github.com/stripe/stripe-go/v74"
 	"github.com/stripe/stripe-go/v74/paymentintent"
 	"github.com/stripe/stripe-go/v74/refund"
-	"unipay/config"
 )
-
-func Init() {
-	stripe.Key = config.Cfg.Server.StripeKey
-}
 
 func CreatePaymentIntent(orderId string, amount int64) (*stripe.PaymentIntent, error) {
 	params := &stripe.PaymentIntentParams{
