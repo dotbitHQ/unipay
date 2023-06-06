@@ -3,10 +3,10 @@ package timer
 import (
 	"fmt"
 	"github.com/stripe/stripe-go/v74"
-	"github.com/stripe/stripe-go/v74/paymentintent"
 	"time"
 	"unipay/config"
 	"unipay/notify"
+	"unipay/stripe_api"
 	"unipay/tables"
 )
 
@@ -36,9 +36,9 @@ func (t *ToolTimer) checkStripeStatus() error {
 		return fmt.Errorf("GetUnPayListByTokenIdWithin3d err: %s", err.Error())
 	}
 	for _, v := range list {
-		pi, err := paymentintent.Get(v.PayHash, nil)
+		pi, err := stripe_api.GetPaymentIntent(v.PayHash)
 		if err != nil {
-			return fmt.Errorf("paymentintent.Get err: %s[%s]", err.Error(), v.PayHash)
+			return fmt.Errorf("GetPaymentIntent err: %s", err.Error())
 		}
 		if pi.Status == stripe.PaymentIntentStatusSucceeded {
 			// todo ok
@@ -50,9 +50,9 @@ func (t *ToolTimer) checkStripeStatus() error {
 		return fmt.Errorf("GetUnPayListByTokenIdMoreThan3d err: %s", err.Error())
 	}
 	for _, v := range list {
-		pi, err := paymentintent.Cancel(v.PayHash, nil)
+		pi, err := stripe_api.CancelPaymentIntent(v.PayHash)
 		if err != nil {
-			return fmt.Errorf("paymentintent.Get err: %s[%s]", err.Error(), v.PayHash)
+			return fmt.Errorf("CancelPaymentIntent err: %s", err.Error())
 		}
 		if pi.Status == stripe.PaymentIntentStatusCanceled {
 			if err := t.DbDao.UpdatePayHashStatusToFailed(v.PayHash); err != nil {

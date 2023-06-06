@@ -7,6 +7,8 @@ import (
 	"github.com/scorpiotzh/toolib"
 	"net/http"
 	"unipay/config"
+	"unipay/stripe_api"
+	"unipay/tables"
 )
 
 type ReqOrderInfo struct {
@@ -18,6 +20,7 @@ type RespOrderInfo struct {
 	OrderId         string `json:"order_id"`
 	PaymentAddress  string `json:"payment_address"`
 	ContractAddress string `json:"contract_address"`
+	ClientSecret    string `json:"client_secret"`
 }
 
 func (h *HttpHandle) OrderInfo(ctx *gin.Context) {
@@ -55,13 +58,29 @@ func (h *HttpHandle) doOrderInfo(req *ReqOrderInfo, apiResp *http_api.ApiResp) e
 
 	orderInfo, err := h.DbDao.GetOrderInfo(req.OrderId, req.BusinessId)
 	if err != nil {
-		apiResp.ApiRespErr(http_api.ApiCodeDbError, "failed to get order info")
+		apiResp.ApiRespErr(http_api.ApiCodeDbError, "Failed to get order info")
 		return fmt.Errorf("GetOrderInfo err: %s", err.Error())
 	}
 	paymentAddress, err := config.GetPaymentAddress(orderInfo.PayTokenId)
 	if err != nil {
 		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, err.Error())
 		return nil
+	}
+	if orderInfo.PayTokenId == tables.PayTokenIdStripeUSD {
+		paymentInfo, err := h.DbDao.GetPaymentInfoByOrderId(orderInfo.OrderId)
+		if err != nil {
+			apiResp.ApiRespErr(http_api.ApiCodeDbError, "Failed to get payment info")
+			return fmt.Errorf("GetOrderInfo err: %s", err.Error())
+		} else if paymentInfo.Id == 0 {
+			apiResp.ApiRespErr(http_api.ApiCodePaymentNotExist, "No payment")
+			return nil
+		}
+		pi, err := stripe_api.GetPaymentIntent(paymentInfo.PayHash)
+		if err != nil {
+			apiResp.ApiRespErr(http_api.ApiCodeError500, "Failed to get payment intent")
+			return fmt.Errorf("GetPaymentIntent err: %s", err.Error())
+		}
+		resp.ClientSecret = pi.ClientSecret
 	}
 
 	resp.OrderId = req.OrderId

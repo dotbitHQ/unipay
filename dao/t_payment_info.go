@@ -180,3 +180,8 @@ func (d *DbDao) UpdatePayHashStatusToFailed(payHash string) error {
 			"pay_hash_status": tables.PayHashStatusFail,
 		}).Error
 }
+
+func (d *DbDao) GetPaymentInfoByOrderId(orderId string) (info tables.TablePaymentInfo, err error) {
+	err = d.db.Where("order_id=?", orderId).Find(&info).Limit(1).Error
+	return
+}
