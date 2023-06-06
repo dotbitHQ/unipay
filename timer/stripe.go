@@ -35,13 +35,19 @@ func (t *ToolTimer) checkStripeStatus() error {
 	if err != nil {
 		return fmt.Errorf("GetUnPayListByTokenIdWithin3d err: %s", err.Error())
 	}
-	for _, v := range list {
+	for i, v := range list {
 		pi, err := stripe_api.GetPaymentIntent(v.PayHash)
 		if err != nil {
 			return fmt.Errorf("GetPaymentIntent err: %s", err.Error())
 		}
 		if pi.Status == stripe.PaymentIntentStatusSucceeded {
-			// todo ok
+			orderInfo, err := t.DbDao.GetOrderInfoByOrderId(v.OrderId)
+			if err != nil {
+				return fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
+			}
+			if err = t.HandlePayment(list[i], orderInfo); err != nil {
+				return fmt.Errorf("HandlePayment err: %s", err.Error())
+			}
 		}
 	}
 
@@ -59,6 +65,29 @@ func (t *ToolTimer) checkStripeStatus() error {
 				return fmt.Errorf("UpdatePayHashStatusToFailed err: %s[%s]", err.Error(), v.PayHash)
 			}
 		}
+	}
+	return nil
+}
+
+func (t *ToolTimer) HandlePayment(paymentInfo tables.TablePaymentInfo, orderInfo tables.TableOrderInfo) error {
+	noticeInfo := tables.TableNoticeInfo{
+		EventType:    tables.EventTypeOrderPay,
+		PayHash:      paymentInfo.PayHash,
+		NoticeCount:  0,
+		NoticeStatus: tables.NoticeStatusDefault,
+		Timestamp:    time.Now().UnixMilli(),
+	}
+	noticeInfo.InitNoticeId()
+
+	orderInfo.PayStatus = tables.PayStatusPaid
+	if err := t.CN.CallbackNotice(noticeInfo, paymentInfo, orderInfo); err != nil {
+		log.Error("CallbackNotice err: %s", err.Error())
+	} else {
+		noticeInfo.NoticeStatus = tables.NoticeStatusOK
+	}
+
+	if err := t.DbDao.UpdatePaymentStatus(paymentInfo, noticeInfo); err != nil {
+		return fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
 	}
 	return nil
 }
