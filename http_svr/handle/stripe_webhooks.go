@@ -39,7 +39,7 @@ func (h *HttpHandle) StripeWebhooks(ctx *gin.Context) {
 	}
 	stripeSignature := ctx.GetHeader("Stripe-Signature")
 	log.Info("stripeSignature:", stripeSignature)
-	log.Info("payload:", string(payload))
+	//log.Info("payload:", string(payload))
 
 	endpointSecret := config.Cfg.Chain.Stripe.EndpointSecret
 	event, err := webhook.ConstructEvent(payload, stripeSignature, endpointSecret)
@@ -50,7 +50,7 @@ func (h *HttpHandle) StripeWebhooks(ctx *gin.Context) {
 		return
 	}
 
-	log.Info("doStripeWebhooks", event.Type, event.GetObjectValue("id", "metadata"))
+	log.Info("doStripeWebhooks", event.Type, event.Data.Object)
 	switch event.Type {
 	case "charge.refunded":
 	case "charge.succeeded":
