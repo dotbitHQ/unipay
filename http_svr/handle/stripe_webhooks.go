@@ -1,13 +1,11 @@
 package handle
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/dotbitHQ/das-lib/http_api"
 	"github.com/gin-gonic/gin"
-	"github.com/scorpiotzh/toolib"
 	"github.com/stripe/stripe-go/v74"
 	"github.com/stripe/stripe-go/v74/webhook"
+	"io/ioutil"
 	"net/http"
 	"unipay/config"
 )
@@ -29,39 +27,29 @@ func (h *HttpHandle) StripeWebhooks(ctx *gin.Context) {
 		err                  error
 	)
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		log.Error("ShouldBindJSON err: ", err.Error(), funcName, clientIp, remoteAddr)
+	log.Info("ApiReq:", funcName, clientIp, remoteAddr)
+
+	const MaxBodyBytes = int64(65536)
+	body := http.MaxBytesReader(ctx.Writer, ctx.Request.Body, MaxBodyBytes)
+	payload, err := ioutil.ReadAll(body)
+	if err != nil {
+		log.Error("ioutil.ReadAll err:", err.Error())
 		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, "params invalid")
 		ctx.JSON(http.StatusOK, apiResp)
 		return
 	}
 	stripeSignature := ctx.GetHeader("Stripe-Signature")
 	log.Info("stripeSignature:", stripeSignature)
-	log.Info("ApiReq:", funcName, clientIp, remoteAddr, toolib.JsonString(req))
-	req.stripeSignature = stripeSignature
-
-	if err = h.doStripeWebhooks(&req, &apiResp); err != nil {
-		log.Error("doStripeWebhooks err:", err.Error(), funcName, clientIp, remoteAddr)
-	}
-
-	ctx.JSON(http.StatusOK, apiResp)
-}
-
-func (h *HttpHandle) doStripeWebhooks(req *ReqStripeWebhooks, apiResp *http_api.ApiResp) error {
-	var resp RespStripeWebhooks
-
-	payload, err := json.Marshal(req.Event)
-	if err != nil {
-		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, err.Error())
-		return fmt.Errorf("json.Marshal err: %s", err.Error())
-	}
 
 	endpointSecret := config.Cfg.Chain.Stripe.EndpointSecret
 	event, err := webhook.ConstructEvent(payload, req.stripeSignature, endpointSecret)
 	if err != nil {
+		log.Error("webhook.ConstructEven err:", err.Error())
 		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, err.Error())
-		return fmt.Errorf("webhook.ConstructEvent err: %s", err.Error())
+		ctx.JSON(http.StatusOK, apiResp)
+		return
 	}
+
 	log.Info("doStripeWebhooks", event.Type, event.GetObjectValue("id", "metadata"))
 	switch event.Type {
 	case "charge.refunded":
@@ -74,6 +62,7 @@ func (h *HttpHandle) doStripeWebhooks(req *ReqStripeWebhooks, apiResp *http_api.
 		log.Warnf("doStripeWebhooks: unknown event type [%s]", req.Event.Type)
 	}
 
+	var resp RespStripeWebhooks
 	apiResp.ApiRespOK(resp)
-	return nil
+	ctx.JSON(http.StatusOK, apiResp)
 }
