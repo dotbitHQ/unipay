@@ -21,6 +21,10 @@ func TestStripe(t *testing.T) {
 
 }
 
+func TestWebhooks(t *testing.T) {
+
+}
+
 func TestRefund(t *testing.T) {
 	stripe.Key = stripeKey
 	params := stripe.RefundParams{
@@ -56,7 +60,7 @@ func TestGetPaymentIntent(t *testing.T) {
 func TestCreatePaymentIntent(t *testing.T) {
 	stripe.Key = stripeKey
 	params := &stripe.PaymentIntentParams{
-		Amount: stripe.Int64(100),
+		Amount: stripe.Int64(500),
 		//PaymentMethodTypes: stripe.StringSlice([]string{string(stripe.ChargePaymentMethodDetailsTypeCard)}),
 		Currency: stripe.String(string(stripe.CurrencyUSD)),
 	}
