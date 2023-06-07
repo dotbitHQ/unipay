@@ -12,7 +12,6 @@ import (
 
 type ReqStripeWebhooks struct {
 	stripe.Event
-	stripeSignature string
 }
 
 type RespStripeWebhooks struct {
@@ -40,9 +39,10 @@ func (h *HttpHandle) StripeWebhooks(ctx *gin.Context) {
 	}
 	stripeSignature := ctx.GetHeader("Stripe-Signature")
 	log.Info("stripeSignature:", stripeSignature)
+	log.Info("payload:", string(payload))
 
 	endpointSecret := config.Cfg.Chain.Stripe.EndpointSecret
-	event, err := webhook.ConstructEvent(payload, req.stripeSignature, endpointSecret)
+	event, err := webhook.ConstructEvent(payload, stripeSignature, endpointSecret)
 	if err != nil {
 		log.Error("webhook.ConstructEven err:", err.Error())
 		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, err.Error())
