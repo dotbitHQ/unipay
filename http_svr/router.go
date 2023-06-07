@@ -30,6 +30,13 @@ func (h *HttpSvr) initRouter() {
 	}
 }
 
+func (h *HttpSvr) initStripeRouter() {
+	stripeV1 := h.stripeEngine.Group("v1")
+	{
+		stripeV1.POST("/stripe/webhooks", DoMonitorLog("stripe_webhooks"), h.H.StripeWebhooks)
+	}
+}
+
 func respHandle(c *gin.Context, res string, err error) {
 	if err != nil {
 		log.Error("respHandle err:", err.Error())

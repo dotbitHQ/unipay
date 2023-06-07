@@ -33,7 +33,7 @@ func InitCfg(configFilePath string) error {
 		return fmt.Errorf("UnmarshalYamlFile err:%s", err.Error())
 	}
 	log.Info("config file：", toolib.JsonString(Cfg))
-	stripe.Key = Cfg.Server.StripeKey
+	stripe.Key = Cfg.Chain.Stripe.Key
 	return nil
 }
 
@@ -47,7 +47,7 @@ func AddCfgFileWatcher(configFilePath string) (*fsnotify.Watcher, error) {
 			log.Error("UnmarshalYamlFile err:", err.Error())
 		}
 		log.Info("config file：", toolib.JsonString(Cfg))
-		stripe.Key = Cfg.Server.StripeKey
+		stripe.Key = Cfg.Chain.Stripe.Key
 	})
 }
 
@@ -57,7 +57,6 @@ type CfgServer struct {
 		HttpPort         string            `json:"http_port" yaml:"http_port"`
 		CronSpec         string            `json:"cron_spec" yaml:"cron_spec"`
 		RemoteSignApiUrl string            `json:"remote_sign_api_url" yaml:"remote_sign_api_url"`
-		StripeKey        string            `json:"stripe_key" yaml:"stripe_key"`
 	} `json:"server" yaml:"server"`
 	BusinessIds map[string]string `json:"business_ids" yaml:"business_ids"`
 	Notify      struct {
@@ -89,7 +88,10 @@ type CfgServer struct {
 			Proxy    string `json:"proxy" yaml:"proxy"`
 		} `json:"doge" yaml:"doge"`
 		Stripe struct {
-			Refund bool `json:"refund" yaml:"refund"`
+			Refund         bool   `json:"refund" yaml:"refund"`
+			Key            string `json:"key" yaml:"key"`
+			EndpointSecret string `json:"endpoint_secret" yaml:"endpoint_secret"`
+			WebhooksAddr   string `json:"webhooks_addr" yaml:"webhooks_addr"`
 		} `json:"stripe" yaml:"stripe"`
 	} `json:"chain" yaml:"chain"`
 }

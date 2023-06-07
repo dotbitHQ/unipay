@@ -18,6 +18,10 @@ type HttpSvr struct {
 	H       *handle.HttpHandle
 	engine  *gin.Engine
 	srv     *http.Server
+
+	StripeAddr   string
+	stripeSrv    *http.Server
+	stripeEngine *gin.Engine
 }
 
 func (h *HttpSvr) Run() {
@@ -32,6 +36,20 @@ func (h *HttpSvr) Run() {
 			log.Error("ListenAndServe err:", err)
 		}
 	}()
+
+	if h.StripeAddr != "" {
+		h.stripeEngine = gin.New()
+		h.initStripeRouter()
+		h.stripeSrv = &http.Server{
+			Addr:    h.StripeAddr,
+			Handler: h.stripeEngine,
+		}
+		go func() {
+			if err := h.stripeSrv.ListenAndServe(); err != nil {
+				log.Error("Stripe ListenAndServe err:", err)
+			}
+		}()
+	}
 }
 
 func (h *HttpSvr) Shutdown() {
@@ -39,6 +57,12 @@ func (h *HttpSvr) Shutdown() {
 		log.Warn("HttpSvr Shutdown ... ")
 		if err := h.srv.Shutdown(h.Ctx); err != nil {
 			log.Error("Shutdown err:", err.Error())
+		}
+	}
+	if h.stripeSrv != nil {
+		log.Warn("Stripe HttpSvr Shutdown ... ")
+		if err := h.stripeSrv.Shutdown(h.Ctx); err != nil {
+			log.Error("Stripe Shutdown err:", err.Error())
 		}
 	}
 }

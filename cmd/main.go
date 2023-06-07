@@ -78,6 +78,7 @@ func runServer(ctx *cli.Context) error {
 			DbDao:   dbDao,
 			DasCore: dasCore,
 		},
+		StripeAddr: config.Cfg.Chain.Stripe.WebhooksAddr,
 	}
 	httpSvr.Run()
 
