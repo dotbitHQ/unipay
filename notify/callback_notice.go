@@ -26,6 +26,7 @@ func (c *CallbackNotice) HandlePayment(paymentInfo tables.TablePaymentInfo, orde
 	orderInfo.PayStatus = tables.PayStatusPaid
 	if err := c.callbackNotice(noticeInfo, paymentInfo, orderInfo); err != nil {
 		log.Error("callbackNotice err: %s", err.Error())
+		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "callbackNotice", err.Error())
 	} else {
 		noticeInfo.NoticeStatus = tables.NoticeStatusOK
 	}

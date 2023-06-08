@@ -64,7 +64,7 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 		if event.Type == "charge.refunded" {
 			msg = fmt.Sprintf("Event: %s\nEventID: %s\nChargeID: %s", event.Type, event.ID, charge.ID)
 		}
-	case "payment_intent.amount_capturable_updated", "payment_intent.canceled",
+	case "payment_intent.amount_capturable_updated", "payment_intent.requires_action", "payment_intent.canceled",
 		"payment_intent.created", "payment_intent.payment_failed", "payment_intent.succeeded":
 		var pi stripe.PaymentIntent
 		if err := pi.UnmarshalJSON(event.Data.Raw); err != nil {
@@ -76,10 +76,18 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 			if err != nil {
 				e = fmt.Errorf("GetPaymentInfoByPayHash err: %s[%s]", err.Error(), pi.ID)
 				return
+			} else if paymentInfo.Id == 0 {
+				log.Error("doStripeWebhooks: paymentInfo.Id == 0;", pi.ID)
+				httpCode = http.StatusOK
+				return
 			}
 			orderInfo, err := h.DbDao.GetOrderInfoByOrderId(paymentInfo.OrderId)
 			if err != nil {
 				e = fmt.Errorf("GetOrderInfoByOrderId err: %s[%s]", err.Error(), pi.ID)
+				return
+			} else if orderInfo.Id == 0 {
+				log.Error("doStripeWebhooks: orderInfo.Id == 0;", pi.ID, paymentInfo.OrderId)
+				httpCode = http.StatusOK
 				return
 			}
 			if err := h.CN.HandlePayment(paymentInfo, orderInfo); err != nil {
