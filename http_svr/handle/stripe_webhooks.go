@@ -62,7 +62,7 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 			return
 		}
 		if event.Type == "charge.refunded" {
-			msg = fmt.Sprintf("Event: %s\nEventID: %s\nChargeID: %s", event.Type, event.ID, charge.ID)
+			msg = fmt.Sprintf("Event: %s\nEventID: %s\nChargeID: %s\nAmount: %.2f\nAmountRefunded: %.2f", event.Type, event.ID, charge.ID, float64(charge.Amount)/100, float64(charge.AmountRefunded)/100)
 		}
 	case "payment_intent.amount_capturable_updated", "payment_intent.requires_action", "payment_intent.canceled",
 		"payment_intent.created", "payment_intent.payment_failed", "payment_intent.succeeded":
@@ -94,7 +94,7 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 				e = fmt.Errorf("HandlePayment err: %s[%s]", err.Error(), pi.ID)
 				return
 			}
-			msg = fmt.Sprintf("Event: %s\nEventID: %s\nPaymentIntentID: %s", event.Type, event.ID, pi.ID)
+			msg = fmt.Sprintf("Event: %s\nEventID: %s\nPaymentIntentID: %s\nAmount: %.2f", event.Type, event.ID, pi.ID, float64(pi.Amount)/100)
 		}
 	default:
 		msg = fmt.Sprintf("Event: %s\nEventID: %s", event.Type, event.ID)
