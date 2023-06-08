@@ -225,7 +225,7 @@ func (p *ParserEvm) doPayment(order tables.TableOrderInfo, tx chain_evm.Transact
 		PayHashStatus: tables.PayHashStatusConfirm,
 		RefundStatus:  tables.RefundStatusDefault,
 	}
-	if err := pc.HandlePayment(paymentInfo, order); err != nil {
+	if err := pc.CN.HandlePayment(paymentInfo, order); err != nil {
 		return fmt.Errorf("HandlePayment err: %s", err.Error())
 	}
 	return nil

@@ -204,7 +204,7 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 				PayHashStatus: tables.PayHashStatusConfirm,
 				RefundStatus:  tables.RefundStatusDefault,
 			}
-			if err := pc.HandlePayment(paymentInfo, order); err != nil {
+			if err := pc.CN.HandlePayment(paymentInfo, order); err != nil {
 				return fmt.Errorf("HandlePayment err: %s", err.Error())
 			}
 			break

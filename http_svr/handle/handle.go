@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/scorpiotzh/mylog"
 	"unipay/dao"
+	"unipay/notify"
 )
 
 var (
@@ -17,6 +18,7 @@ type HttpHandle struct {
 	Ctx     context.Context
 	DbDao   *dao.DbDao
 	DasCore *core.DasCore
+	CN      *notify.CallbackNotice
 }
 
 func GetClientIp(ctx *gin.Context) (string, string) {

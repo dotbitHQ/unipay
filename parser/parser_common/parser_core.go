@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
-	"time"
 	"unipay/dao"
 	"unipay/notify"
 	"unipay/tables"
@@ -69,29 +68,6 @@ func (p *ParserCore) HandleConcurrentParsingOK(blockList []tables.TableBlockPars
 	}
 	if err := p.DbDao.DeleteBlockInfo(p.ParserType, p.CurrentBlockNumber-20); err != nil {
 		log.Error("DeleteBlockInfo2 err:", p.ParserType, err.Error(), p.CurrentBlockNumber)
-	}
-	return nil
-}
-
-func (p *ParserCore) HandlePayment(paymentInfo tables.TablePaymentInfo, orderInfo tables.TableOrderInfo) error {
-	noticeInfo := tables.TableNoticeInfo{
-		EventType:    tables.EventTypeOrderPay,
-		PayHash:      paymentInfo.PayHash,
-		NoticeCount:  0,
-		NoticeStatus: tables.NoticeStatusDefault,
-		Timestamp:    time.Now().UnixMilli(),
-	}
-	noticeInfo.InitNoticeId()
-
-	orderInfo.PayStatus = tables.PayStatusPaid
-	if err := p.CN.CallbackNotice(noticeInfo, paymentInfo, orderInfo); err != nil {
-		log.Error("CallbackNotice err: %s", err.Error())
-	} else {
-		noticeInfo.NoticeStatus = tables.NoticeStatusOK
-	}
-
-	if err := p.DbDao.UpdatePaymentStatus(paymentInfo, noticeInfo); err != nil {
-		return fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
 	}
 	return nil
 }

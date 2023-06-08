@@ -13,7 +13,30 @@ type CallbackNotice struct {
 	DbDao *dao.DbDao
 }
 
-func (c *CallbackNotice) CallbackNotice(notice tables.TableNoticeInfo, paymentInfo tables.TablePaymentInfo, orderInfo tables.TableOrderInfo) error {
+func (c *CallbackNotice) HandlePayment(paymentInfo tables.TablePaymentInfo, orderInfo tables.TableOrderInfo) error {
+	noticeInfo := tables.TableNoticeInfo{
+		EventType:    tables.EventTypeOrderPay,
+		PayHash:      paymentInfo.PayHash,
+		NoticeCount:  0,
+		NoticeStatus: tables.NoticeStatusDefault,
+		Timestamp:    time.Now().UnixMilli(),
+	}
+	noticeInfo.InitNoticeId()
+
+	orderInfo.PayStatus = tables.PayStatusPaid
+	if err := c.callbackNotice(noticeInfo, paymentInfo, orderInfo); err != nil {
+		log.Error("callbackNotice err: %s", err.Error())
+	} else {
+		noticeInfo.NoticeStatus = tables.NoticeStatusOK
+	}
+
+	if err := c.DbDao.UpdatePaymentStatus(paymentInfo, noticeInfo); err != nil {
+		return fmt.Errorf("UpdatePaymentStatus err: %s", err.Error())
+	}
+	return nil
+}
+
+func (c *CallbackNotice) callbackNotice(notice tables.TableNoticeInfo, paymentInfo tables.TablePaymentInfo, orderInfo tables.TableOrderInfo) error {
 	// get callback url
 	callbackUrl, ok := config.Cfg.BusinessIds[orderInfo.BusinessId]
 	if !ok {

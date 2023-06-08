@@ -69,6 +69,9 @@ func runServer(ctx *cli.Context) error {
 		return fmt.Errorf("config.InitDasCore err: %s", err.Error())
 	}
 
+	// callback notice
+	cn := &notify.CallbackNotice{DbDao: dbDao}
+
 	// http
 	httpSvr := http_svr.HttpSvr{
 		Ctx:     ctxServer,
@@ -77,13 +80,11 @@ func runServer(ctx *cli.Context) error {
 			Ctx:     ctxServer,
 			DbDao:   dbDao,
 			DasCore: dasCore,
+			CN:      cn,
 		},
 		StripeAddr: config.Cfg.Chain.Stripe.WebhooksAddr,
 	}
 	httpSvr.Run()
-
-	// callback notice
-	cn := &notify.CallbackNotice{DbDao: dbDao}
 
 	// tool parser
 	toolParser, err := parser.NewToolParser(ctxServer, &wgServer, dbDao, cn)
