@@ -92,8 +92,8 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 	orderInfo.InitOrderId()
 	var paymentInfo tables.TablePaymentInfo
 	if req.PayTokenId == tables.PayTokenIdStripeUSD {
-		if req.Amount.IntPart() < 50 {
-			apiResp.ApiRespErr(http_api.ApiCodeAmountIsTooLow, "Amount not less than 0.5$")
+		if req.Amount.IntPart() < 52 {
+			apiResp.ApiRespErr(http_api.ApiCodeAmountIsTooLow, "Amount not less than 0.52$")
 			return nil
 		}
 		pi, err := stripe_api.CreatePaymentIntent(orderInfo.OrderId, req.Amount.IntPart())
