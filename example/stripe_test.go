@@ -22,7 +22,13 @@ func TestStripe(t *testing.T) {
 }
 
 func TestWebhooks(t *testing.T) {
-	fmt.Printf("%.2f", float64(500)/100)
+	//fmt.Printf("%.2f", float64(500)/100)
+
+	dec34 := decimal.NewFromFloat(0.034)
+	dec50 := decimal.NewFromFloat(50)
+	dec500 := decimal.NewFromInt(500)
+	fmt.Println(dec500.Sub(dec500.Mul(dec34).Add(dec50)))
+
 }
 
 func TestRefund(t *testing.T) {

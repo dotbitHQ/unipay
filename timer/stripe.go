@@ -31,27 +31,27 @@ func (t *ToolTimer) RunCheckStripeStatus() {
 }
 
 func (t *ToolTimer) checkStripeStatus() error {
-	list, err := t.DbDao.GetUnPayListByTokenIdWithin3d(tables.PayTokenIdStripeUSD)
-	if err != nil {
-		return fmt.Errorf("GetUnPayListByTokenIdWithin3d err: %s", err.Error())
-	}
-	for i, v := range list {
-		pi, err := stripe_api.GetPaymentIntent(v.PayHash)
-		if err != nil {
-			return fmt.Errorf("GetPaymentIntent err: %s", err.Error())
-		}
-		if pi.Status == stripe.PaymentIntentStatusSucceeded {
-			orderInfo, err := t.DbDao.GetOrderInfoByOrderId(v.OrderId)
-			if err != nil {
-				return fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
-			}
-			if err = t.CN.HandlePayment(list[i], orderInfo); err != nil {
-				return fmt.Errorf("HandlePayment err: %s", err.Error())
-			}
-		}
-	}
+	//list, err := t.DbDao.GetUnPayListByTokenIdWithin3d(tables.PayTokenIdStripeUSD)
+	//if err != nil {
+	//	return fmt.Errorf("GetUnPayListByTokenIdWithin3d err: %s", err.Error())
+	//}
+	//for i, v := range list {
+	//	pi, err := stripe_api.GetPaymentIntent(v.PayHash)
+	//	if err != nil {
+	//		return fmt.Errorf("GetPaymentIntent err: %s", err.Error())
+	//	}
+	//	if pi.Status == stripe.PaymentIntentStatusSucceeded {
+	//		orderInfo, err := t.DbDao.GetOrderInfoByOrderId(v.OrderId)
+	//		if err != nil {
+	//			return fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
+	//		}
+	//		if err = t.CN.HandlePayment(list[i], orderInfo); err != nil {
+	//			return fmt.Errorf("HandlePayment err: %s", err.Error())
+	//		}
+	//	}
+	//}
 
-	list, err = t.DbDao.GetUnPayListByTokenIdMoreThan3d(tables.PayTokenIdStripeUSD)
+	list, err := t.DbDao.GetUnPayListByTokenIdMoreThan3d(tables.PayTokenIdStripeUSD)
 	if err != nil {
 		return fmt.Errorf("GetUnPayListByTokenIdMoreThan3d err: %s", err.Error())
 	}

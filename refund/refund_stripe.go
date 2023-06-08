@@ -2,6 +2,7 @@ package refund
 
 import (
 	"fmt"
+	"github.com/shopspring/decimal"
 	"github.com/stripe/stripe-go/v74"
 	"unipay/config"
 	"unipay/stripe_api"
@@ -15,14 +16,22 @@ func (t *ToolRefund) doRefundStripe(list []tables.TablePaymentInfo) error {
 	if len(list) == 0 {
 		return nil
 	}
-	for _, v := range list {
-		r, err := stripe_api.RefundPaymentIntent(v.PayHash, v.Amount.IntPart())
+	for i, v := range list {
+		dec34 := decimal.NewFromFloat(0.034)
+		dec50 := decimal.NewFromFloat(50)
+
+		amountRefund := v.Amount.Sub(v.Amount.Mul(dec34).Add(dec50))
+		r, err := stripe_api.RefundPaymentIntent(v.PayHash, amountRefund.IntPart())
 		if err != nil {
 			return fmt.Errorf("RefundPaymentIntent err: %s", err.Error())
 		}
 		if r.Status == stripe.RefundStatusSucceeded {
 			if err := t.DbDao.UpdateSinglePaymentToRefunded(v.PayHash, "", 0); err != nil {
 				return fmt.Errorf("UpdateSinglePaymentToRefunded err: %s[%s]", err.Error(), v.PayHash)
+			}
+			// callback notice
+			if err = t.addCallbackNotice([]tables.TablePaymentInfo{list[i]}); err != nil {
+				log.Error("addCallbackNotice err:", err.Error())
 			}
 		}
 	}
