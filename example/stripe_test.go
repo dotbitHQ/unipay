@@ -22,13 +22,13 @@ func TestStripe(t *testing.T) {
 }
 
 func TestWebhooks(t *testing.T) {
-
+	fmt.Printf("%.2f", float64(500)/100)
 }
 
 func TestRefund(t *testing.T) {
 	stripe.Key = stripeKey
 	params := stripe.RefundParams{
-		Amount:        stripe.Int64(500),
+		Amount:        stripe.Int64(100),
 		PaymentIntent: stripe.String(""),
 	}
 	r, _ := refund.New(&params)
@@ -39,6 +39,16 @@ func TestAmount(t *testing.T) {
 	usdAmount, _ := decimal.NewFromString("0.4923")
 	amount := usdAmount.Mul(decimal.New(1, 2)).Div(decimal.NewFromInt(1)).Ceil()
 	fmt.Println(amount)
+}
+
+func TestConfirmPaymentIntent(t *testing.T) {
+	stripe.Key = stripeKey
+	params := &stripe.PaymentIntentConfirmParams{
+		PaymentMethod: stripe.String("pm_card_visa"),
+	}
+	pi, _ := paymentintent.Confirm("", params)
+	fmt.Println(toolib.JsonString(pi))
+	// canceled
 }
 
 func TestCancelPaymentIntent(t *testing.T) {
