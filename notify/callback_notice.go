@@ -14,6 +14,7 @@ type CallbackNotice struct {
 }
 
 func (c *CallbackNotice) HandlePayment(paymentInfo tables.TablePaymentInfo, orderInfo tables.TableOrderInfo) error {
+	paymentInfo.PayHashStatus = tables.PayHashStatusConfirm
 	noticeInfo := tables.TableNoticeInfo{
 		EventType:    tables.EventTypeOrderPay,
 		PayHash:      paymentInfo.PayHash,

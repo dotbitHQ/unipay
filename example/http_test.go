@@ -28,7 +28,7 @@ func TestOrderCreate(t *testing.T) {
 	req := handle.ReqOrderCreate{
 		ChainTypeAddress: cta,
 		BusinessId:       BusinessIdAutoSubAccount,
-		Amount:           decimal.NewFromInt(49),
+		Amount:           decimal.NewFromInt(500),
 		PayTokenId:       tables.PayTokenIdStripeUSD,
 	}
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/create")

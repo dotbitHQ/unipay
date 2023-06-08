@@ -22,10 +22,11 @@ type ReqOrderCreate struct {
 }
 
 type RespOrderCreate struct {
-	OrderId         string `json:"order_id"`
-	PaymentAddress  string `json:"payment_address"`
-	ContractAddress string `json:"contract_address"`
-	ClientSecret    string `json:"client_secret"`
+	OrderId               string `json:"order_id"`
+	PaymentAddress        string `json:"payment_address"`
+	ContractAddress       string `json:"contract_address"`
+	StripePaymentIntentId string `json:"stripe_payment_intent_id"`
+	ClientSecret          string `json:"client_secret"`
 }
 
 func (h *HttpHandle) OrderCreate(ctx *gin.Context) {
@@ -109,6 +110,7 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 			Amount:      req.Amount,
 			PayTokenId:  req.PayTokenId,
 		}
+		resp.StripePaymentIntentId = pi.ID
 		resp.ClientSecret = pi.ClientSecret
 	}
 	if err := h.DbDao.CreateOrderInfoWithPaymentInfo(orderInfo, paymentInfo); err != nil {
