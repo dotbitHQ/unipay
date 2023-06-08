@@ -51,18 +51,26 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 		return
 	}
 
-	log.Info("doStripeWebhooks", event.Type)
-
+	log.Info("doStripeWebhooks", event.Type, toolib.JsonString(&event))
+	msg := ""
 	switch event.Type {
-	case "charge.refunded", "charge.succeeded":
-		// todo
-	case "payment_intent.succeeded":
+	case "charge.expired", "charge.failed", "charge.refunded",
+		"charge.succeeded", "charge.updated", "charge.refund.updated":
+		var charge stripe.Charge
+		if err := charge.UnmarshalJSON(event.Data.Raw); err != nil {
+			e = fmt.Errorf("UnmarshalJSON err: %s", err.Error())
+			return
+		}
+		if event.Type == "charge.refunded" {
+			msg = fmt.Sprintf("Event: %s\nEventID: %s\nChargeID: %s", event.Type, event.ID, charge.ID)
+		}
+	case "payment_intent.amount_capturable_updated", "payment_intent.canceled",
+		"payment_intent.created", "payment_intent.payment_failed", "payment_intent.succeeded":
 		var pi stripe.PaymentIntent
 		if err := pi.UnmarshalJSON(event.Data.Raw); err != nil {
 			e = fmt.Errorf("UnmarshalJSON err: %s", err.Error())
 			return
 		}
-		log.Info("pi:", toolib.JsonString(&pi))
 		if event.Type == "payment_intent.succeeded" {
 			paymentInfo, err := h.DbDao.GetPaymentInfoByPayHash(pi.ID)
 			if err != nil {
@@ -78,12 +86,13 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 				e = fmt.Errorf("HandlePayment err: %s[%s]", err.Error(), pi.ID)
 				return
 			}
-		} else {
-			msg := fmt.Sprintf("Event: %s\nID: %s", event.Type, pi.ID)
-			notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "Stripe Webhooks", msg)
+			msg = fmt.Sprintf("Event: %s\nEventID: %s\nPaymentIntentID: %s", event.Type, event.ID, pi.ID)
 		}
 	default:
-		log.Warnf("doStripeWebhooks: unknown event type [%s] [%s]", event.Type, toolib.JsonString(&event))
+		msg = fmt.Sprintf("Event: %s\nEventID: %s", event.Type, event.ID)
+	}
+	if msg != "" {
+		notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "Stripe Webhooks", msg)
 	}
 
 	httpCode = http.StatusOK
