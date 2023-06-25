@@ -14,6 +14,7 @@ import (
 	"github.com/scorpiotzh/mylog"
 	"github.com/scorpiotzh/toolib"
 	"github.com/stripe/stripe-go/v74"
+	"strings"
 	"sync"
 	"time"
 	"unipay/tables"
@@ -67,25 +68,27 @@ type CfgServer struct {
 	} `json:"db" yaml:"db"`
 	Chain struct {
 		Ckb struct {
-			Refund  bool   `json:"refund" yaml:"refund"`
-			Switch  bool   `json:"switch" yaml:"switch"`
-			Node    string `json:"node" yaml:"node"`
-			Address string `json:"address" yaml:"address"`
-			Private string `json:"private" yaml:"private"`
+			Refund  bool              `json:"refund" yaml:"refund"`
+			Switch  bool              `json:"switch" yaml:"switch"`
+			Node    string            `json:"node" yaml:"node"`
+			Address string            `json:"address" yaml:"address"`
+			Private string            `json:"private" yaml:"private"`
+			AddrMap map[string]string `json:"addr_map" yaml:"addr_map"`
 		} `json:"ckb" yaml:"ckb"`
 		Eth     EvmNode `json:"eth" yaml:"eth"`
 		Tron    EvmNode `json:"tron" yaml:"tron"`
 		Bsc     EvmNode `json:"bsc" yaml:"bsc"`
 		Polygon EvmNode `json:"polygon" yaml:"polygon"`
 		Doge    struct {
-			Refund   bool   `json:"refund" yaml:"refund"`
-			Switch   bool   `json:"switch" yaml:"switch"`
-			Node     string `json:"node" yaml:"node"`
-			Address  string `json:"address" yaml:"address"`
-			Private  string `json:"private" yaml:"private"`
-			User     string `json:"user" yaml:"user"`
-			Password string `json:"password" yaml:"password"`
-			Proxy    string `json:"proxy" yaml:"proxy"`
+			Refund   bool              `json:"refund" yaml:"refund"`
+			Switch   bool              `json:"switch" yaml:"switch"`
+			Node     string            `json:"node" yaml:"node"`
+			Address  string            `json:"address" yaml:"address"`
+			Private  string            `json:"private" yaml:"private"`
+			User     string            `json:"user" yaml:"user"`
+			Password string            `json:"password" yaml:"password"`
+			Proxy    string            `json:"proxy" yaml:"proxy"`
+			AddrMap  map[string]string `json:"addr_map" yaml:"addr_map"`
 		} `json:"doge" yaml:"doge"`
 		Stripe struct {
 			Refund         bool   `json:"refund" yaml:"refund"`
@@ -104,12 +107,46 @@ type DbMysql struct {
 }
 
 type EvmNode struct {
-	Refund       bool    `json:"refund" yaml:"refund"`
-	Switch       bool    `json:"switch" yaml:"switch"`
-	Node         string  `json:"node" yaml:"node"`
-	Address      string  `json:"address" yaml:"address"`
-	Private      string  `json:"private" yaml:"private"`
-	RefundAddFee float64 `json:"refund_add_fee" yaml:"refund_add_fee"`
+	Refund       bool              `json:"refund" yaml:"refund"`
+	Switch       bool              `json:"switch" yaml:"switch"`
+	Node         string            `json:"node" yaml:"node"`
+	Address      string            `json:"address" yaml:"address"`
+	Private      string            `json:"private" yaml:"private"`
+	RefundAddFee float64           `json:"refund_add_fee" yaml:"refund_add_fee"`
+	AddrMap      map[string]string `json:"addr_map" yaml:"addr_map"`
+}
+
+func FormatAddrMap(parserType tables.ParserType, addrMap map[string]string) map[string]string {
+	var res = make(map[string]string)
+	switch parserType {
+	case tables.ParserTypeETH, tables.ParserTypeBSC, tables.ParserTypePOLYGON:
+		for k, v := range addrMap {
+			res[strings.ToLower(k)] = v
+		}
+	case tables.ParserTypeTRON:
+		for k, v := range addrMap {
+			if strings.HasPrefix(k, common.TronBase58PreFix) {
+				if tronAddr, err := common.TronBase58ToHex(k); err != nil {
+					log.Error("FormatAddrMap err:", parserType, k, err.Error())
+					continue
+				} else {
+					res[tronAddr] = v
+				}
+			}
+		}
+	case tables.ParserTypeCKB:
+		for k, v := range addrMap {
+			parseAddrK, err := address.Parse(k)
+			if err != nil {
+				log.Error("FormatAddrMap err:", parserType, k, err.Error())
+				continue
+			}
+			res[common.Bytes2Hex(parseAddrK.Script.Args)] = v
+		}
+	default:
+		res = addrMap
+	}
+	return res
 }
 
 func GetPaymentAddress(payTokenId tables.PayTokenId) (string, error) {

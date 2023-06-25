@@ -19,6 +19,7 @@ type TableOrderInfo struct {
 	PayStatus   PayStatus             `json:"pay_status" gorm:"column:pay_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Unpaid 1-Paid';"`
 	OrderStatus OrderStatus           `json:"order_status" gorm:"column:order_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Normal 1-Cancel';"`
 	Timestamp   int64                 `json:"timestamp" gorm:"column:timestamp; index:k_timestamp; type:bigint(20) NOT NULL DEFAULT '0' COMMENT '';"`
+	ReceiptAddr string                `json:"receipt_addr" gorm:"column:receipt_addr; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
 	CreatedAt   time.Time             `json:"created_at" gorm:"column:created_at; type:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '';"`
 	UpdatedAt   time.Time             `json:"updated_at" gorm:"column:updated_at; type:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '';"`
 }

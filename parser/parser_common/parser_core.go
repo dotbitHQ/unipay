@@ -3,8 +3,10 @@ package parser_common
 import (
 	"context"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"sync"
 	"sync/atomic"
+	"time"
 	"unipay/dao"
 	"unipay/notify"
 	"unipay/tables"
@@ -17,13 +19,48 @@ type ParserCore struct {
 	CN                 *notify.CallbackNotice
 	ParserType         tables.ParserType
 	PayTokenId         tables.PayTokenId
-	Address            string
 	ContractAddress    string
 	ContractPayTokenId tables.PayTokenId
 	CurrentBlockNumber uint64
 	ConcurrencyNum     uint64
 	ConfirmNum         uint64
 	Switch             bool
+	AddrMap            map[string]string
+}
+
+func (p *ParserCore) CreatePaymentForAmountMismatch(order tables.TableOrderInfo, payHash, payAddress string, amount decimal.Decimal) {
+	paymentInfo := tables.TablePaymentInfo{
+		PayHash:       payHash,
+		OrderId:       order.OrderId,
+		PayAddress:    payAddress,
+		AlgorithmId:   order.AlgorithmId,
+		Timestamp:     time.Now().UnixMilli(),
+		Amount:        amount,
+		PayTokenId:    order.PayTokenId,
+		PayHashStatus: tables.PayHashStatusConfirm,
+		RefundStatus:  tables.RefundStatusDefault,
+	}
+	if err := p.DbDao.CreatePayment(paymentInfo); err != nil {
+		log.Error("CreatePaymentForAmountMismatch err:", order.OrderId, payHash, err.Error())
+	}
+}
+
+func (p *ParserCore) DoPayment(order tables.TableOrderInfo, txId, fromHex string) error {
+	paymentInfo := tables.TablePaymentInfo{
+		PayHash:       txId,
+		OrderId:       order.OrderId,
+		PayAddress:    fromHex,
+		AlgorithmId:   order.AlgorithmId,
+		Timestamp:     time.Now().UnixMilli(),
+		Amount:        order.Amount,
+		PayTokenId:    order.PayTokenId,
+		PayHashStatus: tables.PayHashStatusConfirm,
+		RefundStatus:  tables.RefundStatusDefault,
+	}
+	if err := p.CN.HandlePayment(paymentInfo, order); err != nil {
+		return fmt.Errorf("HandlePayment err: %s", err.Error())
+	}
+	return nil
 }
 
 func (p *ParserCore) HandleFork(blockHash, parentHash string) (bool, error) {

@@ -10,7 +10,6 @@ import (
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
 	"sync"
-	"time"
 	"unipay/config"
 	"unipay/notify"
 	"unipay/parser/parser_common"
@@ -144,7 +143,7 @@ func (p *ParserBitcoin) getMainNetParams(pc *parser_common.ParserCore) (chaincfg
 }
 
 func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo, pc *parser_common.ParserCore) error {
-	parserType, addr := pc.ParserType, pc.Address
+	parserType := pc.ParserType
 	if block == nil {
 		return fmt.Errorf("block is nil")
 	}
@@ -156,10 +155,10 @@ func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo, pc *parser_co
 			return fmt.Errorf("req GetRawTransaction err: %s", err.Error())
 		}
 		// check address of outputs
-		isMyTx, value := false, float64(0)
+		isMyTx, value, receiptAddr := false, float64(0), ""
 		for _, vOut := range data.Vout {
-			for _, outAddr := range vOut.ScriptPubKey.Addresses {
-				if outAddr == addr {
+			for _, receiptAddr = range vOut.ScriptPubKey.Addresses {
+				if _, ok := pc.AddrMap[receiptAddr]; ok {
 					isMyTx = true
 					value = vOut.Value
 					break
@@ -185,12 +184,12 @@ func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo, pc *parser_co
 				return fmt.Errorf("VinScriptSigToAddress err: %s", err.Error())
 			}
 
-			if ok, err := p.dealWithOpReturn(pc, data, decValue, addrPayload); err != nil {
+			if ok, err := p.dealWithOpReturn(pc, data, decValue, addrPayload, receiptAddr); err != nil {
 				return fmt.Errorf("dealWithOpReturn err: %s", err.Error())
 			} else if ok {
 				continue
 			}
-			if err = p.dealWithHashAndAmount(pc, data, decValue, addrPayload); err != nil {
+			if err = p.dealWithHashAndAmount(pc, data, decValue, addrPayload, receiptAddr); err != nil {
 				return fmt.Errorf("dealWithHashAndAmount err: %s", err.Error())
 			}
 		}
@@ -198,7 +197,7 @@ func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo, pc *parser_co
 	return nil
 }
 
-func (p *ParserBitcoin) dealWithOpReturn(pc *parser_common.ParserCore, data btcjson.TxRawResult, decValue decimal.Decimal, addrPayload string) (bool, error) {
+func (p *ParserBitcoin) dealWithOpReturn(pc *parser_common.ParserCore, data btcjson.TxRawResult, decValue decimal.Decimal, addrPayload, receiptAddr string) (bool, error) {
 	var orderId string
 	for _, vOut := range data.Vout {
 		switch vOut.ScriptPubKey.Type {
@@ -213,9 +212,9 @@ func (p *ParserBitcoin) dealWithOpReturn(pc *parser_common.ParserCore, data btcj
 	if orderId == "" {
 		return false, nil
 	}
-	order, err := pc.DbDao.GetOrderInfoByOrderId(orderId)
+	order, err := pc.DbDao.GetOrderInfoByOrderIdWithAddr(orderId, receiptAddr)
 	if err != nil {
-		return false, fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
+		return false, fmt.Errorf("GetOrderInfoByOrderIdWithAddr err: %s", err.Error())
 	} else if order.Id == 0 {
 		log.Warn("order not exist:", pc.ParserType, orderId)
 		return false, nil
@@ -227,68 +226,30 @@ func (p *ParserBitcoin) dealWithOpReturn(pc *parser_common.ParserCore, data btcj
 	decValue = decValue.Mul(decimal.NewFromInt(1e8))
 	if decValue.Cmp(order.Amount) == -1 {
 		log.Warn("tx value less than order amount:", decValue.String(), order.Amount.String())
-		paymentInfo := tables.TablePaymentInfo{
-			PayHash:       data.Txid,
-			OrderId:       order.OrderId,
-			PayAddress:    addrPayload,
-			AlgorithmId:   order.AlgorithmId,
-			Timestamp:     time.Now().UnixMilli(),
-			Amount:        decValue,
-			PayTokenId:    order.PayTokenId,
-			PayHashStatus: tables.PayHashStatusConfirm,
-			RefundStatus:  tables.RefundStatusDefault,
-		}
-		if err = pc.DbDao.CreatePayment(paymentInfo); err != nil {
-			log.Error("CreatePayment err:", err.Error())
-		}
+		pc.CreatePaymentForAmountMismatch(order, data.Txid, addrPayload, decValue)
 		return false, nil
 	}
 	// update payment info
-	paymentInfo := tables.TablePaymentInfo{
-		PayHash:       data.Txid,
-		OrderId:       order.OrderId,
-		PayAddress:    addrPayload,
-		AlgorithmId:   order.AlgorithmId,
-		Timestamp:     time.Now().UnixMilli(),
-		Amount:        order.Amount,
-		PayTokenId:    order.PayTokenId,
-		PayHashStatus: tables.PayHashStatusConfirm,
-		RefundStatus:  tables.RefundStatusDefault,
-	}
-	if err := pc.CN.HandlePayment(paymentInfo, order); err != nil {
-		return false, fmt.Errorf("HandlePayment err: %s", err.Error())
+	if err = pc.DoPayment(order, data.Txid, addrPayload); err != nil {
+		return false, fmt.Errorf("pc.DoPayment err: %s", err.Error())
 	}
 
 	return true, nil
 }
 
-func (p *ParserBitcoin) dealWithHashAndAmount(pc *parser_common.ParserCore, data btcjson.TxRawResult, decValue decimal.Decimal, addrPayload string) error {
+func (p *ParserBitcoin) dealWithHashAndAmount(pc *parser_common.ParserCore, data btcjson.TxRawResult, decValue decimal.Decimal, addrPayload, receiptAddr string) error {
 	var order tables.TableOrderInfo
 	var err error
 
 	decValue = decValue.Mul(decimal.NewFromInt(1e8))
-	order, err = pc.DbDao.GetOrderByAddrWithAmount(addrPayload, pc.PayTokenId, decValue)
+	order, err = pc.DbDao.GetOrderByAddrWithAmountAndAddr(addrPayload, receiptAddr, pc.PayTokenId, decValue)
 	if err != nil {
-		return fmt.Errorf("GetOrderByAddrWithAmount err: %s", err.Error())
+		return fmt.Errorf("GetOrderByAddrWithAmountAndAddr err: %s", err.Error())
 	}
 	log.Info("dealWithHashAndAmount:", data.Txid, order.OrderId)
 	if order.Id > 0 {
-		paymentInfo := tables.TablePaymentInfo{
-			Id:            0,
-			PayHash:       data.Txid,
-			OrderId:       order.OrderId,
-			PayAddress:    addrPayload,
-			AlgorithmId:   order.AlgorithmId,
-			Timestamp:     time.Now().UnixMilli(),
-			Amount:        order.Amount,
-			PayTokenId:    order.PayTokenId,
-			PayHashStatus: tables.PayHashStatusConfirm,
-			RefundStatus:  tables.RefundStatusDefault,
-			RefundHash:    "",
-			RefundNonce:   0,
-		}
-		if err := pc.CN.HandlePayment(paymentInfo, order); err != nil {
-			return fmt.Errorf("HandlePayment err: %s", err.Error())
+		if err = pc.DoPayment(order, data.Txid, addrPayload); err != nil {
+			return fmt.Errorf("pc.DoPayment err: %s", err.Error())
 		}
 	} else {
 		msg := `hash: %s

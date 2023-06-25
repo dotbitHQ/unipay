@@ -12,7 +12,6 @@ import (
 	"math/big"
 	"strings"
 	"sync"
-	"time"
 	"unipay/parser/parser_common"
 	"unipay/tables"
 )
@@ -135,23 +134,27 @@ func (p *ParserEvm) ConcurrentParsing(pc *parser_common.ParserCore) error {
 }
 
 func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.ParserCore) error {
-	parserType, payTokenId, addr := pc.ParserType, pc.PayTokenId, pc.Address
-	contractUSDT, contractPayTokenId := pc.ContractAddress, pc.ContractPayTokenId
+	parserType, payTokenId := pc.ParserType, pc.PayTokenId
+	contractUSDT, contractPayTokenId := strings.ToLower(pc.ContractAddress), pc.ContractPayTokenId
 	if block == nil {
 		return fmt.Errorf("block is nil")
 	}
 	for _, tx := range block.Transactions {
-		switch strings.ToLower(ethcommon.HexToAddress(tx.To).Hex()) {
-		case strings.ToLower(addr):
+		addrTo := strings.ToLower(ethcommon.HexToAddress(tx.To).Hex())
+		switch addrTo {
+		default:
+			if _, ok := pc.AddrMap[addrTo]; !ok {
+				continue
+			}
 			orderId := string(ethcommon.FromHex(tx.Input))
 			log.Info("parsingBlockData:", parserType, tx.Hash, tx.From, orderId, tx.Value)
 			if orderId == "" {
 				continue
 			}
 			// select order by order id which in tx memo
-			order, err := pc.DbDao.GetOrderInfoByOrderId(orderId)
+			order, err := pc.DbDao.GetOrderInfoByOrderIdWithAddr(orderId, addrTo)
 			if err != nil {
-				return fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
+				return fmt.Errorf("GetOrderInfoByOrderIdWithAddr err: %s", err.Error())
 			} else if order.Id == 0 {
 				log.Warn("order not exist:", parserType, orderId)
 				continue
@@ -164,38 +167,26 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 			decValue := decimal.NewFromBigInt(chain_evm.BigIntFromHex(tx.Value), 0)
 			if decValue.Cmp(order.Amount) == -1 {
 				log.Warn("tx value less than order amount:", parserType, decValue, order.Amount.String())
-				paymentInfo := tables.TablePaymentInfo{
-					PayHash:       tx.Hash,
-					OrderId:       order.OrderId,
-					PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
-					AlgorithmId:   order.AlgorithmId,
-					Timestamp:     time.Now().UnixMilli(),
-					Amount:        decValue,
-					PayTokenId:    order.PayTokenId,
-					PayHashStatus: tables.PayHashStatusConfirm,
-					RefundStatus:  tables.RefundStatusDefault,
-				}
-				if err = pc.DbDao.CreatePayment(paymentInfo); err != nil {
-					log.Error("CreatePayment err:", err.Error())
-				}
+				pc.CreatePaymentForAmountMismatch(order, tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), decValue)
 				continue
 			}
-			if err := p.doPayment(order, tx, pc); err != nil {
-				return fmt.Errorf("doPayment err: %s", err.Error())
+			if err = pc.DoPayment(order, tx.Hash, ethcommon.HexToAddress(tx.From).Hex()); err != nil {
+				return fmt.Errorf("pc.DoPayment err: %s", err.Error())
 			}
-		case strings.ToLower(contractUSDT):
+		case contractUSDT:
 			// a9059cbb is the hex str of transfer
 			if len(tx.Input) != 138 || !strings.Contains(tx.Input, "a9059cbb0000") {
 				continue
 			}
-			if !strings.EqualFold(tx.Input[34:74], addr[2:]) {
+			addrReceipt := "0x" + strings.ToLower(tx.Input[34:74])
+			if _, ok := pc.AddrMap[addrReceipt]; !ok {
 				continue
 			}
 			amount := decimal.NewFromBigInt(new(big.Int).SetBytes(dascommon.Hex2Bytes(tx.Input)[36:]), 0)
 			log.Info("parsingBlockData:", contractPayTokenId, tx.From, amount.String())
-			order, err := pc.DbDao.GetOrderByAddrWithAmount(tx.From, contractPayTokenId, amount)
+			order, err := pc.DbDao.GetOrderByAddrWithAmountAndAddr(tx.From, addrReceipt, contractPayTokenId, amount)
 			if err != nil {
-				return fmt.Errorf("GetOrderByAddrWithAmount err: %s", err.Error())
+				return fmt.Errorf("GetOrderByAddrWithAmountAndAddr err: %s", err.Error())
 			} else if order.Id == 0 {
 				log.Warn("order not exist:", contractPayTokenId, tx.From, amount)
 				continue
@@ -204,29 +195,11 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				log.Warn("order pay token id not match", order.OrderId, order.PayTokenId, contractPayTokenId)
 				continue
 			}
-			if err := p.doPayment(order, tx, pc); err != nil {
-				return fmt.Errorf("doPayment err: %s", err.Error())
+
+			if err = pc.DoPayment(order, tx.Hash, ethcommon.HexToAddress(tx.From).Hex()); err != nil {
+				return fmt.Errorf("pc.DoPayment err: %s", err.Error())
 			}
 		}
-	}
-	return nil
-}
-
-func (p *ParserEvm) doPayment(order tables.TableOrderInfo, tx chain_evm.Transaction, pc *parser_common.ParserCore) error {
-	// change the status to confirm
-	paymentInfo := tables.TablePaymentInfo{
-		PayHash:       tx.Hash,
-		OrderId:       order.OrderId,
-		PayAddress:    ethcommon.HexToAddress(tx.From).Hex(),
-		AlgorithmId:   order.AlgorithmId,
-		Timestamp:     time.Now().UnixMilli(),
-		Amount:        order.Amount,
-		PayTokenId:    order.PayTokenId,
-		PayHashStatus: tables.PayHashStatusConfirm,
-		RefundStatus:  tables.RefundStatusDefault,
-	}
-	if err := pc.CN.HandlePayment(paymentInfo, order); err != nil {
-		return fmt.Errorf("HandlePayment err: %s", err.Error())
 	}
 	return nil
 }

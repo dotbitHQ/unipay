@@ -12,7 +12,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"strconv"
 	"sync"
-	"time"
 	"unipay/config"
 	"unipay/parser/parser_common"
 	"unipay/tables"
@@ -23,16 +22,9 @@ var log = mylog.NewLogger("parser_ckb", mylog.LevelDebug)
 type ParserCkb struct {
 	Ctx    context.Context
 	Client rpc.Client
-
-	addressArgs string
 }
 
 func (p *ParserCkb) Init(pc *parser_common.ParserCore) error {
-	parseAdd, err := address.Parse(pc.Address)
-	if err != nil {
-		return fmt.Errorf("address.Parse err: %s[%d]", err.Error(), pc.ParserType)
-	}
-	p.addressArgs = common.Bytes2Hex(parseAdd.Script.Args)
 	return nil
 }
 func (p *ParserCkb) GetLatestBlockNumber() (uint64, error) {
@@ -141,7 +133,8 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 	}
 	for _, tx := range block.Transactions {
 		for i, v := range tx.Outputs {
-			if p.addressArgs != common.Bytes2Hex(v.Lock.Args) {
+			addrArgs, ok := pc.AddrMap[common.Bytes2Hex(v.Lock.Args)]
+			if !ok {
 				continue
 			}
 			orderId := string(tx.OutputsData[i])
@@ -150,9 +143,9 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 			}
 			log.Info("parsingBlockData:", orderId, tx.Hash.Hex())
 			capacity, _ := decimal.NewFromString(strconv.FormatUint(v.Capacity, 10))
-			order, err := pc.DbDao.GetOrderInfoByOrderId(orderId)
+			order, err := pc.DbDao.GetOrderInfoByOrderIdWithAddr(orderId, addrArgs)
 			if err != nil {
-				return fmt.Errorf("GetOrderInfoByOrderId err: %s", err.Error())
+				return fmt.Errorf("GetOrderInfoByOrderIdWithAddr err: %s", err.Error())
 			} else if order.Id == 0 {
 				log.Warn("order not exist:", parserType, orderId)
 				continue
@@ -176,36 +169,12 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 			}
 			if capacity.Cmp(order.Amount) == -1 {
 				log.Warn("tx value less than order amount:", capacity.String(), order.Amount.String())
-				paymentInfo := tables.TablePaymentInfo{
-					PayHash:       tx.Hash.Hex(),
-					OrderId:       order.OrderId,
-					PayAddress:    fromAddr,
-					AlgorithmId:   order.AlgorithmId,
-					Timestamp:     time.Now().UnixMilli(),
-					Amount:        capacity,
-					PayTokenId:    order.PayTokenId,
-					PayHashStatus: tables.PayHashStatusConfirm,
-					RefundStatus:  tables.RefundStatusDefault,
-				}
-				if err = pc.DbDao.CreatePayment(paymentInfo); err != nil {
-					log.Error("CreatePayment err:", err.Error())
-				}
+				pc.CreatePaymentForAmountMismatch(order, tx.Hash.Hex(), fromAddr, capacity)
 				continue
 			}
 			// change the status to confirm
-			paymentInfo := tables.TablePaymentInfo{
-				PayHash:       tx.Hash.Hex(),
-				OrderId:       order.OrderId,
-				PayAddress:    fromAddr,
-				AlgorithmId:   order.AlgorithmId,
-				Timestamp:     time.Now().UnixMilli(),
-				Amount:        order.Amount,
-				PayTokenId:    order.PayTokenId,
-				PayHashStatus: tables.PayHashStatusConfirm,
-				RefundStatus:  tables.RefundStatusDefault,
-			}
-			if err := pc.CN.HandlePayment(paymentInfo, order); err != nil {
-				return fmt.Errorf("HandlePayment err: %s", err.Error())
+			if err = pc.DoPayment(order, tx.Hash.Hex(), fromAddr); err != nil {
+				return fmt.Errorf("pc.DoPayment err: %s", err.Error())
 			}
 			break
 		}

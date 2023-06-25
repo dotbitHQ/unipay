@@ -20,6 +20,8 @@ chain:
     node: ""
     address: "" # receiver's address
     private: "" # private key
+    addr_map: # address & private
+      "": ""
   eth:
     refund: true
     switch: true
@@ -27,6 +29,8 @@ chain:
     address: ""
     private: ""
     refund_add_fee: 1.1
+    addr_map: # address & private
+      "": ""
   tron:
     refund: true
     switch: true
@@ -34,6 +38,8 @@ chain:
     address: ""
     private: ""
     refund_add_fee: 1.1
+    addr_map: # address & private
+      "": ""
   bsc:
     refund: true
     switch: true
@@ -41,6 +47,8 @@ chain:
     address: ""
     private: ""
     refund_add_fee: 1.1
+    addr_map: # address & private
+      "": ""
   polygon:
     refund: true
     switch: true
@@ -48,6 +56,8 @@ chain:
     address: ""
     private: ""
     refund_add_fee: 1.1
+    addr_map: # address & private
+      "": ""
   doge:
     refund: true
     switch: true
@@ -56,6 +66,8 @@ chain:
     private: ""
     user: ""
     password: ""
+    addr_map: # address & private
+      "": ""
   stripe:
     refund: true
     key: ""

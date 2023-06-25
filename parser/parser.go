@@ -8,7 +8,6 @@ import (
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
 	"github.com/dotbitHQ/das-lib/common"
 	"github.com/nervosnetwork/ckb-sdk-go/rpc"
-	"strings"
 	"sync"
 	"unipay/config"
 	"unipay/dao"
@@ -77,13 +76,13 @@ func (t *ToolParser) initParserEth() error {
 			CN:                 t.cn,
 			ParserType:         tables.ParserTypeETH,
 			PayTokenId:         tables.PayTokenIdETH,
-			Address:            config.Cfg.Chain.Eth.Address,
 			ContractPayTokenId: tables.PayTokenIdErc20USDT,
 			ContractAddress:    tables.PayTokenIdErc20USDT.GetContractAddress(config.Cfg.Server.Net),
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     5,
 			ConfirmNum:         2,
 			Switch:             config.Cfg.Chain.Eth.Switch,
+			AddrMap:            config.FormatAddrMap(tables.ParserTypeETH, config.Cfg.Chain.Eth.AddrMap),
 		},
 		PA: &parser_evm.ParserEvm{
 			ChainEvm: chainEvm,
@@ -108,13 +107,13 @@ func (t *ToolParser) initParserBsc() error {
 			CN:                 t.cn,
 			ParserType:         tables.ParserTypeBSC,
 			PayTokenId:         tables.PayTokenIdBNB,
-			Address:            config.Cfg.Chain.Bsc.Address,
 			ContractPayTokenId: tables.PayTokenIdBep20USDT,
 			ContractAddress:    tables.PayTokenIdBep20USDT.GetContractAddress(config.Cfg.Server.Net),
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     10,
 			ConfirmNum:         10,
 			Switch:             config.Cfg.Chain.Bsc.Switch,
+			AddrMap:            config.FormatAddrMap(tables.ParserTypeBSC, config.Cfg.Chain.Bsc.AddrMap),
 		},
 		PA: &parser_evm.ParserEvm{
 			ChainEvm: chainEvm,
@@ -140,11 +139,11 @@ func (t *ToolParser) initParserPolygon() error {
 			CN:                 t.cn,
 			ParserType:         tables.ParserTypePOLYGON,
 			PayTokenId:         tables.PayTokenIdMATIC,
-			Address:            config.Cfg.Chain.Polygon.Address,
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     10,
 			ConfirmNum:         10,
 			Switch:             config.Cfg.Chain.Polygon.Switch,
+			AddrMap:            config.FormatAddrMap(tables.ParserTypePOLYGON, config.Cfg.Chain.Polygon.AddrMap),
 		},
 		PA: &parser_evm.ParserEvm{
 			ChainEvm: chainEvm,
@@ -161,12 +160,6 @@ func (t *ToolParser) initParserTron() error {
 	if err != nil {
 		return fmt.Errorf("chain_ckb.NewChainTron tron err: %s", err.Error())
 	}
-	address := config.Cfg.Chain.Tron.Address
-	if strings.HasPrefix(address, common.TronBase58PreFix) {
-		if address, err = common.TronBase58ToHex(address); err != nil {
-			return fmt.Errorf("TronBase58ToHex err: %s", err.Error())
-		}
-	}
 	contractAddress := tables.PayTokenIdTrc20USDT.GetContractAddress(config.Cfg.Server.Net)
 	if contractAddress, err = common.TronBase58ToHex(contractAddress); err != nil {
 		return fmt.Errorf("TronBase58ToHex err: %s", err.Error())
@@ -179,13 +172,13 @@ func (t *ToolParser) initParserTron() error {
 			CN:                 t.cn,
 			ParserType:         tables.ParserTypeTRON,
 			PayTokenId:         tables.PayTokenIdTRX,
-			Address:            address,
 			ContractPayTokenId: tables.PayTokenIdTrc20USDT,
 			ContractAddress:    contractAddress,
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     10,
 			ConfirmNum:         10,
 			Switch:             config.Cfg.Chain.Tron.Switch,
+			AddrMap:            config.FormatAddrMap(tables.ParserTypeTRON, config.Cfg.Chain.Tron.AddrMap),
 		},
 		PA: &parser_tron.ParserTron{ChainTron: chainTron},
 	}
@@ -209,11 +202,11 @@ func (t *ToolParser) initParserCkb() error {
 			CN:                 t.cn,
 			ParserType:         tables.ParserTypeCKB,
 			PayTokenId:         tables.PayTokenIdDAS,
-			Address:            config.Cfg.Chain.Ckb.Address,
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     10,
 			ConfirmNum:         2,
 			Switch:             config.Cfg.Chain.Ckb.Switch,
+			AddrMap:            config.FormatAddrMap(tables.ParserTypeCKB, config.Cfg.Chain.Ckb.AddrMap),
 		},
 		PA: &parser_ckb.ParserCkb{
 			Ctx:    t.ctx,
@@ -241,11 +234,11 @@ func (t *ToolParser) initParserDoge() error {
 			CN:                 t.cn,
 			ParserType:         tables.ParserTypeDoge,
 			PayTokenId:         tables.PayTokenIdDOGE,
-			Address:            config.Cfg.Chain.Doge.Address,
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     5,
 			ConfirmNum:         3,
 			Switch:             config.Cfg.Chain.Doge.Switch,
+			AddrMap:            config.Cfg.Chain.Doge.AddrMap,
 		},
 		PA: &parser_bitcoin.ParserBitcoin{NodeRpc: &nodeRpc},
 	}
