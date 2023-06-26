@@ -18,7 +18,7 @@ type ReqOrderInfo struct {
 
 type RespOrderInfo struct {
 	OrderId         string `json:"order_id"`
-	ReceiptAddr     string `json:"receipt_addr"`
+	PaymentAddress  string `json:"payment_address"`
 	ContractAddress string `json:"contract_address"`
 	ClientSecret    string `json:"client_secret"`
 }
@@ -79,7 +79,7 @@ func (h *HttpHandle) doOrderInfo(req *ReqOrderInfo, apiResp *http_api.ApiResp) e
 	}
 
 	resp.OrderId = req.OrderId
-	resp.ReceiptAddr = orderInfo.ReceiptAddr
+	resp.PaymentAddress = orderInfo.PaymentAddress
 	resp.ContractAddress = orderInfo.PayTokenId.GetContractAddress(config.Cfg.Server.Net)
 
 	apiResp.ApiRespOK(resp)
