@@ -16,14 +16,15 @@ import (
 
 type ReqOrderCreate struct {
 	core.ChainTypeAddress
-	BusinessId string            `json:"business_id"`
-	Amount     decimal.Decimal   `json:"amount"`
-	PayTokenId tables.PayTokenId `json:"pay_token_id"`
+	BusinessId  string            `json:"business_id"`
+	Amount      decimal.Decimal   `json:"amount"`
+	PayTokenId  tables.PayTokenId `json:"pay_token_id"`
+	ReceiptAddr string            `json:"receipt_addr"`
 }
 
 type RespOrderCreate struct {
 	OrderId               string `json:"order_id"`
-	PaymentAddress        string `json:"payment_address"`
+	ReceiptAddr           string `json:"receipt_addr"`
 	ContractAddress       string `json:"contract_address"`
 	StripePaymentIntentId string `json:"stripe_payment_intent_id"`
 	ClientSecret          string `json:"client_secret"`
@@ -70,12 +71,12 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 	}
 
 	// check pay token id
-	paymentAddress, err := config.GetPaymentAddress(req.PayTokenId)
+	receiptAddr, err := config.GetReceiptAddr(req.PayTokenId, req.ReceiptAddr)
 	if err != nil {
 		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, err.Error())
 		return nil
 	}
-	log.Info("doOrderCreate:", paymentAddress, req.PayTokenId)
+	log.Info("doOrderCreate:", receiptAddr, req.PayTokenId)
 
 	// create order
 	orderInfo := tables.TableOrderInfo{
@@ -120,7 +121,7 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 
 	//
 	resp.OrderId = orderInfo.OrderId
-	resp.PaymentAddress = paymentAddress
+	resp.ReceiptAddr = receiptAddr
 	resp.ContractAddress = req.PayTokenId.GetContractAddress(config.Cfg.Server.Net)
 
 	apiResp.ApiRespOK(resp)

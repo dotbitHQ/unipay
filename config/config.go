@@ -149,21 +149,33 @@ func FormatAddrMap(parserType tables.ParserType, addrMap map[string]string) map[
 	return res
 }
 
-func GetPaymentAddress(payTokenId tables.PayTokenId) (string, error) {
+func GetReceiptAddr(payTokenId tables.PayTokenId, receiptAddr string) (string, error) {
 	addr := ""
 	switch payTokenId {
 	case tables.PayTokenIdETH, tables.PayTokenIdErc20USDT:
-		addr = Cfg.Chain.Eth.Address
+		if _, ok := Cfg.Chain.Eth.AddrMap[receiptAddr]; ok {
+			return receiptAddr, nil
+		}
 	case tables.PayTokenIdTRX, tables.PayTokenIdTrc20USDT:
-		addr = Cfg.Chain.Tron.Address
+		if _, ok := Cfg.Chain.Tron.AddrMap[receiptAddr]; ok {
+			return receiptAddr, nil
+		}
 	case tables.PayTokenIdBNB, tables.PayTokenIdBep20USDT:
-		addr = Cfg.Chain.Bsc.Address
+		if _, ok := Cfg.Chain.Bsc.AddrMap[receiptAddr]; ok {
+			return receiptAddr, nil
+		}
 	case tables.PayTokenIdMATIC:
-		addr = Cfg.Chain.Polygon.Address
+		if _, ok := Cfg.Chain.Polygon.AddrMap[receiptAddr]; ok {
+			return receiptAddr, nil
+		}
 	case tables.PayTokenIdDAS, tables.PayTokenIdCKB:
-		addr = Cfg.Chain.Ckb.Address
+		if _, ok := Cfg.Chain.Ckb.AddrMap[receiptAddr]; ok {
+			return receiptAddr, nil
+		}
 	case tables.PayTokenIdDOGE:
-		addr = Cfg.Chain.Doge.Address
+		if _, ok := Cfg.Chain.Doge.AddrMap[receiptAddr]; ok {
+			return receiptAddr, nil
+		}
 	case tables.PayTokenIdStripeUSD:
 		addr = "stripe"
 	default:

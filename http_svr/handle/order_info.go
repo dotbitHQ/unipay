@@ -18,7 +18,7 @@ type ReqOrderInfo struct {
 
 type RespOrderInfo struct {
 	OrderId         string `json:"order_id"`
-	PaymentAddress  string `json:"payment_address"`
+	ReceiptAddr     string `json:"receipt_addr"`
 	ContractAddress string `json:"contract_address"`
 	ClientSecret    string `json:"client_secret"`
 }
@@ -61,11 +61,6 @@ func (h *HttpHandle) doOrderInfo(req *ReqOrderInfo, apiResp *http_api.ApiResp) e
 		apiResp.ApiRespErr(http_api.ApiCodeDbError, "Failed to get order info")
 		return fmt.Errorf("GetOrderInfo err: %s", err.Error())
 	}
-	paymentAddress, err := config.GetPaymentAddress(orderInfo.PayTokenId)
-	if err != nil {
-		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, err.Error())
-		return nil
-	}
 	if orderInfo.PayTokenId == tables.PayTokenIdStripeUSD {
 		paymentInfo, err := h.DbDao.GetPaymentInfoByOrderId(orderInfo.OrderId)
 		if err != nil {
@@ -84,7 +79,7 @@ func (h *HttpHandle) doOrderInfo(req *ReqOrderInfo, apiResp *http_api.ApiResp) e
 	}
 
 	resp.OrderId = req.OrderId
-	resp.PaymentAddress = paymentAddress
+	resp.ReceiptAddr = orderInfo.ReceiptAddr
 	resp.ContractAddress = orderInfo.PayTokenId.GetContractAddress(config.Cfg.Server.Net)
 
 	apiResp.ApiRespOK(resp)
