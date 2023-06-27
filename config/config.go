@@ -11,6 +11,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/nervosnetwork/ckb-sdk-go/address"
 	"github.com/nervosnetwork/ckb-sdk-go/rpc"
+	"github.com/nervosnetwork/ckb-sdk-go/transaction"
+	"github.com/nervosnetwork/ckb-sdk-go/types"
 	"github.com/scorpiotzh/mylog"
 	"github.com/scorpiotzh/toolib"
 	"github.com/stripe/stripe-go/v74"
@@ -125,13 +127,11 @@ func FormatAddrMap(parserType tables.ParserType, addrMap map[string]string) map[
 		}
 	case tables.ParserTypeTRON:
 		for k, v := range addrMap {
-			if strings.HasPrefix(k, common.TronBase58PreFix) {
-				if tronAddr, err := common.TronBase58ToHex(k); err != nil {
-					log.Error("FormatAddrMap err:", parserType, k, err.Error())
-					continue
-				} else {
-					res[tronAddr] = v
-				}
+			if tronAddr, err := common.TronBase58ToHex(k); err != nil {
+				log.Error("FormatAddrMap err:", parserType, k, err.Error())
+				continue
+			} else {
+				res[tronAddr] = v
 			}
 		}
 	case tables.ParserTypeCKB:
@@ -150,48 +150,52 @@ func FormatAddrMap(parserType tables.ParserType, addrMap map[string]string) map[
 }
 
 func GetPaymentAddress(payTokenId tables.PayTokenId, paymentAddress string) (string, error) {
-	addr := ""
 	switch payTokenId {
 	case tables.PayTokenIdETH, tables.PayTokenIdErc20USDT:
 		if _, ok := Cfg.Chain.Eth.AddrMap[paymentAddress]; ok {
-			return paymentAddress, nil
+			return strings.ToLower(paymentAddress), nil
 		}
 	case tables.PayTokenIdTRX, tables.PayTokenIdTrc20USDT:
 		if _, ok := Cfg.Chain.Tron.AddrMap[paymentAddress]; ok {
-			return paymentAddress, nil
+			if tronAddr, err := common.TronBase58ToHex(paymentAddress); err != nil {
+				return "", fmt.Errorf("common.TronBase58ToHex err: %s[%s]", err.Error(), paymentAddress)
+			} else {
+				return tronAddr, nil
+			}
 		}
 	case tables.PayTokenIdBNB, tables.PayTokenIdBep20USDT:
 		if _, ok := Cfg.Chain.Bsc.AddrMap[paymentAddress]; ok {
-			return paymentAddress, nil
+			return strings.ToLower(paymentAddress), nil
 		}
 	case tables.PayTokenIdMATIC:
 		if _, ok := Cfg.Chain.Polygon.AddrMap[paymentAddress]; ok {
-			return paymentAddress, nil
+			return strings.ToLower(paymentAddress), nil
 		}
 	case tables.PayTokenIdDAS, tables.PayTokenIdCKB:
 		if _, ok := Cfg.Chain.Ckb.AddrMap[paymentAddress]; ok {
-			return paymentAddress, nil
+			if parseAddr, err := address.Parse(paymentAddress); err != nil {
+				return "", fmt.Errorf("address.Parse err: %s[%s]", err.Error(), paymentAddress)
+			} else if parseAddr.Script.CodeHash.String() != transaction.SECP256K1_BLAKE160_SIGHASH_ALL_TYPE_HASH {
+				return "", fmt.Errorf("Script.CodeHash Invaild: %s", paymentAddress)
+			} else {
+				return common.Bytes2Hex(parseAddr.Script.Args), nil
+			}
 		}
 	case tables.PayTokenIdDOGE:
 		if _, ok := Cfg.Chain.Doge.AddrMap[paymentAddress]; ok {
 			return paymentAddress, nil
 		}
 	case tables.PayTokenIdStripeUSD:
-		addr = "stripe"
-	default:
-		return "", fmt.Errorf("unknow pay token id[%s]", payTokenId)
+		return "", nil
 	}
-	if addr == "" {
-		return "", fmt.Errorf("payment address not configured")
-	}
-	return addr, nil
+	return "", fmt.Errorf("unknow pay token id[%s]", payTokenId)
 }
 
-func InitDasCore(ctx context.Context, wg *sync.WaitGroup) (*core.DasCore, *dascache.DasCache, *txbuilder.DasTxBuilderBase, error) {
+func InitDasCore(ctx context.Context, wg *sync.WaitGroup) (*core.DasCore, *dascache.DasCache, error) {
 	// ckb node
 	ckbClient, err := rpc.DialWithIndexer(Cfg.Chain.Ckb.Node, Cfg.Chain.Ckb.Node)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("rpc.DialWithIndexer err: %s", err.Error())
+		return nil, nil, fmt.Errorf("rpc.DialWithIndexer err: %s", err.Error())
 	}
 	log.Info("ckb node ok")
 
@@ -211,10 +215,10 @@ func InitDasCore(ctx context.Context, wg *sync.WaitGroup) (*core.DasCore, *dasca
 	dasCore := core.NewDasCore(ctx, wg, ops...)
 	dasCore.InitDasContract(env.MapContract)
 	if err := dasCore.InitDasConfigCell(); err != nil {
-		return nil, nil, nil, fmt.Errorf("InitDasConfigCell err: %s", err.Error())
+		return nil, nil, fmt.Errorf("InitDasConfigCell err: %s", err.Error())
 	}
 	if err := dasCore.InitDasSoScript(); err != nil {
-		return nil, nil, nil, fmt.Errorf("InitDasSoScript err: %s", err.Error())
+		return nil, nil, fmt.Errorf("InitDasSoScript err: %s", err.Error())
 	}
 	dasCore.RunAsyncDasContract(time.Minute * 3)   // contract outpoint
 	dasCore.RunAsyncDasConfigCell(time.Minute * 5) // config cell outpoint
@@ -226,28 +230,24 @@ func InitDasCore(ctx context.Context, wg *sync.WaitGroup) (*core.DasCore, *dasca
 	dasCache := dascache.NewDasCache(ctx, wg)
 	dasCache.RunClearExpiredOutPoint(time.Minute * 15)
 	log.Info("das cache ok")
+	return dasCore, dasCache, nil
+}
 
-	//
-	payServerAddressArgs := ""
-	if Cfg.Chain.Ckb.Address != "" {
-		parseAddress, err := address.Parse(Cfg.Chain.Ckb.Address)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("address.Parse err: %s", err.Error())
-		} else {
-			payServerAddressArgs = common.Bytes2Hex(parseAddress.Script.Args)
-		}
+func InitDasTxBuilderBase(ctx context.Context, dasCore *core.DasCore, fromScript *types.Script, private string) (*txbuilder.DasTxBuilderBase, error) {
+	if fromScript == nil {
+		return nil, fmt.Errorf("fromScript is nil")
 	}
+	svrArgs := common.Bytes2Hex(fromScript.Args)
 	var handleSign sign.HandleSignCkbMessage
-	if Cfg.Chain.Ckb.Private != "" {
+	if private != "" {
 		handleSign = sign.LocalSign(Cfg.Chain.Ckb.Private)
-	} else if Cfg.Server.RemoteSignApiUrl != "" && payServerAddressArgs != "" {
+	} else if Cfg.Server.RemoteSignApiUrl != "" {
 		remoteSignClient, err := sign.NewClient(ctx, Cfg.Server.RemoteSignApiUrl)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("sign.NewClient err: %s", err.Error())
+			return nil, fmt.Errorf("sign.NewClient err: %s", err.Error())
 		}
-		handleSign = sign.RemoteSign(remoteSignClient, Cfg.Server.Net, payServerAddressArgs)
+		handleSign = sign.RemoteSign(remoteSignClient, Cfg.Server.Net, svrArgs)
 	}
-	txBuilderBase := txbuilder.NewDasTxBuilderBase(ctx, dasCore, handleSign, payServerAddressArgs)
-
-	return dasCore, dasCache, txBuilderBase, nil
+	txBuilderBase := txbuilder.NewDasTxBuilderBase(ctx, dasCore, handleSign, svrArgs)
+	return txBuilderBase, nil
 }

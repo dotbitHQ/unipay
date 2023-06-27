@@ -60,18 +60,17 @@ func runServer(ctx *cli.Context) error {
 	}
 
 	// das core
-	dasCore, _, txBuilderBase, err := config.InitDasCore(ctxServer, &wgServer)
+	dasCore, _, err := config.InitDasCore(ctxServer, &wgServer)
 	if err != nil {
 		return fmt.Errorf("config.InitDasCore err: %s", err.Error())
 	}
 
 	// tool refund
 	toolRefund := refund.ToolRefund{
-		Ctx:           ctxServer,
-		Wg:            &wgServer,
-		DbDao:         dbDao,
-		DasCore:       dasCore,
-		TxBuilderBase: txBuilderBase,
+		Ctx:     ctxServer,
+		Wg:      &wgServer,
+		DbDao:   dbDao,
+		DasCore: dasCore,
 	}
 	if err := toolRefund.InitRefundInfo(); err != nil {
 		return fmt.Errorf("InitRefundInfo err: %s", err.Error())

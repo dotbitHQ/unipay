@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
@@ -74,13 +75,13 @@ func (d *DbDao) GetRefundListWithin3d() (list []tables.TablePaymentInfo, err err
 	return
 }
 
-//func (d *DbDao) GetViewRefundListWithin3d() (list []tables.ViewRefundPaymentInfo, err error) {
-//	timestamp := time.Now().Add(-time.Hour * 24 * 3).UnixMilli()
-//	sql := fmt.Sprintf(`SELECT p.*,o.payment_address FROM %s p LEFT JOIN %s o ON o.order_id=p.order_id AND p.timestamp>=? AND pay_hash_status=? AND refund_status=?`,
-//		tables.TableNamePaymentInfo, tables.TableNameOrderInfo)
-//	err = d.db.Raw(sql, timestamp, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).Find(&list).Error
-//	return
-//}
+func (d *DbDao) GetViewRefundListWithin3d() (list []tables.ViewRefundPaymentInfo, err error) {
+	timestamp := time.Now().Add(-time.Hour * 24 * 3).UnixMilli()
+	sql := fmt.Sprintf(`SELECT p.*,o.payment_address FROM %s p LEFT JOIN %s o ON o.order_id=p.order_id AND p.timestamp>=? AND pay_hash_status=? AND refund_status=?`,
+		tables.TableNamePaymentInfo, tables.TableNameOrderInfo)
+	err = d.db.Raw(sql, timestamp, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).Find(&list).Error
+	return
+}
 
 func (d *DbDao) UpdatePaymentListToRefunded(payHashList []string, refundHash string) error {
 	return d.db.Model(tables.TablePaymentInfo{}).

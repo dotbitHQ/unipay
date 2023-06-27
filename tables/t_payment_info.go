@@ -53,18 +53,18 @@ const (
 	RefundStatusRefuseToRefund RefundStatus = 4
 )
 
-//type ViewRefundPaymentInfo struct {
-//	Id             uint64                `json:"id" gorm:"column:id;"`
-//	PayHash        string                `json:"pay_hash" gorm:"column:pay_hash;"`
-//	OrderId        string                `json:"order_id" gorm:"column:order_id;"`
-//	PayAddress     string                `json:"pay_address" gorm:"column:pay_address;"`
-//	AlgorithmId    common.DasAlgorithmId `json:"algorithm_id" gorm:"column:algorithm_id;"`
-//	Timestamp      int64                 `json:"timestamp" gorm:"column:timestamp;"`
-//	Amount         decimal.Decimal       `json:"amount" gorm:"column:amount;"` // diff from order
-//	PayTokenId     PayTokenId            `json:"pay_token_id" gorm:"column:pay_token_id;"`
-//	PayHashStatus  PayHashStatus         `json:"pay_hash_status" gorm:"column:pay_hash_status;"`
-//	RefundStatus   RefundStatus          `json:"refund_status" gorm:"column:refund_status;"`
-//	RefundHash     string                `json:"refund_hash" gorm:"column:refund_hash;"`
-//	RefundNonce    uint64                `json:"refund_nonce" gorm:"column:refund_nonce;"`
-//	PaymentAddress string                `json:"payment_address" gorm:"column:payment_address;"`
-//}
+type ViewRefundPaymentInfo struct {
+	Id             uint64                `json:"id" gorm:"column:id;"`
+	PayHash        string                `json:"pay_hash" gorm:"column:pay_hash;"`
+	OrderId        string                `json:"order_id" gorm:"column:order_id;"`
+	PayAddress     string                `json:"pay_address" gorm:"column:pay_address;"`
+	AlgorithmId    common.DasAlgorithmId `json:"algorithm_id" gorm:"column:algorithm_id;"`
+	Timestamp      int64                 `json:"timestamp" gorm:"column:timestamp;"`
+	Amount         decimal.Decimal       `json:"amount" gorm:"column:amount;"` // diff from order
+	PayTokenId     PayTokenId            `json:"pay_token_id" gorm:"column:pay_token_id;"`
+	PayHashStatus  PayHashStatus         `json:"pay_hash_status" gorm:"column:pay_hash_status;"`
+	RefundStatus   RefundStatus          `json:"refund_status" gorm:"column:refund_status;"`
+	RefundHash     string                `json:"refund_hash" gorm:"column:refund_hash;"`
+	RefundNonce    uint64                `json:"refund_nonce" gorm:"column:refund_nonce;"`
+	PaymentAddress string                `json:"payment_address" gorm:"column:payment_address;"`
+}

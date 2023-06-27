@@ -80,15 +80,16 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 
 	// create order
 	orderInfo := tables.TableOrderInfo{
-		OrderId:     "",
-		BusinessId:  req.BusinessId,
-		PayAddress:  addrHex.AddressHex,
-		AlgorithmId: addrHex.DasAlgorithmId,
-		Amount:      req.Amount,
-		PayTokenId:  req.PayTokenId,
-		PayStatus:   tables.PayStatusUnpaid,
-		OrderStatus: tables.OrderStatusNormal,
-		Timestamp:   time.Now().UnixMilli(),
+		OrderId:        "",
+		BusinessId:     req.BusinessId,
+		PayAddress:     addrHex.AddressHex,
+		AlgorithmId:    addrHex.DasAlgorithmId,
+		Amount:         req.Amount,
+		PayTokenId:     req.PayTokenId,
+		PayStatus:      tables.PayStatusUnpaid,
+		OrderStatus:    tables.OrderStatusNormal,
+		Timestamp:      time.Now().UnixMilli(),
+		PaymentAddress: paymentAddress,
 	}
 	orderInfo.InitOrderId()
 	var paymentInfo tables.TablePaymentInfo
@@ -121,7 +122,7 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 
 	//
 	resp.OrderId = orderInfo.OrderId
-	resp.PaymentAddress = paymentAddress
+	resp.PaymentAddress = req.PaymentAddress
 	resp.ContractAddress = req.PayTokenId.GetContractAddress(config.Cfg.Server.Net)
 
 	apiResp.ApiRespOK(resp)

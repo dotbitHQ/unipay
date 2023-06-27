@@ -8,7 +8,6 @@ import (
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
 	"github.com/dotbitHQ/das-lib/core"
 	"github.com/dotbitHQ/das-lib/remote_sign"
-	"github.com/dotbitHQ/das-lib/txbuilder"
 	"github.com/robfig/cron/v3"
 	"github.com/scorpiotzh/mylog"
 	"sync"
@@ -22,11 +21,10 @@ var (
 )
 
 type ToolRefund struct {
-	Ctx           context.Context
-	Wg            *sync.WaitGroup
-	DbDao         *dao.DbDao
-	DasCore       *core.DasCore
-	TxBuilderBase *txbuilder.DasTxBuilderBase
+	Ctx     context.Context
+	Wg      *sync.WaitGroup
+	DbDao   *dao.DbDao
+	DasCore *core.DasCore
 
 	remoteSignClient *remote_sign.RemoteSignClient
 	chainDoge        *bitcoin.TxTool
