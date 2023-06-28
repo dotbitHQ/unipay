@@ -6,10 +6,11 @@ import (
 	"github.com/dotbitHQ/das-lib/common"
 	"github.com/fbsobreira/gotron-sdk/pkg/proto/api"
 	"unipay/config"
+	"unipay/notify"
 	"unipay/tables"
 )
 
-func (t *ToolRefund) refundTron2(paymentAddress, private string, info tables.ViewRefundPaymentInfo) error {
+func (t *ToolRefund) refundTron(paymentAddress, private string, info tables.ViewRefundPaymentInfo) error {
 	if !config.Cfg.Chain.Tron.Refund {
 		return nil
 	}
@@ -72,15 +73,15 @@ func (t *ToolRefund) refundTron2(paymentAddress, private string, info tables.Vie
 		return fmt.Errorf("UpdateSinglePaymentToRefunded err: %s", err.Error())
 	}
 	if err = t.chainTron.SendTransaction(tx.Transaction); err != nil {
-		if err = t.DbDao.UpdateSinglePaymentToUnRefunded(payHash); err != nil {
-			log.Info("UpdateSinglePaymentToUnRefunded err: ", err.Error(), payHash)
-			sendRefundNotify(info.Id, payTokenId, orderId, err.Error())
+		if er := t.DbDao.UpdateSinglePaymentToUnRefunded(payHash); er != nil {
+			log.Info("UpdateSinglePaymentToUnRefunded err: ", er.Error(), payHash)
+			notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateSinglePaymentToUnRefunded", fmt.Sprintf("%s\n%s", payHash, er.Error()))
 		}
 		return fmt.Errorf("SendTx err: %s", err.Error())
 	}
 
 	// callback notice
-	if err = t.addCallbackNotice2([]tables.ViewRefundPaymentInfo{info}); err != nil {
+	if err = t.addCallbackNotice([]tables.ViewRefundPaymentInfo{info}); err != nil {
 		log.Error("addCallbackNotice err:", err.Error())
 	}
 

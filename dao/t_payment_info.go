@@ -68,13 +68,6 @@ func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo, noticeI
 	})
 }
 
-func (d *DbDao) GetRefundListWithin3d() (list []tables.TablePaymentInfo, err error) {
-	timestamp := time.Now().Add(-time.Hour * 24 * 3).UnixMilli()
-	err = d.db.Where("timestamp>=? AND pay_hash_status=? AND refund_status=?",
-		timestamp, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).Find(&list).Error
-	return
-}
-
 func (d *DbDao) GetViewRefundListWithin3d() (list []tables.ViewRefundPaymentInfo, err error) {
 	timestamp := time.Now().Add(-time.Hour * 24 * 3).UnixMilli()
 	sql := fmt.Sprintf(`SELECT p.*,o.payment_address FROM %s p LEFT JOIN %s o ON o.order_id=p.order_id AND p.timestamp>=? AND pay_hash_status=? AND refund_status=?`,
@@ -145,13 +138,7 @@ func (d *DbDao) UpdateSinglePaymentToUnRefunded(payHash string) error {
 		}).Error
 }
 
-func (d *DbDao) GetRefundNonce(refundNonce uint64, payTokenIds []tables.PayTokenId) (info tables.TablePaymentInfo, err error) {
-	err = d.db.Where("refund_nonce>=? AND payment_address=?",
-		refundNonce, payTokenIds).Limit(1).Find(&info).Error
-	return
-}
-
-func (d *DbDao) GetRefundNonce2(refundNonce uint64, paymentAddress string) (info tables.TablePaymentInfo, err error) {
+func (d *DbDao) GetRefundNonce(refundNonce uint64, paymentAddress string) (info tables.TablePaymentInfo, err error) {
 	err = d.db.Where("refund_nonce>=? AND payment_address=?",
 		refundNonce, paymentAddress).Limit(1).Find(&info).Error
 	return

@@ -11,7 +11,7 @@ import (
 	"unipay/tables"
 )
 
-type refundEvmParam2 struct {
+type refundEvmParam struct {
 	info        tables.ViewRefundPaymentInfo
 	fromAddr    string
 	private     string
@@ -21,7 +21,7 @@ type refundEvmParam2 struct {
 	refundNonce uint64
 }
 
-func (t *ToolRefund) refundEvm2(p refundEvmParam2) (ok bool, e error) {
+func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 	if !p.refund {
 		return
 	}
@@ -125,13 +125,13 @@ func (t *ToolRefund) refundEvm2(p refundEvmParam2) (ok bool, e error) {
 		e = fmt.Errorf("SendTx err: %s", err.Error())
 		if err = t.DbDao.UpdateSinglePaymentToUnRefunded(payHash); err != nil {
 			log.Info("UpdateSinglePaymentToUnRefunded err: ", err.Error(), payHash)
-			notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "refundEvm", fmt.Sprintf("%s\n%s", payHash, err.Error()))
+			notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateSinglePaymentToUnRefunded", fmt.Sprintf("%s\n%s", payHash, err.Error()))
 		}
 		return
 	}
 
 	// callback notice
-	if err = t.addCallbackNotice2([]tables.ViewRefundPaymentInfo{p.info}); err != nil {
+	if err = t.addCallbackNotice([]tables.ViewRefundPaymentInfo{p.info}); err != nil {
 		log.Error("addCallbackNotice err:", err.Error())
 	}
 
