@@ -73,8 +73,6 @@ type CfgServer struct {
 			Refund  bool              `json:"refund" yaml:"refund"`
 			Switch  bool              `json:"switch" yaml:"switch"`
 			Node    string            `json:"node" yaml:"node"`
-			Address string            `json:"address" yaml:"address"`
-			Private string            `json:"private" yaml:"private"`
 			AddrMap map[string]string `json:"addr_map" yaml:"addr_map"`
 		} `json:"ckb" yaml:"ckb"`
 		Eth     EvmNode `json:"eth" yaml:"eth"`
@@ -85,8 +83,6 @@ type CfgServer struct {
 			Refund   bool              `json:"refund" yaml:"refund"`
 			Switch   bool              `json:"switch" yaml:"switch"`
 			Node     string            `json:"node" yaml:"node"`
-			Address  string            `json:"address" yaml:"address"`
-			Private  string            `json:"private" yaml:"private"`
 			User     string            `json:"user" yaml:"user"`
 			Password string            `json:"password" yaml:"password"`
 			Proxy    string            `json:"proxy" yaml:"proxy"`
@@ -112,8 +108,6 @@ type EvmNode struct {
 	Refund       bool              `json:"refund" yaml:"refund"`
 	Switch       bool              `json:"switch" yaml:"switch"`
 	Node         string            `json:"node" yaml:"node"`
-	Address      string            `json:"address" yaml:"address"`
-	Private      string            `json:"private" yaml:"private"`
 	RefundAddFee float64           `json:"refund_add_fee" yaml:"refund_add_fee"`
 	AddrMap      map[string]string `json:"addr_map" yaml:"addr_map"`
 }
@@ -240,7 +234,7 @@ func InitDasTxBuilderBase(ctx context.Context, dasCore *core.DasCore, fromScript
 	svrArgs := common.Bytes2Hex(fromScript.Args)
 	var handleSign sign.HandleSignCkbMessage
 	if private != "" {
-		handleSign = sign.LocalSign(Cfg.Chain.Ckb.Private)
+		handleSign = sign.LocalSign(private)
 	} else if Cfg.Server.RemoteSignApiUrl != "" {
 		remoteSignClient, err := sign.NewClient(ctx, Cfg.Server.RemoteSignApiUrl)
 		if err != nil {

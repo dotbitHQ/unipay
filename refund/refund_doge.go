@@ -53,7 +53,7 @@ func (t *ToolRefund) doRefundDoge(paymentAddress, private string, list []tables.
 
 	// sign
 	var signTx *wire.MsgTx
-	if config.Cfg.Chain.Doge.Private != "" {
+	if private != "" {
 		if _, err = t.chainDoge.LocalSignTx(tx, uos); err != nil {
 			return fmt.Errorf("LocalSignTx err: %s", err.Error())
 		}
