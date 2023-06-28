@@ -93,7 +93,7 @@ func (d *DbDao) UpdatePaymentListToRefunded(payHashList []string, refundHash str
 		}).Error
 }
 
-func (d *DbDao) UpdateSinglePaymentToRefunded(payHash string, refundHash string, refundNonce uint64) error {
+func (d *DbDao) UpdateSinglePaymentToRefunded(payHash, refundHash string, refundNonce uint64) error {
 	return d.db.Model(tables.TablePaymentInfo{}).
 		Where("pay_hash=? AND pay_hash_status=? AND refund_status=?",
 			payHash, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).
@@ -101,6 +101,18 @@ func (d *DbDao) UpdateSinglePaymentToRefunded(payHash string, refundHash string,
 			"refund_status": tables.RefundStatusRefunded,
 			"refund_hash":   refundHash,
 			"refund_nonce":  refundNonce,
+		}).Error
+}
+
+func (d *DbDao) UpdateSinglePaymentToRefunded2(payHash, refundHash, paymentAddress string, refundNonce uint64) error {
+	return d.db.Model(tables.TablePaymentInfo{}).
+		Where("pay_hash=? AND pay_hash_status=? AND refund_status=?",
+			payHash, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).
+		Updates(map[string]interface{}{
+			"refund_status":   tables.RefundStatusRefunded,
+			"refund_hash":     refundHash,
+			"refund_nonce":    refundNonce,
+			"payment_address": paymentAddress,
 		}).Error
 }
 
@@ -134,8 +146,14 @@ func (d *DbDao) UpdateSinglePaymentToUnRefunded(payHash string) error {
 }
 
 func (d *DbDao) GetRefundNonce(refundNonce uint64, payTokenIds []tables.PayTokenId) (info tables.TablePaymentInfo, err error) {
-	err = d.db.Where("refund_nonce>=? AND pay_token_id IN(?)",
+	err = d.db.Where("refund_nonce>=? AND payment_address=?",
 		refundNonce, payTokenIds).Limit(1).Find(&info).Error
+	return
+}
+
+func (d *DbDao) GetRefundNonce2(refundNonce uint64, paymentAddress string) (info tables.TablePaymentInfo, err error) {
+	err = d.db.Where("refund_nonce>=? AND payment_address=?",
+		refundNonce, paymentAddress).Limit(1).Find(&info).Error
 	return
 }
 

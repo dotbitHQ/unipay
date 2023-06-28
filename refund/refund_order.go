@@ -189,30 +189,57 @@ func (t *ToolRefund) getParserTypeEvmMap() (map[tables.ParserType]parserTypeEvm,
 			return nil, fmt.Errorf("NonceAt eth err: %s", err.Error())
 		}
 		parserTypeETH.nonceMap[k] = nonce
-		payTokenIds := []tables.PayTokenId{tables.PayTokenIdETH, tables.PayTokenIdErc20USDT}
-		nonceInfo, err := t.DbDao.GetRefundNonce(nonce, payTokenIds) // todo nonce
+		nonceInfo, err := t.DbDao.GetRefundNonce2(nonce, k)
 		if err != nil {
-			return nil, fmt.Errorf("GetRefundNonce err: %s[%d][%v]", err.Error(), nonce, payTokenIds)
+			return nil, fmt.Errorf("GetRefundNonce2 eth err: %s[%d][%s]", err.Error(), nonce, k)
 		} else if nonceInfo.Id > 0 {
 			parserTypeETH.refund = false
 		}
 	}
 	parserTypeEvmMap[tables.ParserTypeETH] = parserTypeETH
 
-	// todo bsc
-	parserTypeEvmMap[tables.ParserTypeBSC] = parserTypeEvm{
+	// bsc
+	parserTypeBSC := parserTypeEvm{
 		addFee:   config.Cfg.Chain.Bsc.RefundAddFee,
 		refund:   config.Cfg.Chain.Bsc.Refund,
 		chainEvm: t.chainBsc,
-		nonceMap: nil,
+		nonceMap: make(map[string]uint64),
 	}
+	for k, _ := range config.Cfg.Chain.Bsc.AddrMap {
+		nonce, err := t.chainBsc.NonceAt(k)
+		if err != nil {
+			return nil, fmt.Errorf("NonceAt bsc err: %s", err.Error())
+		}
+		parserTypeBSC.nonceMap[k] = nonce
+		nonceInfo, err := t.DbDao.GetRefundNonce2(nonce, k)
+		if err != nil {
+			return nil, fmt.Errorf("GetRefundNonce bsc err: %s[%d][%s]", err.Error(), nonce, k)
+		} else if nonceInfo.Id > 0 {
+			parserTypeBSC.refund = false
+		}
+	}
+	parserTypeEvmMap[tables.ParserTypeBSC] = parserTypeBSC
 
-	// todo polygon
-	parserTypeEvmMap[tables.ParserTypePOLYGON] = parserTypeEvm{
+	// polygon
+	parserTypePolygon := parserTypeEvm{
 		addFee:   config.Cfg.Chain.Polygon.RefundAddFee,
 		refund:   config.Cfg.Chain.Polygon.Refund,
 		chainEvm: t.chainPolygon,
-		nonceMap: nil,
+		nonceMap: make(map[string]uint64),
 	}
+	for k, _ := range config.Cfg.Chain.Polygon.AddrMap {
+		nonce, err := t.chainPolygon.NonceAt(k)
+		if err != nil {
+			return nil, fmt.Errorf("NonceAt polygon err: %s", err.Error())
+		}
+		parserTypePolygon.nonceMap[k] = nonce
+		nonceInfo, err := t.DbDao.GetRefundNonce2(nonce, k)
+		if err != nil {
+			return nil, fmt.Errorf("GetRefundNonce polygon err: %s[%d][%s]", err.Error(), nonce, k)
+		} else if nonceInfo.Id > 0 {
+			parserTypePolygon.refund = false
+		}
+	}
+	parserTypeEvmMap[tables.ParserTypePOLYGON] = parserTypePolygon
 	return parserTypeEvmMap, nil
 }

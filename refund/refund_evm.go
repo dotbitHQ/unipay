@@ -116,7 +116,7 @@ func (t *ToolRefund) refundEvm2(p refundEvmParam2) (ok bool, e error) {
 	// send tx
 	refundHash := tx.Hash().Hex()
 
-	if err := t.DbDao.UpdateSinglePaymentToRefunded(payHash, refundHash, refundNonce); err != nil {
+	if err := t.DbDao.UpdateSinglePaymentToRefunded2(payHash, refundHash, fromAddr, refundNonce); err != nil {
 		e = fmt.Errorf("UpdateSinglePaymentToRefunded err: %s", err.Error())
 		return
 	}
