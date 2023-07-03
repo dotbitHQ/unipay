@@ -98,7 +98,7 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 			apiResp.ApiRespErr(http_api.ApiCodeAmountIsTooLow, "Amount not less than 0.52$")
 			return nil
 		}
-		pi, err := stripe_api.CreatePaymentIntent(orderInfo.OrderId, req.Amount.IntPart())
+		pi, err := stripe_api.CreatePaymentIntent(req.BusinessId, orderInfo.OrderId, req.Amount.IntPart())
 		if err != nil {
 			apiResp.ApiRespErr(http_api.ApiCodeError500, "Failed to create a payment intent")
 			return fmt.Errorf("CreatePaymentIntent err: %s", err.Error())

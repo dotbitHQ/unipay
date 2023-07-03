@@ -151,20 +151,22 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 			if orderId == "" {
 				continue
 			}
+			decValue := decimal.NewFromBigInt(chain_evm.BigIntFromHex(tx.Value), 0)
 			// select order by order id which in tx memo
 			order, err := pc.DbDao.GetOrderInfoByOrderIdWithAddr(orderId, addrTo)
 			if err != nil {
 				return fmt.Errorf("GetOrderInfoByOrderIdWithAddr err: %s", err.Error())
 			} else if order.Id == 0 {
 				log.Warn("order not exist:", parserType, orderId)
+				pc.CreatePaymentForMismatch(dascommon.DasAlgorithmIdEth712, orderId, tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), decValue, payTokenId)
 				continue
 			}
 			if order.PayTokenId != payTokenId {
 				log.Warn("order pay token id not match", order.OrderId, payTokenId)
+				pc.CreatePaymentForMismatch(dascommon.DasAlgorithmIdEth712, orderId, tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), decValue, payTokenId)
 				continue
 			}
 			// check value is equal amount or not
-			decValue := decimal.NewFromBigInt(chain_evm.BigIntFromHex(tx.Value), 0)
 			if decValue.Cmp(order.Amount) == -1 {
 				log.Warn("tx value less than order amount:", parserType, decValue, order.Amount.String())
 				pc.CreatePaymentForAmountMismatch(order, tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), decValue)
@@ -183,12 +185,13 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				continue
 			}
 			amount := decimal.NewFromBigInt(new(big.Int).SetBytes(dascommon.Hex2Bytes(tx.Input)[36:]), 0)
-			log.Info("parsingBlockData:", contractPayTokenId, tx.From, amount.String())
+			log.Info("parsingBlockData:", contractPayTokenId, tx.From, amount.String(), tx.Hash)
 			order, err := pc.DbDao.GetOrderByAddrWithAmountAndAddr(tx.From, addrReceipt, contractPayTokenId, amount)
 			if err != nil {
 				return fmt.Errorf("GetOrderByAddrWithAmountAndAddr err: %s", err.Error())
 			} else if order.Id == 0 {
-				log.Warn("order not exist:", contractPayTokenId, tx.From, amount)
+				log.Warn("order not exist:", contractPayTokenId, tx.From, amount, tx.Hash)
+				pc.CreatePaymentForMismatch(dascommon.DasAlgorithmIdEth712, "", tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), amount, contractPayTokenId)
 				continue
 			}
 			if order.PayTokenId != contractPayTokenId {

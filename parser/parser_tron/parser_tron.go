@@ -166,21 +166,21 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 			} else if len(orderId) > 64 {
 				continue
 			}
-
+			amountValue := decimal.New(instance.Amount, 0)
 			// check order id
 			order, err := pc.DbDao.GetOrderInfoByOrderIdWithAddr(orderId, toAddr)
 			if err != nil {
 				return fmt.Errorf("GetOrderInfoByOrderIdWithAddr err: %s", err.Error())
 			} else if order.Id == 0 {
+				pc.CreatePaymentForMismatch(common.DasAlgorithmIdTron, "", hex.EncodeToString(tx.Txid), fromAddr, amountValue, payTokenId)
 				log.Warn("GetOrderInfoByOrderId is not exist:", parserType, orderId)
 				continue
 			}
 			if order.PayTokenId != payTokenId {
 				log.Warn("order pay token id not match", order.OrderId)
+				pc.CreatePaymentForMismatch(common.DasAlgorithmIdTron, order.OrderId, hex.EncodeToString(tx.Txid), fromAddr, amountValue, payTokenId)
 				continue
 			}
-
-			amountValue := decimal.New(instance.Amount, 0)
 			if amountValue.Cmp(order.Amount) == -1 {
 				log.Warn("tx value less than order amount:", amountValue.String(), order.Amount.String())
 				pc.CreatePaymentForAmountMismatch(order, hex.EncodeToString(tx.Txid), fromAddr, amountValue)
@@ -217,10 +217,12 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 				return fmt.Errorf("GetOrderByAddrWithAmountAndAddr err: %s", err.Error())
 			} else if order.Id == 0 {
 				log.Warn("order not exist:", contractPayTokenId, fromHex, amount)
+				pc.CreatePaymentForMismatch(common.DasAlgorithmIdTron, "", hex.EncodeToString(tx.Txid), fromHex, amount, contractPayTokenId)
 				continue
 			}
 			if order.PayTokenId != contractPayTokenId {
 				log.Warn("order pay token id not match", order.OrderId, order.PayTokenId, contractPayTokenId)
+				pc.CreatePaymentForMismatch(common.DasAlgorithmIdTron, order.OrderId, hex.EncodeToString(tx.Txid), fromHex, amount, contractPayTokenId)
 				continue
 			}
 			if err = pc.DoPayment(order, hex.EncodeToString(tx.Txid), fromHex); err != nil {

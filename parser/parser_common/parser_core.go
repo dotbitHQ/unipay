@@ -3,6 +3,7 @@ package parser_common
 import (
 	"context"
 	"fmt"
+	"github.com/dotbitHQ/das-lib/common"
 	"github.com/shopspring/decimal"
 	"sync"
 	"sync/atomic"
@@ -26,6 +27,23 @@ type ParserCore struct {
 	ConfirmNum         uint64
 	Switch             bool
 	AddrMap            map[string]string
+}
+
+func (p *ParserCore) CreatePaymentForMismatch(algorithmId common.DasAlgorithmId, orderId, payHash, payAddress string, amount decimal.Decimal, payTokenId tables.PayTokenId) {
+	paymentInfo := tables.TablePaymentInfo{
+		PayHash:       payHash,
+		OrderId:       orderId,
+		PayAddress:    payAddress,
+		AlgorithmId:   algorithmId,
+		Timestamp:     time.Now().UnixMilli(),
+		Amount:        amount,
+		PayTokenId:    payTokenId,
+		PayHashStatus: tables.PayHashStatusConfirm,
+		RefundStatus:  tables.RefundStatusDefault,
+	}
+	if err := p.DbDao.CreatePayment(paymentInfo); err != nil {
+		log.Error("CreatePaymentForAmountMismatch err:", orderId, payHash, err.Error())
+	}
 }
 
 func (p *ParserCore) CreatePaymentForAmountMismatch(order tables.TableOrderInfo, payHash, payAddress string, amount decimal.Decimal) {

@@ -26,11 +26,13 @@ import (
 )
 
 var (
-	node, addFee = "https://rpc.ankr.com/eth_goerli", float64(2)
+	//node, addFee = "https://rpc.ankr.com/eth_goerli", float64(2)
+	node, addFee = "https://rpc.ankr.com/bsc_testnet_chapel", float64(2)
 	nodeBsc      = "https://rpc.ankr.com/bsc_testnet_chapel"
 	nodePolygon  = "https://rpc.ankr.com/polygon_mumbai"
 	nodeTron     = "grpc.nile.trongrid.io:50051"
 	privateKey   = ""
+	privateKey2  = ""
 )
 
 func TestTrc20(t *testing.T) {
@@ -41,7 +43,7 @@ func TestTrc20(t *testing.T) {
 	contractHex, _ := common.TronBase58ToHex("TKMVcZtc1kyb2qFruhgd91mRCPNhPRRrsw")
 	fromHex, _ := common.TronBase58ToHex("TQoLh9evwUmZKxpD1uhFttsZk3EBs8BksV")
 	toHex, _ := common.TronBase58ToHex("TFUg8zKThCj23acDSwsVjQrBVRywMMQGP1")
-	tx, err := chainTron.TransferTrc20(contractHex, fromHex, toHex, 5*1e6, 20*1e6)
+	tx, err := chainTron.TransferTrc20(contractHex, fromHex, toHex, 4*1e6, 20*1e6)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,6 +56,33 @@ func TestTrc20(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println(hex.EncodeToString(tx.Txid))
+}
+func TestTrc202(t *testing.T) {
+	chainTron, err := chain_tron.NewChainTron(context.Background(), nodeTron)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contractHex, _ := common.TronBase58ToHex("TKMVcZtc1kyb2qFruhgd91mRCPNhPRRrsw")
+	fromHex, _ := common.TronBase58ToHex("TFUg8zKThCj23acDSwsVjQrBVRywMMQGP1")
+	toHex, _ := common.TronBase58ToHex("TQoLh9evwUmZKxpD1uhFttsZk3EBs8BksV")
+	tx, err := chainTron.TransferTrc20(contractHex, fromHex, toHex, 3*1e6, 20*1e6)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := chainTron.LocalSign(tx, privateKey2); err != nil {
+		t.Fatal(err)
+	}
+
+	err = chainTron.SendTransaction(tx.Transaction)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(hex.EncodeToString(tx.Txid))
+}
+
+func TestTrc203(t *testing.T) {
+	TestTrc20(t)
+	TestTrc202(t)
 }
 
 func TestTrc20Tx(t *testing.T) {
@@ -112,8 +141,8 @@ func TestTron(t *testing.T) {
 	}
 	fromHex, _ := common.TronBase58ToHex("TQoLh9evwUmZKxpD1uhFttsZk3EBs8BksV")
 	toHex, _ := common.TronBase58ToHex("TFUg8zKThCj23acDSwsVjQrBVRywMMQGP1")
-	memo := "3d863f089368ccad5eb1e746417e2803"
-	amount := int64(500 * 1e6)
+	memo := "ae46417aa85b46f2acec5adf4e09af37"
+	amount := int64(10 * 1e6)
 	tx, err := chainTron.CreateTransaction(fromHex, toHex, memo, amount)
 	if err != nil {
 		t.Fatal(err)
@@ -127,6 +156,35 @@ func TestTron(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println(hex.EncodeToString(tx.Txid))
+}
+
+func TestTron2(t *testing.T) {
+	chainTron, err := chain_tron.NewChainTron(context.Background(), nodeTron)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fromHex, _ := common.TronBase58ToHex("TFUg8zKThCj23acDSwsVjQrBVRywMMQGP1")
+	toHex, _ := common.TronBase58ToHex("TQoLh9evwUmZKxpD1uhFttsZk3EBs8BksV")
+	memo := "ca36c94c29a7946a7e0772e178945ea7"
+	amount := int64(9 * 1e6)
+	tx, err := chainTron.CreateTransaction(fromHex, toHex, memo, amount)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := chainTron.LocalSign(tx, privateKey2); err != nil {
+		t.Fatal(err)
+	}
+
+	err = chainTron.SendTransaction(tx.Transaction)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(hex.EncodeToString(tx.Txid))
+}
+
+func TestTron3(t *testing.T) {
+	TestTron(t)
+	TestTron2(t)
 }
 
 func TestCkbTx(t *testing.T) {
@@ -200,6 +258,12 @@ func TestCkbTx(t *testing.T) {
 	}
 }
 
+func TestEvmTx3(t *testing.T) {
+	go TestEvmTx(t)
+	go TestEvmTx2(t)
+	time.Sleep(10 * time.Second)
+}
+
 func TestEvmTx(t *testing.T) {
 	chainEvm, err := chain_evm.NewChainEvm(context.Background(), node, addFee)
 	if err != nil {
@@ -207,8 +271,9 @@ func TestEvmTx(t *testing.T) {
 	}
 	from := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
 	to := "0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"
-	value := decimal.NewFromInt(5407802377269926)
-	data := []byte("569ffc5b4fc347194e49ac8d7a63f7c3")
+	value := decimal.NewFromInt(2 * 1e15)
+	data := []byte("cba67295de7eaca7bd3d424e55127c96")
+
 	nonce, err := chainEvm.NonceAt(from)
 	if err != nil {
 		t.Fatal(err)
@@ -223,6 +288,39 @@ func TestEvmTx(t *testing.T) {
 		t.Fatal(err)
 	}
 	tx, err = chainEvm.SignWithPrivateKey(privateKey, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = chainEvm.SendTransaction(tx); err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("hash:", tx.Hash().String())
+}
+
+func TestEvmTx2(t *testing.T) {
+	chainEvm, err := chain_evm.NewChainEvm(context.Background(), node, addFee)
+	if err != nil {
+		t.Fatal(err)
+	}
+	from := "0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"
+	to := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
+	value := decimal.NewFromInt(3 * 1e15)
+	data := []byte("377028345605517609b25b10c4112652")
+
+	nonce, err := chainEvm.NonceAt(from)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gasPrice, gasLimit, err := chainEvm.EstimateGas(from, to, value, data, addFee)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(gasPrice.Mul(gasLimit).String())
+	tx, err := chainEvm.NewTransaction(from, to, value, data, nonce, gasPrice, gasLimit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tx, err = chainEvm.SignWithPrivateKey(privateKey2, tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -282,9 +380,9 @@ func TestErc20Tx(t *testing.T) {
 	}
 	from := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"     //"0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
 	to := "0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"       //"0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"
-	contract := "0xDf954C7D93E300183836CdaA01a07a1743F183EC" //"0x5Efb0D565898be6748920db2c3BdC22BDFd5c187" //"0xDf954C7D93E300183836CdaA01a07a1743F183EC"
+	contract := "0x5Efb0D565898be6748920db2c3BdC22BDFd5c187" //"0xDf954C7D93E300183836CdaA01a07a1743F183EC"
 
-	value := decimal.NewFromBigInt(new(big.Int).SetUint64(20053551), 0)
+	value := decimal.NewFromBigInt(new(big.Int).SetUint64(5*1e6), 0)
 	fmt.Println(value.Coefficient().String())
 	data, err := chain_evm.PackMessage("transfer", ethcommon.HexToAddress(to), value.Coefficient())
 	if err != nil {
@@ -313,6 +411,52 @@ func TestErc20Tx(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println("hash:", tx.Hash().String())
+}
+
+func TestErc20Tx2(t *testing.T) {
+	chainEvm, err := chain_evm.NewChainEvm(context.Background(), node, addFee)
+	if err != nil {
+		t.Fatal(err)
+	}
+	from := "0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"     //"0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"
+	to := "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891"       //"0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7"
+	contract := "0x5Efb0D565898be6748920db2c3BdC22BDFd5c187" //"0xDf954C7D93E300183836CdaA01a07a1743F183EC"
+
+	value := decimal.NewFromBigInt(new(big.Int).SetUint64(4*1e6), 0)
+	fmt.Println(value.Coefficient().String())
+	data, err := chain_evm.PackMessage("transfer", ethcommon.HexToAddress(to), value.Coefficient())
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(common.Bytes2Hex(data))
+
+	nonce, err := chainEvm.NonceAt(from)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gasPrice, gasLimit, err := chainEvm.EstimateGas(from, contract, decimal.Zero, data, chainEvm.RefundAddFee)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(gasPrice.Mul(gasLimit).String())
+	tx, err := chainEvm.NewTransaction(from, contract, decimal.Zero, data, nonce, gasPrice, gasLimit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tx, err = chainEvm.SignWithPrivateKey(privateKey2, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = chainEvm.SendTransaction(tx); err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("hash:", tx.Hash().String())
+}
+
+func TestErc20Tx3(t *testing.T) {
+	go TestErc20Tx(t)
+	go TestErc20Tx2(t)
+	time.Sleep(10 * time.Second)
 }
 
 func TestTx(t *testing.T) {

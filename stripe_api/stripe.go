@@ -7,13 +7,13 @@ import (
 	"github.com/stripe/stripe-go/v74/refund"
 )
 
-func CreatePaymentIntent(orderId string, amount int64) (*stripe.PaymentIntent, error) {
+func CreatePaymentIntent(businessId, orderId string, amount int64) (*stripe.PaymentIntent, error) {
 	params := &stripe.PaymentIntentParams{
 		Amount:             stripe.Int64(amount),
 		PaymentMethodTypes: stripe.StringSlice([]string{string(stripe.ChargePaymentMethodDetailsTypeCard)}),
 		Currency:           stripe.String(string(stripe.CurrencyUSD)),
 	}
-	params.Metadata = map[string]string{"order_id": orderId}
+	params.Metadata = map[string]string{"business_id": businessId, "order_id": orderId}
 	pi, err := paymentintent.New(params)
 	if err != nil {
 		return nil, fmt.Errorf("paymentintent.New err: %s", err.Error())

@@ -182,7 +182,7 @@ func GetPaymentAddress(payTokenId tables.PayTokenId, paymentAddress string) (str
 	case tables.PayTokenIdStripeUSD:
 		return "", nil
 	}
-	return "", fmt.Errorf("unknow pay token id[%s]", payTokenId)
+	return "", fmt.Errorf("unknow pay token id[%s] in AddrMap[%s]", payTokenId, paymentAddress)
 }
 
 func InitDasCore(ctx context.Context, wg *sync.WaitGroup) (*core.DasCore, *dascache.DasCache, error) {
