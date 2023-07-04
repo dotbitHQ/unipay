@@ -70,7 +70,7 @@ func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo, noticeI
 
 func (d *DbDao) GetViewRefundListWithin3d() (list []tables.ViewRefundPaymentInfo, err error) {
 	timestamp := time.Now().Add(-time.Hour * 24 * 3).UnixMilli()
-	sql := fmt.Sprintf(`SELECT p.*,o.payment_address FROM %s p LEFT JOIN %s o ON o.order_id=p.order_id AND p.timestamp>=? AND pay_hash_status=? AND refund_status=?`,
+	sql := fmt.Sprintf(`SELECT p.*,o.payment_address FROM %s p LEFT JOIN %s o ON o.order_id=p.order_id WHERE p.timestamp>=? AND p.order_id!='' AND p.pay_hash_status=? AND p.refund_status=?`,
 		tables.TableNamePaymentInfo, tables.TableNameOrderInfo)
 	err = d.db.Raw(sql, timestamp, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).Find(&list).Error
 	return
@@ -97,15 +97,15 @@ func (d *DbDao) UpdateSinglePaymentToRefunded(payHash, refundHash string, refund
 		}).Error
 }
 
-func (d *DbDao) UpdateSinglePaymentToRefunded2(payHash, refundHash, paymentAddress string, refundNonce uint64) error {
+func (d *DbDao) UpdateSinglePaymentToRefunded2(payHash, refundHash, refundFrom string, refundNonce uint64) error {
 	return d.db.Model(tables.TablePaymentInfo{}).
 		Where("pay_hash=? AND pay_hash_status=? AND refund_status=?",
 			payHash, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).
 		Updates(map[string]interface{}{
-			"refund_status":   tables.RefundStatusRefunded,
-			"refund_hash":     refundHash,
-			"refund_nonce":    refundNonce,
-			"payment_address": paymentAddress,
+			"refund_status": tables.RefundStatusRefunded,
+			"refund_hash":   refundHash,
+			"refund_nonce":  refundNonce,
+			"refund_from":   refundFrom,
 		}).Error
 }
 
@@ -138,9 +138,9 @@ func (d *DbDao) UpdateSinglePaymentToUnRefunded(payHash string) error {
 		}).Error
 }
 
-func (d *DbDao) GetRefundNonce(refundNonce uint64, paymentAddress string) (info tables.TablePaymentInfo, err error) {
-	err = d.db.Where("refund_nonce>=? AND payment_address=?",
-		refundNonce, paymentAddress).Limit(1).Find(&info).Error
+func (d *DbDao) GetRefundNonce(refundNonce uint64, refundFrom string, payTokenIds []tables.PayTokenId) (info tables.TablePaymentInfo, err error) {
+	err = d.db.Where("refund_nonce>=? AND refund_from=? AND pay_token_id IN(?)",
+		refundNonce, refundFrom, payTokenIds).Limit(1).Find(&info).Error
 	return
 }
 

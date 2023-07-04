@@ -23,6 +23,11 @@ type refundEvmParam struct {
 
 func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 	if !p.refund {
+		e = fmt.Errorf("refund flag is false")
+		return
+	}
+	if p.chainEvm == nil {
+		e = fmt.Errorf("chainEvm client is nil")
 		return
 	}
 
@@ -36,6 +41,8 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 	payHash := p.info.PayHash
 	gasPrice, gasLimit, fee := decimal.Zero, decimal.Zero, decimal.Zero
 	var err error
+
+	log.Warn("refundEvm:", p.info.OrderId, p.info.PayTokenId, p.info.Amount)
 
 	switch p.info.PayTokenId {
 	case tables.PayTokenIdErc20USDT, tables.PayTokenIdBep20USDT:
@@ -66,7 +73,6 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 		fee = gasPrice.Mul(gasLimit)
 		toAddr = contract
 		refundAmount = decimal.Zero
-		return
 	default:
 		// tx fee
 		gasPrice, gasLimit, err = p.chainEvm.EstimateGas(fromAddr, toAddr, refundAmount, data, addFee)

@@ -14,6 +14,9 @@ func (t *ToolRefund) refundTron(paymentAddress, private string, info tables.View
 	if !config.Cfg.Chain.Tron.Refund {
 		return nil
 	}
+	if t.chainTron == nil {
+		return nil
+	}
 	amount := info.Amount
 	orderId := info.OrderId
 	toAddr := info.PayAddress
@@ -21,7 +24,7 @@ func (t *ToolRefund) refundTron(paymentAddress, private string, info tables.View
 	payTokenId := info.PayTokenId
 	fromHex := paymentAddress
 	var err error
-
+	log.Warn("refundTron:", info.OrderId, info.PayTokenId, info.Amount)
 	var tx *api.TransactionExtention
 	switch payTokenId {
 	case tables.PayTokenIdTrc20USDT:

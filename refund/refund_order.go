@@ -3,6 +3,7 @@ package refund
 import (
 	"fmt"
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
+	"strings"
 	"unipay/config"
 	"unipay/notify"
 	"unipay/tables"
@@ -74,9 +75,9 @@ func (t *ToolRefund) doRefund() error {
 				err = t.doRefundDoge(paymentAddress, private, refundList)
 			case tables.ParserTypeTRON:
 				for _, v := range refundList {
-					if er := t.refundTron(paymentAddress, private, v); err != nil {
+					if er := t.refundTron(paymentAddress, private, v); er != nil {
 						log.Error("refundTron err: ", parserType, paymentAddress, er.Error())
-						sendRefundNotify(v.Id, v.PayTokenId, v.OrderId, err.Error())
+						sendRefundNotify(v.Id, v.PayTokenId, v.OrderId, er.Error())
 					}
 				}
 			case tables.ParserTypeETH, tables.ParserTypeBSC, tables.ParserTypePOLYGON:
@@ -91,8 +92,8 @@ func (t *ToolRefund) doRefund() error {
 						chainEvm:    item.chainEvm,
 						refundNonce: item.nonceMap[paymentAddress],
 					}); er != nil {
-						log.Error("refundEvm err:", err.Error(), v.PayTokenId, v.OrderId)
-						sendRefundNotify(v.Id, v.PayTokenId, v.OrderId, err.Error())
+						log.Error("refundEvm err:", er.Error(), v.PayTokenId, v.OrderId)
+						sendRefundNotify(v.Id, v.PayTokenId, v.OrderId, er.Error())
 					} else if refundOK {
 						item.nonceMap[paymentAddress]++
 						parserTypeEvmMap[parserType] = item
@@ -130,17 +131,20 @@ func (t *ToolRefund) getParserTypeEvmMap() (map[tables.ParserType]parserTypeEvm,
 		chainEvm: t.chainEth,
 		nonceMap: make(map[string]uint64),
 	}
-	for k, _ := range config.Cfg.Chain.Eth.AddrMap {
-		nonce, err := t.chainEth.NonceAt(k)
-		if err != nil {
-			return nil, fmt.Errorf("NonceAt eth err: %s", err.Error())
-		}
-		parserTypeETH.nonceMap[k] = nonce
-		nonceInfo, err := t.DbDao.GetRefundNonce(nonce, k)
-		if err != nil {
-			return nil, fmt.Errorf("GetRefundNonce2 eth err: %s[%d][%s]", err.Error(), nonce, k)
-		} else if nonceInfo.Id > 0 {
-			parserTypeETH.refund = false
+	if t.chainEth != nil {
+		for k, _ := range config.Cfg.Chain.Eth.AddrMap {
+			nonce, err := t.chainEth.NonceAt(k)
+			if err != nil {
+				return nil, fmt.Errorf("NonceAt eth err: %s", err.Error())
+			}
+			parserTypeETH.nonceMap[strings.ToLower(k)] = nonce
+			nonceInfo, err := t.DbDao.GetRefundNonce(nonce, k, []tables.PayTokenId{tables.PayTokenIdETH, tables.PayTokenIdErc20USDT})
+			if err != nil {
+				return nil, fmt.Errorf("GetRefundNonce2 eth err: %s[%d][%s]", err.Error(), nonce, k)
+			} else if nonceInfo.Id > 0 {
+				parserTypeETH.refund = false
+				log.Warn("getParserTypeEvmMap eth nonce pending")
+			}
 		}
 	}
 	parserTypeEvmMap[tables.ParserTypeETH] = parserTypeETH
@@ -152,17 +156,20 @@ func (t *ToolRefund) getParserTypeEvmMap() (map[tables.ParserType]parserTypeEvm,
 		chainEvm: t.chainBsc,
 		nonceMap: make(map[string]uint64),
 	}
-	for k, _ := range config.Cfg.Chain.Bsc.AddrMap {
-		nonce, err := t.chainBsc.NonceAt(k)
-		if err != nil {
-			return nil, fmt.Errorf("NonceAt bsc err: %s", err.Error())
-		}
-		parserTypeBSC.nonceMap[k] = nonce
-		nonceInfo, err := t.DbDao.GetRefundNonce(nonce, k)
-		if err != nil {
-			return nil, fmt.Errorf("GetRefundNonce bsc err: %s[%d][%s]", err.Error(), nonce, k)
-		} else if nonceInfo.Id > 0 {
-			parserTypeBSC.refund = false
+	if t.chainBsc != nil {
+		for k, _ := range config.Cfg.Chain.Bsc.AddrMap {
+			nonce, err := t.chainBsc.NonceAt(k)
+			if err != nil {
+				return nil, fmt.Errorf("NonceAt bsc err: %s", err.Error())
+			}
+			parserTypeBSC.nonceMap[strings.ToLower(k)] = nonce
+			nonceInfo, err := t.DbDao.GetRefundNonce(nonce, k, []tables.PayTokenId{tables.PayTokenIdBNB, tables.PayTokenIdBep20USDT})
+			if err != nil {
+				return nil, fmt.Errorf("GetRefundNonce bsc err: %s[%d][%s]", err.Error(), nonce, k)
+			} else if nonceInfo.Id > 0 {
+				parserTypeBSC.refund = false
+				log.Warn("getParserTypeEvmMap bsc nonce pending")
+			}
 		}
 	}
 	parserTypeEvmMap[tables.ParserTypeBSC] = parserTypeBSC
@@ -174,19 +181,23 @@ func (t *ToolRefund) getParserTypeEvmMap() (map[tables.ParserType]parserTypeEvm,
 		chainEvm: t.chainPolygon,
 		nonceMap: make(map[string]uint64),
 	}
-	for k, _ := range config.Cfg.Chain.Polygon.AddrMap {
-		nonce, err := t.chainPolygon.NonceAt(k)
-		if err != nil {
-			return nil, fmt.Errorf("NonceAt polygon err: %s", err.Error())
-		}
-		parserTypePolygon.nonceMap[k] = nonce
-		nonceInfo, err := t.DbDao.GetRefundNonce(nonce, k)
-		if err != nil {
-			return nil, fmt.Errorf("GetRefundNonce polygon err: %s[%d][%s]", err.Error(), nonce, k)
-		} else if nonceInfo.Id > 0 {
-			parserTypePolygon.refund = false
+	if t.chainPolygon != nil {
+		for k, _ := range config.Cfg.Chain.Polygon.AddrMap {
+			nonce, err := t.chainPolygon.NonceAt(k)
+			if err != nil {
+				return nil, fmt.Errorf("NonceAt polygon err: %s", err.Error())
+			}
+			parserTypePolygon.nonceMap[strings.ToLower(k)] = nonce
+			nonceInfo, err := t.DbDao.GetRefundNonce(nonce, k, []tables.PayTokenId{tables.PayTokenIdMATIC})
+			if err != nil {
+				return nil, fmt.Errorf("GetRefundNonce polygon err: %s[%d][%s]", err.Error(), nonce, k)
+			} else if nonceInfo.Id > 0 {
+				parserTypePolygon.refund = false
+				log.Warn("getParserTypeEvmMap polygon nonce pending")
+			}
 		}
 	}
 	parserTypeEvmMap[tables.ParserTypePOLYGON] = parserTypePolygon
+
 	return parserTypeEvmMap, nil
 }

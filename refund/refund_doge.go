@@ -16,6 +16,9 @@ func (t *ToolRefund) doRefundDoge(paymentAddress, private string, list []tables.
 	if !config.Cfg.Chain.Doge.Refund {
 		return nil
 	}
+	if t.chainDoge == nil {
+		return nil
+	}
 	if len(list) == 0 {
 		return nil
 	}

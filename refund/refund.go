@@ -38,13 +38,15 @@ type ToolRefund struct {
 
 func (t *ToolRefund) InitRefundInfo() error {
 	// remote sign client
-	remoteSignClient, err := remote_sign.NewRemoteSignClient(t.Ctx, config.Cfg.Server.RemoteSignApiUrl)
-	if err != nil {
-		return fmt.Errorf("NewRemoteSignClient err: %s", err.Error())
+	if config.Cfg.Server.RemoteSignApiUrl != "" {
+		remoteSignClient, err := remote_sign.NewRemoteSignClient(t.Ctx, config.Cfg.Server.RemoteSignApiUrl)
+		if err != nil {
+			return fmt.Errorf("NewRemoteSignClient err: %s", err.Error())
+		}
+		t.remoteSignClient = remoteSignClient
 	}
-	t.remoteSignClient = remoteSignClient
 	// doge
-	if config.Cfg.Chain.Doge.Switch {
+	if config.Cfg.Chain.Doge.Refund {
 		t.chainDoge = &bitcoin.TxTool{
 			RpcClient: &bitcoin.BaseRequest{
 				RpcUrl:   config.Cfg.Chain.Doge.Node,
@@ -53,14 +55,17 @@ func (t *ToolRefund) InitRefundInfo() error {
 				Proxy:    "",
 			},
 			Ctx:              t.Ctx,
-			RemoteSignClient: remoteSignClient.Client(),
+			RemoteSignClient: nil,
 			DustLimit:        bitcoin.DustLimitDoge,
 			Params:           bitcoin.GetDogeMainNetParams(),
+		}
+		if t.remoteSignClient != nil {
+			t.chainDoge.RemoteSignClient = t.remoteSignClient.Client()
 		}
 	}
 
 	// eth
-	if config.Cfg.Chain.Eth.Switch {
+	if config.Cfg.Chain.Eth.Refund {
 		chainEth, err := chain_evm.NewChainEvm(t.Ctx, config.Cfg.Chain.Eth.Node, config.Cfg.Chain.Eth.RefundAddFee)
 		if err != nil {
 			return fmt.Errorf("NewChainEvm eth err: %s", err.Error())
@@ -69,7 +74,7 @@ func (t *ToolRefund) InitRefundInfo() error {
 	}
 
 	// bsc
-	if config.Cfg.Chain.Bsc.Switch {
+	if config.Cfg.Chain.Bsc.Refund {
 		chainBsc, err := chain_evm.NewChainEvm(t.Ctx, config.Cfg.Chain.Bsc.Node, config.Cfg.Chain.Bsc.RefundAddFee)
 		if err != nil {
 			return fmt.Errorf("NewChainEvm bsc err: %s", err.Error())
@@ -78,7 +83,7 @@ func (t *ToolRefund) InitRefundInfo() error {
 	}
 
 	// polygon
-	if config.Cfg.Chain.Polygon.Switch {
+	if config.Cfg.Chain.Polygon.Refund {
 		chainPolygon, err := chain_evm.NewChainEvm(t.Ctx, config.Cfg.Chain.Polygon.Node, config.Cfg.Chain.Polygon.RefundAddFee)
 		if err != nil {
 			return fmt.Errorf("NewChainEvm polygon err: %s", err.Error())
@@ -87,7 +92,7 @@ func (t *ToolRefund) InitRefundInfo() error {
 	}
 
 	// tron
-	if config.Cfg.Chain.Tron.Switch {
+	if config.Cfg.Chain.Tron.Refund {
 		chainTron, err := chain_tron.NewChainTron(t.Ctx, config.Cfg.Chain.Tron.Node)
 		if err != nil {
 			return fmt.Errorf("chain_ckb.NewChainTron tron err: %s", err.Error())
