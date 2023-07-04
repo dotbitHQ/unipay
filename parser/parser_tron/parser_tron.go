@@ -172,7 +172,7 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 			if err != nil {
 				return fmt.Errorf("GetOrderInfoByOrderIdWithAddr err: %s", err.Error())
 			} else if order.Id == 0 {
-				pc.CreatePaymentForMismatch("", hex.EncodeToString(tx.Txid), fromAddr, amountValue, payTokenId)
+				pc.CreatePaymentForMismatch(orderId, hex.EncodeToString(tx.Txid), fromAddr, amountValue, payTokenId)
 				log.Warn("GetOrderInfoByOrderId is not exist:", parserType, orderId)
 				continue
 			}
@@ -217,7 +217,7 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 				return fmt.Errorf("GetOrderByAddrWithAmountAndAddr err: %s", err.Error())
 			} else if order.Id == 0 {
 				log.Warn("order not exist:", contractPayTokenId, fromHex, amount)
-				pc.CreatePaymentForMismatch("", hex.EncodeToString(tx.Txid), fromHex, amount, contractPayTokenId)
+				//pc.CreatePaymentForMismatch("", hex.EncodeToString(tx.Txid), fromHex, amount, contractPayTokenId)
 				continue
 			}
 			if order.PayTokenId != contractPayTokenId {

@@ -164,7 +164,7 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 				return fmt.Errorf("GetOrderInfoByOrderIdWithAddr err: %s", err.Error())
 			} else if order.Id == 0 {
 				log.Warn("order not exist:", parserType, orderId)
-				pc.CreatePaymentForMismatch("", tx.Hash.Hex(), fromAddr, capacity, pc.PayTokenId)
+				//pc.CreatePaymentForMismatch("", tx.Hash.Hex(), fromAddr, capacity, pc.PayTokenId)
 				continue
 			}
 			if order.PayTokenId != tables.PayTokenIdCKB && order.PayTokenId != tables.PayTokenIdDAS {

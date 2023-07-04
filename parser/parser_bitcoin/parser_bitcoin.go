@@ -257,7 +257,7 @@ func (p *ParserBitcoin) dealWithHashAndAmount(pc *parser_common.ParserCore, data
 			return fmt.Errorf("pc.DoPayment err: %s", err.Error())
 		}
 	} else {
-		pc.CreatePaymentForMismatch("", data.Txid, addrPayload, decValue, pc.PayTokenId)
+		//pc.CreatePaymentForMismatch("", data.Txid, addrPayload, decValue, pc.PayTokenId)
 		msg := `hash: %s
 addrPayload: %s`
 		notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "dealWithHashAndAmount", fmt.Sprintf(msg, data.Txid, addrPayload))

@@ -191,7 +191,7 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				return fmt.Errorf("GetOrderByAddrWithAmountAndAddr err: %s", err.Error())
 			} else if order.Id == 0 {
 				log.Warn("order not exist:", contractPayTokenId, tx.From, amount, tx.Hash)
-				pc.CreatePaymentForMismatch("", tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), amount, contractPayTokenId)
+				//pc.CreatePaymentForMismatch("", tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), amount, contractPayTokenId)
 				continue
 			}
 			if order.PayTokenId != contractPayTokenId {
