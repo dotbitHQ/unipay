@@ -18,11 +18,12 @@ import (
 
 func (t *ToolRefund) doRefundCkb(paymentAddress, private string, list []tables.ViewRefundPaymentInfo) error {
 	if !config.Cfg.Chain.Ckb.Refund {
-		return nil
+		return fmt.Errorf("ckb refund flag is false")
 	}
 	if len(list) == 0 {
 		return nil
 	}
+	log.Info("doRefundCkb:", paymentAddress, len(list))
 	fromScript := common.GetNormalLockScript(paymentAddress)
 	//
 	dasContract, err := core.GetDasContractInfo(common.DasContractNameDispatchCellType)

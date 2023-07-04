@@ -14,10 +14,10 @@ import (
 
 func (t *ToolRefund) doRefundDoge(paymentAddress, private string, list []tables.ViewRefundPaymentInfo) error {
 	if !config.Cfg.Chain.Doge.Refund {
-		return nil
+		return fmt.Errorf("doge refund flag is false")
 	}
 	if t.chainDoge == nil {
-		return nil
+		return fmt.Errorf("chainDoge client is nil")
 	}
 	if len(list) == 0 {
 		return nil

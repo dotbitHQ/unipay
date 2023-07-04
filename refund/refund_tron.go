@@ -12,10 +12,10 @@ import (
 
 func (t *ToolRefund) refundTron(paymentAddress, private string, info tables.ViewRefundPaymentInfo) error {
 	if !config.Cfg.Chain.Tron.Refund {
-		return nil
+		return fmt.Errorf("tron refund flag is false")
 	}
 	if t.chainTron == nil {
-		return nil
+		return fmt.Errorf("chainTron client is nil ")
 	}
 	amount := info.Amount
 	orderId := info.OrderId

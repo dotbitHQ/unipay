@@ -23,7 +23,7 @@ type refundEvmParam struct {
 
 func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 	if !p.refund {
-		e = fmt.Errorf("refund flag is false")
+		e = fmt.Errorf("evm refund flag is false")
 		return
 	}
 	if p.chainEvm == nil {
