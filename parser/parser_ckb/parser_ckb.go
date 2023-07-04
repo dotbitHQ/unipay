@@ -8,6 +8,7 @@ import (
 	"github.com/nervosnetwork/ckb-sdk-go/rpc"
 	"github.com/nervosnetwork/ckb-sdk-go/types"
 	"github.com/scorpiotzh/mylog"
+	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
 	"strconv"
@@ -131,9 +132,11 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 	if block == nil {
 		return fmt.Errorf("block is nil")
 	}
+	log.Info("parsingBlockData:", toolib.JsonString(pc.AddrMap))
 	for _, tx := range block.Transactions {
 		for i, v := range tx.Outputs {
-			addrArgs, ok := pc.AddrMap[common.Bytes2Hex(v.Lock.Args)]
+			addrArgs := common.Bytes2Hex(v.Lock.Args)
+			_, ok := pc.AddrMap[addrArgs]
 			if !ok {
 				continue
 			}
@@ -142,18 +145,6 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 				continue
 			}
 			log.Info("parsingBlockData:", orderId, tx.Hash.Hex())
-			capacity, _ := decimal.NewFromString(strconv.FormatUint(v.Capacity, 10))
-			order, err := pc.DbDao.GetOrderInfoByOrderIdWithAddr(orderId, addrArgs)
-			if err != nil {
-				return fmt.Errorf("GetOrderInfoByOrderIdWithAddr err: %s", err.Error())
-			} else if order.Id == 0 {
-				log.Warn("order not exist:", parserType, orderId)
-				continue
-			}
-			if order.PayTokenId != tables.PayTokenIdCKB && order.PayTokenId != tables.PayTokenIdDAS {
-				log.Warn("order pay token id not match", order.OrderId)
-				continue
-			}
 			txInputs, err := p.Client.GetTransaction(p.Ctx, tx.Inputs[0].PreviousOutput.TxHash)
 			if err != nil {
 				return fmt.Errorf("GetTransaction err:%s", err.Error())
@@ -162,18 +153,32 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 			if config.Cfg.Server.Net != common.DasNetTypeMainNet {
 				mode = address.Testnet
 			}
-
 			fromAddr, err := common.ConvertScriptToAddress(mode, txInputs.Transaction.Outputs[tx.Inputs[0].PreviousOutput.Index].Lock)
 			if err != nil {
 				return fmt.Errorf("common.ConvertScriptToAddress err:%s", err.Error())
 			}
+
+			capacity, _ := decimal.NewFromString(strconv.FormatUint(v.Capacity, 10))
+			order, err := pc.DbDao.GetOrderInfoByOrderIdWithAddr(orderId, addrArgs)
+			if err != nil {
+				return fmt.Errorf("GetOrderInfoByOrderIdWithAddr err: %s", err.Error())
+			} else if order.Id == 0 {
+				log.Warn("order not exist:", parserType, orderId)
+				pc.CreatePaymentForMismatch("", tx.Hash.Hex(), fromAddr, capacity, pc.PayTokenId)
+				continue
+			}
+			if order.PayTokenId != tables.PayTokenIdCKB && order.PayTokenId != tables.PayTokenIdDAS {
+				log.Warn("order pay token id not match", order.OrderId)
+				//pc.CreatePaymentForMismatch(common.DasAlgorithmIdCkb, order.OrderId, tx.Hash.Hex(), fromAddr, capacity, tables.PayTokenIdCKB)
+				continue
+			}
 			if capacity.Cmp(order.Amount) == -1 {
 				log.Warn("tx value less than order amount:", capacity.String(), order.Amount.String())
-				pc.CreatePaymentForAmountMismatch(order, tx.Hash.Hex(), fromAddr, capacity)
+				pc.CreatePaymentForMismatch(order.OrderId, tx.Hash.Hex(), fromAddr, capacity, order.PayTokenId)
 				continue
 			}
 			// change the status to confirm
-			if err = pc.DoPayment(order, tx.Hash.Hex(), fromAddr); err != nil {
+			if err = pc.DoPayment(order, tx.Hash.Hex(), fromAddr, pc.ParserType.ToAlgorithmId()); err != nil {
 				return fmt.Errorf("pc.DoPayment err: %s", err.Error())
 			}
 			break

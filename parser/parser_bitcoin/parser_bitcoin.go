@@ -1,6 +1,7 @@
 package parser_bitcoin
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -9,6 +10,7 @@ import (
 	"github.com/scorpiotzh/mylog"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
+	"strings"
 	"sync"
 	"unipay/config"
 	"unipay/notify"
@@ -202,10 +204,13 @@ func (p *ParserBitcoin) dealWithOpReturn(pc *parser_common.ParserCore, data btcj
 	for _, vOut := range data.Vout {
 		switch vOut.ScriptPubKey.Type {
 		case txscript.NullDataTy.String():
-			if lenHex := len(vOut.ScriptPubKey.Hex); lenHex > 32 {
-				orderId = vOut.ScriptPubKey.Hex[lenHex-32:]
-				break
+			asm := vOut.ScriptPubKey.Asm
+			orderId = strings.TrimPrefix(asm, "OP_RETURN ")
+			if len(orderId) == 64 {
+				bys, _ := hex.DecodeString(orderId)
+				orderId = string(bys)
 			}
+			break
 		}
 	}
 	log.Info("dealWithOpReturn:", orderId, addrPayload)
@@ -226,11 +231,11 @@ func (p *ParserBitcoin) dealWithOpReturn(pc *parser_common.ParserCore, data btcj
 	decValue = decValue.Mul(decimal.NewFromInt(1e8))
 	if decValue.Cmp(order.Amount) == -1 {
 		log.Warn("tx value less than order amount:", decValue.String(), order.Amount.String())
-		pc.CreatePaymentForAmountMismatch(order, data.Txid, addrPayload, decValue)
+		pc.CreatePaymentForMismatch(order.OrderId, data.Txid, addrPayload, decValue, pc.PayTokenId)
 		return false, nil
 	}
 	// update payment info
-	if err = pc.DoPayment(order, data.Txid, addrPayload); err != nil {
+	if err = pc.DoPayment(order, data.Txid, addrPayload, pc.ParserType.ToAlgorithmId()); err != nil {
 		return false, fmt.Errorf("pc.DoPayment err: %s", err.Error())
 	}
 
@@ -248,10 +253,11 @@ func (p *ParserBitcoin) dealWithHashAndAmount(pc *parser_common.ParserCore, data
 	}
 	log.Info("dealWithHashAndAmount:", data.Txid, order.OrderId)
 	if order.Id > 0 {
-		if err = pc.DoPayment(order, data.Txid, addrPayload); err != nil {
+		if err = pc.DoPayment(order, data.Txid, addrPayload, pc.ParserType.ToAlgorithmId()); err != nil {
 			return fmt.Errorf("pc.DoPayment err: %s", err.Error())
 		}
 	} else {
+		pc.CreatePaymentForMismatch("", data.Txid, addrPayload, decValue, pc.PayTokenId)
 		msg := `hash: %s
 addrPayload: %s`
 		notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "dealWithHashAndAmount", fmt.Sprintf(msg, data.Txid, addrPayload))

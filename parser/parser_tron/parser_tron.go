@@ -172,22 +172,22 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 			if err != nil {
 				return fmt.Errorf("GetOrderInfoByOrderIdWithAddr err: %s", err.Error())
 			} else if order.Id == 0 {
-				pc.CreatePaymentForMismatch(common.DasAlgorithmIdTron, "", hex.EncodeToString(tx.Txid), fromAddr, amountValue, payTokenId)
+				pc.CreatePaymentForMismatch("", hex.EncodeToString(tx.Txid), fromAddr, amountValue, payTokenId)
 				log.Warn("GetOrderInfoByOrderId is not exist:", parserType, orderId)
 				continue
 			}
 			if order.PayTokenId != payTokenId {
 				log.Warn("order pay token id not match", order.OrderId)
-				pc.CreatePaymentForMismatch(common.DasAlgorithmIdTron, order.OrderId, hex.EncodeToString(tx.Txid), fromAddr, amountValue, payTokenId)
+				//pc.CreatePaymentForMismatch(common.DasAlgorithmIdTron, order.OrderId, hex.EncodeToString(tx.Txid), fromAddr, amountValue, payTokenId)
 				continue
 			}
 			if amountValue.Cmp(order.Amount) == -1 {
 				log.Warn("tx value less than order amount:", amountValue.String(), order.Amount.String())
-				pc.CreatePaymentForAmountMismatch(order, hex.EncodeToString(tx.Txid), fromAddr, amountValue)
+				pc.CreatePaymentForMismatch(order.OrderId, hex.EncodeToString(tx.Txid), fromAddr, amountValue, pc.PayTokenId)
 				continue
 			}
 			// change the status to confirm
-			if err = pc.DoPayment(order, hex.EncodeToString(tx.Txid), fromAddr); err != nil {
+			if err = pc.DoPayment(order, hex.EncodeToString(tx.Txid), fromAddr, pc.ParserType.ToAlgorithmId()); err != nil {
 				return fmt.Errorf("pc.DoPayment err: %s", err.Error())
 			}
 		//case core.Transaction_Contract_TransferAssetContract:
@@ -217,15 +217,15 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 				return fmt.Errorf("GetOrderByAddrWithAmountAndAddr err: %s", err.Error())
 			} else if order.Id == 0 {
 				log.Warn("order not exist:", contractPayTokenId, fromHex, amount)
-				pc.CreatePaymentForMismatch(common.DasAlgorithmIdTron, "", hex.EncodeToString(tx.Txid), fromHex, amount, contractPayTokenId)
+				pc.CreatePaymentForMismatch("", hex.EncodeToString(tx.Txid), fromHex, amount, contractPayTokenId)
 				continue
 			}
 			if order.PayTokenId != contractPayTokenId {
 				log.Warn("order pay token id not match", order.OrderId, order.PayTokenId, contractPayTokenId)
-				pc.CreatePaymentForMismatch(common.DasAlgorithmIdTron, order.OrderId, hex.EncodeToString(tx.Txid), fromHex, amount, contractPayTokenId)
+				//pc.CreatePaymentForMismatch(common.DasAlgorithmIdTron, order.OrderId, hex.EncodeToString(tx.Txid), fromHex, amount, contractPayTokenId)
 				continue
 			}
-			if err = pc.DoPayment(order, hex.EncodeToString(tx.Txid), fromHex); err != nil {
+			if err = pc.DoPayment(order, hex.EncodeToString(tx.Txid), fromHex, pc.ParserType.ToAlgorithmId()); err != nil {
 				return fmt.Errorf("pc.DoPayment err: %s", err.Error())
 			}
 		}

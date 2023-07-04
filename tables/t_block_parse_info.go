@@ -1,6 +1,9 @@
 package tables
 
-import "time"
+import (
+	"github.com/dotbitHQ/das-lib/common"
+	"time"
+)
 
 type TableBlockParserInfo struct {
 	Id          uint64     `json:"id" gorm:"column:id; primaryKey; type:bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '';"`
@@ -31,3 +34,17 @@ const (
 	ParserTypeDoge    = 7
 	//ParserTypeDAS     = 99
 )
+
+func (p ParserType) ToAlgorithmId() common.DasAlgorithmId {
+	switch p {
+	case ParserTypeCKB:
+		return common.DasAlgorithmIdCkb
+	case ParserTypeETH, ParserTypeBSC, ParserTypePOLYGON:
+		return common.DasAlgorithmIdEth712
+	case ParserTypeTRON:
+		return common.DasAlgorithmIdTron
+	case ParserTypeDoge:
+		return common.DasAlgorithmIdDogeChain
+	}
+	return -1
+}

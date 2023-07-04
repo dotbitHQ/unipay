@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/dotbitHQ/das-lib/bitcoin"
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
@@ -193,16 +194,16 @@ func TestCkbTx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	amount := uint64(1024) * common.OneCkb
+	amount := uint64(100) * common.OneCkb
 	fee := uint64(1e6)
-	orderid := "a7dff2d50bdd053aee42e8f4fe3f17b1"
+	orderid := "0bc21198b2307b74bf2045304bd8981a"
 
 	fromAddr := "ckt1qyqvsej8jggu4hmr45g4h8d9pfkpd0fayfksz44t9q"
 	fromParseAddress, err := address.Parse(fromAddr)
 	if err != nil {
 		t.Fatal(err)
 	}
-	toAddr := "ckt1qyqvsej8jggu4hmr45g4h8d9pfkpd0fayfksz44t9q"
+	toAddr := "ckt1qyqrekdjpy72kvhp3e9uf6y5868w5hjg8qnsqt6a0m"
 	txBuilderBase := getTxBuilderBase(dc, common.Bytes2Hex(fromParseAddress.Script.Args), privateKey)
 	toParseAddress, err := address.Parse(toAddr)
 	if err != nil {
@@ -256,6 +257,94 @@ func TestCkbTx(t *testing.T) {
 	} else {
 		fmt.Println("hash:", hash)
 	}
+}
+
+func TestCKBTx(t *testing.T) {
+	dc, err := getNewDasCoreTestnet2()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	orderId := "0bc21198b2307b74bf2045304bd8981a"
+	fromAddr := "ckt1qyqvsej8jggu4hmr45g4h8d9pfkpd0fayfksz44t9q"
+	privateFrom := privateKey
+	toAddr := "ckt1qyqrekdjpy72kvhp3e9uf6y5868w5hjg8qnsqt6a0m"
+	amount := 100 * common.OneCkb
+	if err = txCkb(dc, orderId, fromAddr, privateFrom, toAddr, amount); err != nil {
+		t.Fatal(err)
+	}
+
+	orderId = "14e713f8d2134f3b5d4855cc60f0dd22"
+	fromAddr = "ckt1qyqrekdjpy72kvhp3e9uf6y5868w5hjg8qnsqt6a0m"
+	privateFrom = privateKey2
+	toAddr = "ckt1qyqvsej8jggu4hmr45g4h8d9pfkpd0fayfksz44t9q"
+	amount = 110 * common.OneCkb
+	if err = txCkb(dc, orderId, fromAddr, privateFrom, toAddr, amount); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func txCkb(dc *core.DasCore, orderId, fromAddr, privateFrom, toAddr string, amount uint64) error {
+	fee := uint64(1e6)
+	fromPA, err := address.Parse(fromAddr)
+	if err != nil {
+		return fmt.Errorf("address.Parse err: %s", err.Error())
+	}
+
+	txBuilderBase := getTxBuilderBase(dc, common.Bytes2Hex(fromPA.Script.Args), privateFrom)
+	toPA, err := address.Parse(toAddr)
+	if err != nil {
+		return fmt.Errorf("address.Parse err: %s", err.Error())
+	}
+	liveCells, total, err := dc.GetBalanceCells(&core.ParamGetBalanceCells{
+		DasCache:          nil,
+		LockScript:        fromPA.Script,
+		CapacityNeed:      amount + fee,
+		CapacityForChange: common.MinCellOccupiedCkb,
+		SearchOrder:       indexer.SearchOrderAsc,
+	})
+	if err != nil {
+		return fmt.Errorf("GetBalanceCells err: %s", err.Error())
+	}
+	//fmt.Println(len(liveCells))
+	//
+	var txParams txbuilder.BuildTransactionParams
+	for _, v := range liveCells {
+		//fmt.Println(i)
+		txParams.Inputs = append(txParams.Inputs, &types.CellInput{
+			Since:          0,
+			PreviousOutput: v.OutPoint,
+		})
+	}
+	txParams.Outputs = append(txParams.Outputs, &types.CellOutput{
+		Capacity: amount,
+		Lock:     toPA.Script,
+		Type:     nil,
+	})
+	txParams.OutputsData = append(txParams.OutputsData, []byte(orderId))
+	//
+
+	if change := total - amount - fee; change > 0 {
+		txParams.Outputs = append(txParams.Outputs, &types.CellOutput{
+			Capacity: change,
+			Lock:     fromPA.Script,
+			Type:     nil,
+		})
+		txParams.OutputsData = append(txParams.OutputsData, []byte{})
+	}
+
+	//
+	txBuilder := txbuilder.NewDasTxBuilderFromBase(txBuilderBase, nil)
+	if err := txBuilder.BuildTransaction(&txParams); err != nil {
+		return fmt.Errorf("BuildTransaction err: %s", err.Error())
+	}
+
+	if hash, err := txBuilder.SendTransactionWithCheck(false); err != nil {
+		return fmt.Errorf("SendTransactionWithCheck err: %s", err.Error())
+	} else {
+		fmt.Println("hash:", hash)
+	}
+	return nil
 }
 
 func TestEvmTx3(t *testing.T) {
@@ -371,6 +460,112 @@ func TestDogeTx(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println("hash:", hash)
+}
+
+func TestDogeTx2(t *testing.T) {
+	_ = config.InitCfg("../config/config.yaml")
+	br := bitcoin.BaseRequest{
+		RpcUrl:   config.Cfg.Chain.Doge.Node,
+		User:     config.Cfg.Chain.Doge.User,
+		Password: config.Cfg.Chain.Doge.Password,
+		Proxy:    config.Cfg.Chain.Doge.Proxy,
+	}
+	txTool := bitcoin.TxTool{
+		RpcClient:        &br,
+		Ctx:              context.Background(),
+		RemoteSignClient: nil,
+		DustLimit:        bitcoin.DustLimitDoge,
+		Params:           bitcoin.GetDogeMainNetParams(),
+	}
+	orderId := "fea8de748162bad438f40ba9c3af6d6e"
+	addrFrom := "DQaRQ9s28U7EogPcDZudwZc4wD1NucZr2g"
+	addrTo := "DP86MSmWjEZw8GKotxcvAaW5D4e3qoEh6f"
+	fromKey := privateKey
+	payAmount := int64(400000000)
+	go func() {
+		if err := txDoge(txTool, orderId, addrFrom, addrTo, fromKey, payAmount); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	orderId2 := "698470be9a9dd2665de160f63f8a91f3"
+	addrFrom2 := "DP86MSmWjEZw8GKotxcvAaW5D4e3qoEh6f"
+	addrTo2 := "DQaRQ9s28U7EogPcDZudwZc4wD1NucZr2g"
+	fromKey2 := privateKey2
+	payAmount2 := int64(300000000)
+	go func() {
+		if err := txDoge(txTool, orderId2, addrFrom2, addrTo2, fromKey2, payAmount2); err != nil {
+			t.Fatal(err)
+		}
+	}()
+	time.Sleep(time.Second * 15)
+}
+
+func txDoge(txTool bitcoin.TxTool, orderId, addrFrom, addrTo, fromKey string, payAmount int64) error {
+	_, uos, err := txTool.GetUnspentOutputsDoge(addrFrom, fromKey, payAmount)
+	if err != nil {
+		return fmt.Errorf("GetUnspentOutputsDoge err: %s", err.Error())
+	}
+
+	// transfer
+	tx, err := txTool.NewTx(uos, []string{addrTo}, []int64{payAmount}, orderId)
+	if err != nil {
+		return fmt.Errorf("NewTx err: %s", err.Error())
+	}
+
+	_, err = txTool.LocalSignTx(tx, uos)
+	if err != nil {
+		return fmt.Errorf("LocalSignTx err: %s", err.Error())
+	}
+
+	hash, err := txTool.SendTx(tx)
+	if err != nil {
+		return fmt.Errorf("SendTx err: %s", err.Error())
+	}
+	fmt.Println("hash:", hash)
+	return nil
+}
+
+func TestDogeTx3(t *testing.T) {
+	_ = config.InitCfg("../config/config.yaml")
+	br := bitcoin.BaseRequest{
+		RpcUrl:   config.Cfg.Chain.Doge.Node,
+		User:     config.Cfg.Chain.Doge.User,
+		Password: config.Cfg.Chain.Doge.Password,
+		Proxy:    config.Cfg.Chain.Doge.Proxy,
+	}
+	data, err := br.GetRawTransaction("ccd286a447d16cf5f166edac21b4b5f25df45612c19569043c1283d97fdc0189")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var orderId string
+	for _, vOut := range data.Vout {
+		switch vOut.ScriptPubKey.Type {
+		case txscript.NullDataTy.String():
+			asm := vOut.ScriptPubKey.Asm
+			orderId = strings.TrimPrefix(asm, "OP_RETURN ")
+			if len(orderId) == 64 {
+				bys, _ := hex.DecodeString(orderId)
+				orderId = string(bys)
+			}
+		}
+	}
+	fmt.Println("orderId:", orderId)
+	//
+	//sc := txscript.NewScriptBuilder()
+	//sc.AddOp(txscript.OP_RETURN).AddData([]byte("fea8de748162bad438f40ba9c3af6d6e"))
+	//bs, err := sc.Script()
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//res := wire.NewTxOut(0, bs)
+	//tx := wire.NewMsgTx(wire.TxVersion)
+	//tx.AddTxOut(res)
+	//buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
+	//if err := tx.SerializeNoWitness(buf); err != nil {
+	//	t.Fatal(err)
+	//}
+	//fmt.Println(hex.EncodeToString(buf.Bytes()))
 }
 
 func TestErc20Tx(t *testing.T) {

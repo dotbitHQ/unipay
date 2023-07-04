@@ -29,12 +29,12 @@ type ParserCore struct {
 	AddrMap            map[string]string
 }
 
-func (p *ParserCore) CreatePaymentForMismatch(algorithmId common.DasAlgorithmId, orderId, payHash, payAddress string, amount decimal.Decimal, payTokenId tables.PayTokenId) {
+func (p *ParserCore) CreatePaymentForMismatch(orderId, payHash, payAddress string, amount decimal.Decimal, payTokenId tables.PayTokenId) {
 	paymentInfo := tables.TablePaymentInfo{
 		PayHash:       payHash,
 		OrderId:       orderId,
 		PayAddress:    payAddress,
-		AlgorithmId:   algorithmId,
+		AlgorithmId:   p.ParserType.ToAlgorithmId(),
 		Timestamp:     time.Now().UnixMilli(),
 		Amount:        amount,
 		PayTokenId:    payTokenId,
@@ -46,29 +46,12 @@ func (p *ParserCore) CreatePaymentForMismatch(algorithmId common.DasAlgorithmId,
 	}
 }
 
-func (p *ParserCore) CreatePaymentForAmountMismatch(order tables.TableOrderInfo, payHash, payAddress string, amount decimal.Decimal) {
-	paymentInfo := tables.TablePaymentInfo{
-		PayHash:       payHash,
-		OrderId:       order.OrderId,
-		PayAddress:    payAddress,
-		AlgorithmId:   order.AlgorithmId,
-		Timestamp:     time.Now().UnixMilli(),
-		Amount:        amount,
-		PayTokenId:    order.PayTokenId,
-		PayHashStatus: tables.PayHashStatusConfirm,
-		RefundStatus:  tables.RefundStatusDefault,
-	}
-	if err := p.DbDao.CreatePayment(paymentInfo); err != nil {
-		log.Error("CreatePaymentForAmountMismatch err:", order.OrderId, payHash, err.Error())
-	}
-}
-
-func (p *ParserCore) DoPayment(order tables.TableOrderInfo, txId, fromHex string) error {
+func (p *ParserCore) DoPayment(order tables.TableOrderInfo, txId, fromHex string, algorithmId common.DasAlgorithmId) error {
 	paymentInfo := tables.TablePaymentInfo{
 		PayHash:       txId,
 		OrderId:       order.OrderId,
 		PayAddress:    fromHex,
-		AlgorithmId:   order.AlgorithmId,
+		AlgorithmId:   algorithmId,
 		Timestamp:     time.Now().UnixMilli(),
 		Amount:        order.Amount,
 		PayTokenId:    order.PayTokenId,

@@ -158,21 +158,21 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				return fmt.Errorf("GetOrderInfoByOrderIdWithAddr err: %s", err.Error())
 			} else if order.Id == 0 {
 				log.Warn("order not exist:", parserType, orderId)
-				pc.CreatePaymentForMismatch(dascommon.DasAlgorithmIdEth712, orderId, tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), decValue, payTokenId)
+				pc.CreatePaymentForMismatch(orderId, tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), decValue, payTokenId)
 				continue
 			}
 			if order.PayTokenId != payTokenId {
 				log.Warn("order pay token id not match", order.OrderId, payTokenId)
-				pc.CreatePaymentForMismatch(dascommon.DasAlgorithmIdEth712, orderId, tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), decValue, payTokenId)
+				//pc.CreatePaymentForMismatch(dascommon.DasAlgorithmIdEth712, orderId, tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), decValue, payTokenId)
 				continue
 			}
 			// check value is equal amount or not
 			if decValue.Cmp(order.Amount) == -1 {
 				log.Warn("tx value less than order amount:", parserType, decValue, order.Amount.String())
-				pc.CreatePaymentForAmountMismatch(order, tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), decValue)
+				pc.CreatePaymentForMismatch(order.OrderId, tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), decValue, pc.PayTokenId)
 				continue
 			}
-			if err = pc.DoPayment(order, tx.Hash, ethcommon.HexToAddress(tx.From).Hex()); err != nil {
+			if err = pc.DoPayment(order, tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), pc.ParserType.ToAlgorithmId()); err != nil {
 				return fmt.Errorf("pc.DoPayment err: %s", err.Error())
 			}
 		case contractUSDT:
@@ -191,7 +191,7 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				return fmt.Errorf("GetOrderByAddrWithAmountAndAddr err: %s", err.Error())
 			} else if order.Id == 0 {
 				log.Warn("order not exist:", contractPayTokenId, tx.From, amount, tx.Hash)
-				pc.CreatePaymentForMismatch(dascommon.DasAlgorithmIdEth712, "", tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), amount, contractPayTokenId)
+				pc.CreatePaymentForMismatch("", tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), amount, contractPayTokenId)
 				continue
 			}
 			if order.PayTokenId != contractPayTokenId {
@@ -199,7 +199,7 @@ func (p *ParserEvm) parsingBlockData(block *chain_evm.Block, pc *parser_common.P
 				continue
 			}
 
-			if err = pc.DoPayment(order, tx.Hash, ethcommon.HexToAddress(tx.From).Hex()); err != nil {
+			if err = pc.DoPayment(order, tx.Hash, ethcommon.HexToAddress(tx.From).Hex(), pc.ParserType.ToAlgorithmId()); err != nil {
 				return fmt.Errorf("pc.DoPayment err: %s", err.Error())
 			}
 		}
