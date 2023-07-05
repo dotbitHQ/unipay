@@ -151,7 +151,7 @@ func (p *ParserBitcoin) parsingBlockData2(block *bitcoin.BlockInfo, pc *parser_c
 	}
 	log.Info("parsingBlockData:", parserType, block.Height, block.Hash, len(block.Tx))
 
-	var indexCh = make(chan int, 10)
+	var indexCh = make(chan int, len(block.Tx))
 	var dataList = make([]btcjson.TxRawResult, len(block.Tx))
 	dataLock := &sync.Mutex{}
 	dataGroup := &errgroup.Group{}
@@ -170,15 +170,12 @@ func (p *ParserBitcoin) parsingBlockData2(block *bitcoin.BlockInfo, pc *parser_c
 			return nil
 		})
 	}
-	dataGroup.Go(func() error {
-		for i, _ := range block.Tx {
-			indexCh <- i
-		}
-		return nil
-	})
-
+	for i, _ := range block.Tx {
+		indexCh <- i
+	}
+	close(indexCh)
 	if err := dataGroup.Wait(); err != nil {
-		return fmt.Errorf("dataGroup.Wait()1 err: %s", err.Error())
+		return fmt.Errorf("dataGroup.Wait() err: %s", err.Error())
 	}
 	log.Info("parsingBlockData:", parserType, block.Height, block.Hash, len(block.Tx), len(dataList))
 
