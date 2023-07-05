@@ -235,7 +235,7 @@ func (t *ToolParser) initParserDoge() error {
 			ParserType:         tables.ParserTypeDoge,
 			PayTokenId:         tables.PayTokenIdDOGE,
 			CurrentBlockNumber: 0,
-			ConcurrencyNum:     5,
+			ConcurrencyNum:     3,
 			ConfirmNum:         3,
 			Switch:             config.Cfg.Chain.Doge.Switch,
 			AddrMap:            config.Cfg.Chain.Doge.AddrMap,

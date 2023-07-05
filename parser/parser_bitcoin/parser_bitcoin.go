@@ -12,6 +12,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"strings"
 	"sync"
+	"time"
 	"unipay/config"
 	"unipay/notify"
 	"unipay/parser/parser_common"
@@ -150,12 +151,15 @@ func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo, pc *parser_co
 		return fmt.Errorf("block is nil")
 	}
 	log.Info("parsingBlockData:", parserType, block.Height, block.Hash, len(block.Tx))
-	for _, v := range block.Tx {
+	for i, v := range block.Tx {
+		t1 := time.Now()
+		log.Info("parsingBlockData: t1", t1.String(), i)
 		// get tx info
 		data, err := p.NodeRpc.GetRawTransaction(v)
 		if err != nil {
 			return fmt.Errorf("req GetRawTransaction err: %s", err.Error())
 		}
+		log.Info("parsingBlockData: t2", time.Now().Sub(t1).Seconds(), i)
 		// check address of outputs
 		isMyTx, value, receiptAddr := false, float64(0), ""
 		for _, vOut := range data.Vout {
@@ -195,6 +199,7 @@ func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo, pc *parser_co
 				return fmt.Errorf("dealWithHashAndAmount err: %s", err.Error())
 			}
 		}
+		log.Info("parsingBlockData: t3", time.Now().Sub(t1).Seconds(), i)
 	}
 	return nil
 }
