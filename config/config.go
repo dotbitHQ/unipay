@@ -80,13 +80,14 @@ type CfgServer struct {
 		Bsc     EvmNode `json:"bsc" yaml:"bsc"`
 		Polygon EvmNode `json:"polygon" yaml:"polygon"`
 		Doge    struct {
-			Refund   bool              `json:"refund" yaml:"refund"`
-			Switch   bool              `json:"switch" yaml:"switch"`
-			Node     string            `json:"node" yaml:"node"`
-			User     string            `json:"user" yaml:"user"`
-			Password string            `json:"password" yaml:"password"`
-			Proxy    string            `json:"proxy" yaml:"proxy"`
-			AddrMap  map[string]string `json:"addr_map" yaml:"addr_map"`
+			TxChanNum int               `json:"tx_chan_num" yaml:"tx_chan_num"`
+			Refund    bool              `json:"refund" yaml:"refund"`
+			Switch    bool              `json:"switch" yaml:"switch"`
+			Node      string            `json:"node" yaml:"node"`
+			User      string            `json:"user" yaml:"user"`
+			Password  string            `json:"password" yaml:"password"`
+			Proxy     string            `json:"proxy" yaml:"proxy"`
+			AddrMap   map[string]string `json:"addr_map" yaml:"addr_map"`
 		} `json:"doge" yaml:"doge"`
 		Stripe struct {
 			Refund         bool   `json:"refund" yaml:"refund"`

@@ -156,7 +156,11 @@ func (p *ParserBitcoin) parsingBlockData2(block *bitcoin.BlockInfo, pc *parser_c
 	dataLock := &sync.Mutex{}
 	dataGroup := &errgroup.Group{}
 
-	for i := 0; i < 5; i++ {
+	txChanNum := 5
+	if config.Cfg.Chain.Doge.TxChanNum > 0 {
+		txChanNum = config.Cfg.Chain.Doge.TxChanNum
+	}
+	for i := 0; i < txChanNum; i++ {
 		dataGroup.Go(func() error {
 			for index := range indexCh {
 				data, err := p.NodeRpc.GetRawTransaction(block.Tx[index])
