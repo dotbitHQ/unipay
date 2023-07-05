@@ -12,7 +12,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"strings"
 	"sync"
-	"time"
 	"unipay/config"
 	"unipay/notify"
 	"unipay/parser/parser_common"
@@ -58,8 +57,8 @@ func (p *ParserBitcoin) SingleParsing(pc *parser_common.ParserCore) error {
 	} else if isFork {
 		return nil
 	}
-	if err := p.parsingBlockData(&block, pc); err != nil {
-		return fmt.Errorf("parsingBlockData err: %s", err.Error())
+	if err := p.parsingBlockData2(&block, pc); err != nil {
+		return fmt.Errorf("parsingBlockData2 err: %s", err.Error())
 	} else {
 		if err := pc.HandleSingleParsingOK(blockHash, parentHash); err != nil {
 			return fmt.Errorf("HandleSingleParsingOK err: %s", err.Error())
@@ -119,8 +118,8 @@ func (p *ParserBitcoin) ConcurrentParsing(pc *parser_common.ParserCore) error {
 
 	blockGroup.Go(func() error {
 		for v := range blockCh {
-			if err := p.parsingBlockData(&v, pc); err != nil {
-				return fmt.Errorf("parsingBlockData err: %s", err.Error())
+			if err := p.parsingBlockData2(&v, pc); err != nil {
+				return fmt.Errorf("parsingBlockData2 err: %s", err.Error())
 			}
 		}
 		return nil
@@ -145,21 +144,103 @@ func (p *ParserBitcoin) getMainNetParams(pc *parser_common.ParserCore) (chaincfg
 	return chaincfg.MainNetParams, fmt.Errorf("unknow MainNetParams ParserType[%d]", pc.ParserType)
 }
 
+func (p *ParserBitcoin) parsingBlockData2(block *bitcoin.BlockInfo, pc *parser_common.ParserCore) error {
+	parserType := pc.ParserType
+	if block == nil {
+		return fmt.Errorf("block is nil")
+	}
+	log.Info("parsingBlockData:", parserType, block.Height, block.Hash, len(block.Tx))
+
+	var indexCh = make(chan int, 10)
+	var dataList = make([]btcjson.TxRawResult, len(block.Tx))
+	dataLock := &sync.Mutex{}
+	dataGroup := &errgroup.Group{}
+
+	for i := 0; i < 5; i++ {
+		dataGroup.Go(func() error {
+			for index := range indexCh {
+				data, err := p.NodeRpc.GetRawTransaction(block.Tx[index])
+				if err != nil {
+					return fmt.Errorf("req GetRawTransaction err: %s", err.Error())
+				}
+				dataLock.Lock()
+				dataList[index] = data
+				dataLock.Unlock()
+			}
+			return nil
+		})
+	}
+	dataGroup.Go(func() error {
+		for i, _ := range block.Tx {
+			indexCh <- i
+		}
+		return nil
+	})
+
+	if err := dataGroup.Wait(); err != nil {
+		return fmt.Errorf("dataGroup.Wait()1 err: %s", err.Error())
+	}
+	log.Info("parsingBlockData:", parserType, block.Height, block.Hash, len(block.Tx), len(dataList))
+
+	for _, data := range dataList {
+		// check address of outputs
+		isMyTx, value, receiptAddr := false, float64(0), ""
+		for _, vOut := range data.Vout {
+			for _, receiptAddr = range vOut.ScriptPubKey.Addresses {
+				if _, ok := pc.AddrMap[receiptAddr]; ok {
+					isMyTx = true
+					value = vOut.Value
+					break
+				}
+			}
+			if isMyTx {
+				break
+			}
+		}
+		decValue := decimal.NewFromFloat(value)
+		// check inputs & pay info & order id
+		if isMyTx {
+			log.Info("parsingBlockData:", parserType, data.Txid)
+			if len(data.Vin) == 0 {
+				return fmt.Errorf("tx vin is nil")
+			}
+			mainNetParams, err := p.getMainNetParams(pc)
+			if err != nil {
+				return fmt.Errorf("getMainNetParams err: %s", err.Error())
+			}
+			_, addrPayload, err := bitcoin.VinScriptSigToAddress(data.Vin[0].ScriptSig, mainNetParams)
+			if err != nil {
+				return fmt.Errorf("VinScriptSigToAddress err: %s", err.Error())
+			}
+
+			if ok, err := p.dealWithOpReturn(pc, data, decValue, addrPayload, receiptAddr); err != nil {
+				return fmt.Errorf("dealWithOpReturn err: %s", err.Error())
+			} else if ok {
+				continue
+			}
+			if err = p.dealWithHashAndAmount(pc, data, decValue, addrPayload, receiptAddr); err != nil {
+				return fmt.Errorf("dealWithHashAndAmount err: %s", err.Error())
+			}
+		}
+	}
+	return nil
+}
+
 func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo, pc *parser_common.ParserCore) error {
 	parserType := pc.ParserType
 	if block == nil {
 		return fmt.Errorf("block is nil")
 	}
 	log.Info("parsingBlockData:", parserType, block.Height, block.Hash, len(block.Tx))
-	for i, v := range block.Tx {
-		t1 := time.Now()
-		log.Info("parsingBlockData: t1", t1.String(), i)
+	for _, v := range block.Tx {
+		//t1 := time.Now()
+		//log.Info("parsingBlockData: t1", t1.String(), i)
 		// get tx info
 		data, err := p.NodeRpc.GetRawTransaction(v)
 		if err != nil {
 			return fmt.Errorf("req GetRawTransaction err: %s", err.Error())
 		}
-		log.Info("parsingBlockData: t2", time.Now().Sub(t1).Seconds(), i)
+		//log.Info("parsingBlockData: t2", time.Now().Sub(t1).Seconds(), i)
 		// check address of outputs
 		isMyTx, value, receiptAddr := false, float64(0), ""
 		for _, vOut := range data.Vout {
@@ -199,7 +280,7 @@ func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo, pc *parser_co
 				return fmt.Errorf("dealWithHashAndAmount err: %s", err.Error())
 			}
 		}
-		log.Info("parsingBlockData: t3", time.Now().Sub(t1).Seconds(), i)
+		//log.Info("parsingBlockData: t3", time.Now().Sub(t1).Seconds(), i)
 	}
 	return nil
 }
