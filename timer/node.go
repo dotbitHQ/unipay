@@ -13,15 +13,15 @@ var (
 )
 
 func (t *ToolTimer) RunCheckNode() {
-	tickerNode := time.NewTicker(time.Minute * 30)
+	tickerNode := time.NewTicker(time.Minute * 5)
 	t.Wg.Add(1)
 	go func() {
 		for {
 			select {
 			case <-tickerNode.C:
-				if err := t.doCallbackNotice(); err != nil {
-					log.Error("doCallbackNotice err: ", err.Error())
-					notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doCallbackNotice", err.Error())
+				if err := t.doCheckNode(); err != nil {
+					log.Error("doCheckNode err: ", err.Error())
+					notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doCheckNode", err.Error())
 				}
 			case <-t.Ctx.Done():
 				log.Warn("RunCallbackNotice done")
