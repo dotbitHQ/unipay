@@ -35,8 +35,8 @@ func (t *ToolTimer) checkRefundNum() error {
 	if countRefund == 0 {
 		return nil
 	}
-	msg := fmt.Sprintf("> un refund txs: %d", countRefund)
-	notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "Rejected Txs", msg)
+	msg := fmt.Sprintf("> count: %d", countRefund)
+	notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UnRefunded Txs", msg)
 
 	return nil
 }
