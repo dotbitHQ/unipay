@@ -105,6 +105,7 @@ func runServer(ctx *cli.Context) error {
 	toolTimer.RunCheckNode()
 	toolTimer.RunCheckStripeStatus()
 	toolTimer.RunCkbBalance()
+	toolTimer.RunCheckRefundNum()
 
 	// ============= service end =============
 	toolib.ExitMonitoring(func(sig os.Signal) {

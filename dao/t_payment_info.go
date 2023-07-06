@@ -199,3 +199,10 @@ func (d *DbDao) GetPaymentInfoByOrderId(orderId string) (info tables.TablePaymen
 	err = d.db.Where("order_id=?", orderId).Find(&info).Limit(1).Error
 	return
 }
+
+func (d *DbDao) GetUnRefundTxCount() (count int64, err error) {
+	err = d.db.Model(tables.TablePaymentInfo{}).
+		Where("pay_hash_status=? AND refund_status=?",
+			tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).Count(&count).Error
+	return
+}
