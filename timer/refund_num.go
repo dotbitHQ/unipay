@@ -8,7 +8,7 @@ import (
 )
 
 func (t *ToolTimer) RunCheckRefundNum() {
-	tickerCheck := time.NewTicker(time.Minute * 20)
+	tickerCheck := time.NewTicker(time.Minute * 30)
 	t.Wg.Add(1)
 	go func() {
 		for {

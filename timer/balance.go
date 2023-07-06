@@ -12,7 +12,7 @@ import (
 )
 
 func (t *ToolTimer) RunCkbBalance() {
-	tickerCKBBalance := time.NewTicker(time.Minute * 20)
+	tickerCKBBalance := time.NewTicker(time.Minute * 30)
 	t.Wg.Add(1)
 	go func() {
 		for {
