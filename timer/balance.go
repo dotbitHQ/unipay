@@ -55,6 +55,8 @@ func (t *ToolTimer) ckbBalance() error {
 - Time: %s`
 		msg = fmt.Sprintf(msg, addr, len(liveCells), capacity, time.Now().Format("2006-01-02 15:04:05"))
 
+		log.Info("ckbBalance:", msg)
+
 		if capacity < 1000000 {
 			notify.SendLarkTextNotifyAtAll(config.Cfg.Notify.LarkDasInfoKey, "Live Cells", msg)
 		} else {
