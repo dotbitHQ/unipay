@@ -2,6 +2,7 @@ package notify
 
 import (
 	"fmt"
+	"github.com/dotbitHQ/das-lib/common"
 	"github.com/parnurzeal/gorequest"
 	"time"
 	"unipay/config"
@@ -53,6 +54,8 @@ func (c *CallbackNotice) callbackNotice(notice tables.TableNoticeInfo, paymentIn
 			OrderId:      orderInfo.OrderId,
 			PayStatus:    orderInfo.PayStatus,
 			PayHash:      paymentInfo.PayHash,
+			PayAddress:   paymentInfo.PayAddress,
+			AlgorithmId:  paymentInfo.AlgorithmId,
 			RefundStatus: paymentInfo.RefundStatus,
 			RefundHash:   paymentInfo.RefundHash,
 		}},
@@ -157,6 +160,8 @@ func (c *CallbackNotice) GetEventInfo(notice tables.TableNoticeInfo) (businessId
 		OrderId:      orderInfo.OrderId,
 		PayStatus:    orderInfo.PayStatus,
 		PayHash:      paymentInfo.PayHash,
+		PayAddress:   paymentInfo.PayAddress,
+		AlgorithmId:  paymentInfo.AlgorithmId,
 		RefundStatus: paymentInfo.RefundStatus,
 		RefundHash:   paymentInfo.RefundHash,
 		NoticeId:     notice.Id,
@@ -171,14 +176,16 @@ type reqCallbackNotice struct {
 	EventList  []EventInfo `json:"event_list"`
 }
 type EventInfo struct {
-	EventType    tables.EventType    `json:"event_type"`
-	OrderId      string              `json:"order_id"`
-	PayStatus    tables.PayStatus    `json:"pay_status"`
-	PayHash      string              `json:"pay_hash"`
-	RefundStatus tables.RefundStatus `json:"refund_status"`
-	RefundHash   string              `json:"refund_hash"`
-	NoticeId     uint64              `json:"notice_id"`
-	NoticeCount  int                 `json:"notice_count"`
+	EventType    tables.EventType      `json:"event_type"`
+	OrderId      string                `json:"order_id"`
+	PayStatus    tables.PayStatus      `json:"pay_status"`
+	PayHash      string                `json:"pay_hash"`
+	PayAddress   string                `json:"pay_address"`
+	AlgorithmId  common.DasAlgorithmId `json:"algorithm_id"`
+	RefundStatus tables.RefundStatus   `json:"refund_status"`
+	RefundHash   string                `json:"refund_hash"`
+	NoticeId     uint64                `json:"notice_id"`
+	NoticeCount  int                   `json:"notice_count"`
 }
 type respCallbackNotice struct {
 }
