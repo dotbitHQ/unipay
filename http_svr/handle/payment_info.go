@@ -2,6 +2,7 @@ package handle
 
 import (
 	"fmt"
+	"github.com/dotbitHQ/das-lib/common"
 	"github.com/dotbitHQ/das-lib/http_api"
 	"github.com/gin-gonic/gin"
 	"github.com/scorpiotzh/toolib"
@@ -20,13 +21,15 @@ type RespPaymentInfo struct {
 }
 
 type PaymentInfo struct {
-	OrderId         string               `json:"order_id"`
-	PayHash         string               `json:"pay_hash"`
-	PayHashStatus   tables.PayHashStatus `json:"pay_hash_status"`
-	RefundHash      string               `json:"refund_hash"`
-	RefundStatus    tables.RefundStatus  `json:"refund_status"`
-	PaymentAddress  string               `json:"payment_address"`
-	ContractAddress string               `json:"contract_address"`
+	OrderId         string                `json:"order_id"`
+	PayHash         string                `json:"pay_hash"`
+	PayAddress      string                `json:"pay_address"`
+	AlgorithmId     common.DasAlgorithmId `json:"algorithm_id"`
+	PayHashStatus   tables.PayHashStatus  `json:"pay_hash_status"`
+	RefundHash      string                `json:"refund_hash"`
+	RefundStatus    tables.RefundStatus   `json:"refund_status"`
+	PaymentAddress  string                `json:"payment_address"`
+	ContractAddress string                `json:"contract_address"`
 }
 
 func (h *HttpHandle) PaymentInfo(ctx *gin.Context) {
@@ -74,6 +77,8 @@ func (h *HttpHandle) doPaymentInfo(req *ReqPaymentInfo, apiResp *http_api.ApiRes
 		paymentMap[v.PayHash] = PaymentInfo{
 			OrderId:       v.OrderId,
 			PayHash:       v.PayHash,
+			PayAddress:    v.PayAddress,
+			AlgorithmId:   v.AlgorithmId,
 			PayHashStatus: v.PayHashStatus,
 			RefundHash:    v.RefundHash,
 			RefundStatus:  v.RefundStatus,
@@ -90,6 +95,8 @@ func (h *HttpHandle) doPaymentInfo(req *ReqPaymentInfo, apiResp *http_api.ApiRes
 		paymentMap[v.PayHash] = PaymentInfo{
 			OrderId:       v.OrderId,
 			PayHash:       v.PayHash,
+			PayAddress:    v.PayAddress,
+			AlgorithmId:   v.AlgorithmId,
 			PayHashStatus: v.PayHashStatus,
 			RefundHash:    v.RefundHash,
 			RefundStatus:  v.RefundStatus,
