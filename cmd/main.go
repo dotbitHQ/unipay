@@ -95,10 +95,11 @@ func runServer(ctx *cli.Context) error {
 
 	// tool timer
 	toolTimer := timer.ToolTimer{
-		Ctx:   ctxServer,
-		Wg:    &wgServer,
-		DbDao: dbDao,
-		CN:    cn,
+		Ctx:     ctxServer,
+		Wg:      &wgServer,
+		DbDao:   dbDao,
+		CN:      cn,
+		DasCore: dasCore,
 	}
 	toolTimer.RunCallbackNotice()
 	toolTimer.RunCheckNode()

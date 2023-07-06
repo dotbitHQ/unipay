@@ -66,7 +66,7 @@ func SendLarkTextNotifyAtAll(key, title, text string) {
 	var data MsgData
 	data.Email = ""
 	data.MsgType = "post"
-	data.Content.Post.ZhCn.Title = title
+	data.Content.Post.ZhCn.Title = fmt.Sprintf("UNIPAY: %s", title)
 	data.Content.Post.ZhCn.Content = [][]MsgContent{
 		{
 			MsgContent{

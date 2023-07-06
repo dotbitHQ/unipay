@@ -63,7 +63,8 @@ type CfgServer struct {
 	} `json:"server" yaml:"server"`
 	BusinessIds map[string]string `json:"business_ids" yaml:"business_ids"`
 	Notify      struct {
-		LarkErrorKey string `json:"lark_error_key" yaml:"lark_error_key"`
+		LarkErrorKey   string `json:"lark_error_key" yaml:"lark_error_key"`
+		LarkDasInfoKey string `json:"lark_das_info_key" yaml:"lark_das_info_key"`
 	} `json:"notify" yaml:"notify"`
 	DB struct {
 		Mysql DbMysql `json:"mysql" yaml:"mysql"`

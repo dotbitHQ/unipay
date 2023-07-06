@@ -2,6 +2,7 @@ package timer
 
 import (
 	"context"
+	"github.com/dotbitHQ/das-lib/core"
 	"github.com/scorpiotzh/mylog"
 	"sync"
 	"time"
@@ -15,10 +16,11 @@ var (
 )
 
 type ToolTimer struct {
-	Ctx   context.Context
-	Wg    *sync.WaitGroup
-	DbDao *dao.DbDao
-	CN    *notify.CallbackNotice
+	Ctx     context.Context
+	Wg      *sync.WaitGroup
+	DbDao   *dao.DbDao
+	CN      *notify.CallbackNotice
+	DasCore *core.DasCore
 }
 
 func (t *ToolTimer) RunCallbackNotice() {
