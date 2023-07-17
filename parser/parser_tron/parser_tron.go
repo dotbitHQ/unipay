@@ -201,18 +201,15 @@ func (p *ParserTron) parsingBlockData(block *api.BlockExtention, pc *parser_comm
 			if contractHex != contractUSDT {
 				continue
 			}
-			log.Info("smart.Data:", len(smart.Data))
-			if len(smart.Data) < 36 {
+			data := hex.EncodeToString(smart.Data)
+			if len(smart.Data) != 68 || !strings.Contains(data, "a9059cbb0000") {
 				continue
 			}
-			data := hex.EncodeToString(smart.Data)
 			toHex := common.TronPreFix + hex.EncodeToString(smart.Data[16:36])
 			amount := decimal.NewFromBigInt(new(big.Int).SetBytes(smart.Data[36:]), 0)
 
 			log.Info("parsingBlockData:", fromHex, contractHex, toHex, amount.String())
-			if len(smart.Data) != 68 || !strings.Contains(data, "a9059cbb0000") {
-				continue
-			}
+
 			if _, ok := pc.AddrMap[toHex]; !ok {
 				continue
 			}
