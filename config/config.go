@@ -92,6 +92,7 @@ type CfgServer struct {
 		} `json:"doge" yaml:"doge"`
 		Stripe struct {
 			Refund         bool   `json:"refund" yaml:"refund"`
+			Switch         bool   `json:"switch" yaml:"switch"`
 			Key            string `json:"key" yaml:"key"`
 			EndpointSecret string `json:"endpoint_secret" yaml:"endpoint_secret"`
 			WebhooksAddr   string `json:"webhooks_addr" yaml:"webhooks_addr"`

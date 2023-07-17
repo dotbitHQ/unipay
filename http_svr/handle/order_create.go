@@ -94,6 +94,10 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 	orderInfo.InitOrderId()
 	var paymentInfo tables.TablePaymentInfo
 	if req.PayTokenId == tables.PayTokenIdStripeUSD {
+		if !config.Cfg.Chain.Stripe.Switch {
+			apiResp.ApiRespErr(http_api.ApiCodePaymentMethodDisable, "This payment method is unavailable")
+			return nil
+		}
 		if req.Amount.IntPart() < 52 {
 			apiResp.ApiRespErr(http_api.ApiCodeAmountIsTooLow, "Amount not less than 0.52$")
 			return nil
