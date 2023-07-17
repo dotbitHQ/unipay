@@ -95,6 +95,7 @@ type CfgServer struct {
 			Key            string `json:"key" yaml:"key"`
 			EndpointSecret string `json:"endpoint_secret" yaml:"endpoint_secret"`
 			WebhooksAddr   string `json:"webhooks_addr" yaml:"webhooks_addr"`
+			LargeAmount    int64  `json:"large_amount" yaml:"large_amount"`
 		} `json:"stripe" yaml:"stripe"`
 	} `json:"chain" yaml:"chain"`
 }
