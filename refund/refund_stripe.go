@@ -34,6 +34,15 @@ func (t *ToolRefund) doRefundStripe(list []tables.ViewRefundPaymentInfo) error {
 		//5$: x>0.03871636
 		//1000$: x>0.03521429
 
+		// a->a*(1+x)-> (a*(1+x))*0.034+0.5
+		// ax>(a+ax)*0.034+0.5
+		// ax>a*0.034+a*0.034*x+0.5
+		// ax-a*0.034x>a*0.034+0.5
+		// 0.966ax>0.034a+0.5
+		// x>(0.034a+0.5)/0.966a
+		// 5$: 0.67/4.83 // 0.13871636
+		// 1000$: 34.5/966 // 0.03571429
+
 		//dec34 := decimal.NewFromFloat(0.034)
 		//dec50 := decimal.NewFromFloat(50)
 		//amountRefund := v.Amount.Sub(v.Amount.Mul(dec34).Add(dec50))
