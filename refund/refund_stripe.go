@@ -24,6 +24,16 @@ func (t *ToolRefund) doRefundStripe(list []tables.ViewRefundPaymentInfo) error {
 		if v.PremiumPercentage.Cmp(decimal.Zero) == 1 {
 			amountRefund = amountRefund.Div(v.PremiumPercentage.Add(decimal.NewFromInt(1)))
 		}
+		//a -> a*(1+x)+0.5 -> (a*(1+x)+0.5)*0.034+0.5
+		//ax>((a+ax)+0.5)*0.034
+		//ax>((a+0.5)+ax)*0.034
+		//ax>(a+0.5)*0.034+0.034ax
+		//(a-0.034a)x>0.034a+0.5*0.034
+		//0.966ax>0.034a+0.017
+		//x>(0.034a+0.017)/0.966a
+		//5$: x>0.03871636
+		//1000$: x>0.03521429
+
 		//dec34 := decimal.NewFromFloat(0.034)
 		//dec50 := decimal.NewFromFloat(50)
 		//amountRefund := v.Amount.Sub(v.Amount.Mul(dec34).Add(dec50))
