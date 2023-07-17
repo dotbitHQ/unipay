@@ -17,10 +17,16 @@ func (t *ToolRefund) doRefundStripe(list []tables.ViewRefundPaymentInfo) error {
 		return nil
 	}
 	for i, v := range list {
-		dec34 := decimal.NewFromFloat(0.034)
-		dec50 := decimal.NewFromFloat(50)
-
-		amountRefund := v.Amount.Sub(v.Amount.Mul(dec34).Add(dec50))
+		amountRefund := v.Amount
+		if v.PremiumBase.Cmp(decimal.Zero) == 1 {
+			amountRefund = amountRefund.Sub(v.PremiumBase.Mul(decimal.NewFromInt(100)))
+		}
+		if v.PremiumPercentage.Cmp(decimal.Zero) == 1 {
+			amountRefund = amountRefund.Div(v.PremiumPercentage.Add(decimal.NewFromInt(1)))
+		}
+		//dec34 := decimal.NewFromFloat(0.034)
+		//dec50 := decimal.NewFromFloat(50)
+		//amountRefund := v.Amount.Sub(v.Amount.Mul(dec34).Add(dec50))
 		r, err := stripe_api.RefundPaymentIntent(v.PayHash, amountRefund.IntPart())
 		if err != nil {
 			return fmt.Errorf("RefundPaymentIntent err: %s", err.Error())

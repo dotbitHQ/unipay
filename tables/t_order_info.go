@@ -9,19 +9,21 @@ import (
 )
 
 type TableOrderInfo struct {
-	Id             uint64                `json:"id" gorm:"column:id; primaryKey; type:bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '';"`
-	OrderId        string                `json:"order_id" gorm:"column:order_id; uniqueIndex:uk_order_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
-	BusinessId     string                `json:"business_id" gorm:"column:business_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
-	PayAddress     string                `json:"pay_address" gorm:"column:pay_address; index:k_pay_address; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
-	AlgorithmId    common.DasAlgorithmId `json:"algorithm_id" gorm:"column:algorithm_id; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '3,5-EVM 4-TRON 7-DOGE';"`
-	Amount         decimal.Decimal       `json:"amount" gorm:"column:amount; type:decimal(60,0) NOT NULL DEFAULT '0' COMMENT '';"`
-	PayTokenId     PayTokenId            `json:"pay_token_id" gorm:"column:pay_token_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
-	PayStatus      PayStatus             `json:"pay_status" gorm:"column:pay_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Unpaid 1-Paid';"`
-	OrderStatus    OrderStatus           `json:"order_status" gorm:"column:order_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Normal 1-Cancel';"`
-	Timestamp      int64                 `json:"timestamp" gorm:"column:timestamp; index:k_timestamp; type:bigint(20) NOT NULL DEFAULT '0' COMMENT '';"`
-	PaymentAddress string                `json:"payment_address" gorm:"column:payment_address; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
-	CreatedAt      time.Time             `json:"created_at" gorm:"column:created_at; type:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '';"`
-	UpdatedAt      time.Time             `json:"updated_at" gorm:"column:updated_at; type:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '';"`
+	Id                uint64                `json:"id" gorm:"column:id; primaryKey; type:bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '';"`
+	OrderId           string                `json:"order_id" gorm:"column:order_id; uniqueIndex:uk_order_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
+	BusinessId        string                `json:"business_id" gorm:"column:business_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
+	PayAddress        string                `json:"pay_address" gorm:"column:pay_address; index:k_pay_address; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
+	AlgorithmId       common.DasAlgorithmId `json:"algorithm_id" gorm:"column:algorithm_id; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '3,5-EVM 4-TRON 7-DOGE';"`
+	Amount            decimal.Decimal       `json:"amount" gorm:"column:amount; type:decimal(60,0) NOT NULL DEFAULT '0' COMMENT '';"`
+	PayTokenId        PayTokenId            `json:"pay_token_id" gorm:"column:pay_token_id; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
+	PayStatus         PayStatus             `json:"pay_status" gorm:"column:pay_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Unpaid 1-Paid';"`
+	OrderStatus       OrderStatus           `json:"order_status" gorm:"column:order_status; type:smallint(6) NOT NULL DEFAULT '0' COMMENT '0-Normal 1-Cancel';"`
+	Timestamp         int64                 `json:"timestamp" gorm:"column:timestamp; index:k_timestamp; type:bigint(20) NOT NULL DEFAULT '0' COMMENT '';"`
+	PaymentAddress    string                `json:"payment_address" gorm:"column:payment_address; type:varchar(255) NOT NULL DEFAULT '' COMMENT '';"`
+	PremiumPercentage decimal.Decimal       `json:"premium_percentage" gorm:"column:premium_percentage; type:decimal(20,10) NOT NULL DEFAULT '0' COMMENT '';"`
+	PremiumBase       decimal.Decimal       `json:"premium_base" gorm:"column:premium_base; type:decimal(20,10) NOT NULL DEFAULT '0' COMMENT '';"`
+	CreatedAt         time.Time             `json:"created_at" gorm:"column:created_at; type:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '';"`
+	UpdatedAt         time.Time             `json:"updated_at" gorm:"column:updated_at; type:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '';"`
 }
 
 const (

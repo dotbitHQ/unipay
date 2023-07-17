@@ -15,6 +15,7 @@ import (
 	"github.com/nervosnetwork/ckb-sdk-go/types"
 	"github.com/scorpiotzh/mylog"
 	"github.com/scorpiotzh/toolib"
+	"github.com/shopspring/decimal"
 	"github.com/stripe/stripe-go/v74"
 	"strings"
 	"sync"
@@ -91,12 +92,14 @@ type CfgServer struct {
 			AddrMap   map[string]string `json:"addr_map" yaml:"addr_map"`
 		} `json:"doge" yaml:"doge"`
 		Stripe struct {
-			Refund         bool   `json:"refund" yaml:"refund"`
-			Switch         bool   `json:"switch" yaml:"switch"`
-			Key            string `json:"key" yaml:"key"`
-			EndpointSecret string `json:"endpoint_secret" yaml:"endpoint_secret"`
-			WebhooksAddr   string `json:"webhooks_addr" yaml:"webhooks_addr"`
-			LargeAmount    int64  `json:"large_amount" yaml:"large_amount"`
+			Refund            bool            `json:"refund" yaml:"refund"`
+			Switch            bool            `json:"switch" yaml:"switch"`
+			Key               string          `json:"key" yaml:"key"`
+			EndpointSecret    string          `json:"endpoint_secret" yaml:"endpoint_secret"`
+			WebhooksAddr      string          `json:"webhooks_addr" yaml:"webhooks_addr"`
+			LargeAmount       int64           `json:"large_amount" yaml:"large_amount"`
+			PremiumPercentage decimal.Decimal `json:"premium_percentage" yaml:"premium_percentage"`
+			PremiumBase       decimal.Decimal `json:"premium_base" yaml:"premium_base"`
 		} `json:"stripe" yaml:"stripe"`
 	} `json:"chain" yaml:"chain"`
 }

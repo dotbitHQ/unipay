@@ -67,5 +67,7 @@ type ViewRefundPaymentInfo struct {
 	RefundStatus  RefundStatus    `json:"refund_status" gorm:"column:refund_status;"`
 	//RefundHash     string                `json:"refund_hash" gorm:"column:refund_hash;"`
 	//RefundNonce    uint64                `json:"refund_nonce" gorm:"column:refund_nonce;"`
-	PaymentAddress string `json:"payment_address" gorm:"column:payment_address;"`
+	PaymentAddress    string          `json:"payment_address" gorm:"column:payment_address;"`
+	PremiumPercentage decimal.Decimal `json:"premium_percentage" gorm:"column:premium_percentage;"`
+	PremiumBase       decimal.Decimal `json:"premium_base" gorm:"column:premium_base;"`
 }

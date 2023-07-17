@@ -23,11 +23,14 @@ type ReqOrderCreate struct {
 }
 
 type RespOrderCreate struct {
-	OrderId               string `json:"order_id"`
-	PaymentAddress        string `json:"payment_address"`
-	ContractAddress       string `json:"contract_address"`
-	StripePaymentIntentId string `json:"stripe_payment_intent_id"`
-	ClientSecret          string `json:"client_secret"`
+	OrderId               string          `json:"order_id"`
+	PaymentAddress        string          `json:"payment_address"`
+	ContractAddress       string          `json:"contract_address"`
+	StripePaymentIntentId string          `json:"stripe_payment_intent_id"`
+	ClientSecret          string          `json:"client_secret"`
+	PremiumAmount         decimal.Decimal `json:"premium_amount"`
+	PremiumPercentage     decimal.Decimal `json:"premium_percentage"`
+	PremiumBase           decimal.Decimal `json:"premium_base"`
 }
 
 func (h *HttpHandle) OrderCreate(ctx *gin.Context) {
@@ -79,12 +82,13 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 	log.Info("doOrderCreate:", paymentAddress, req.PayTokenId)
 
 	// create order
+	premiumAmount := req.Amount
 	orderInfo := tables.TableOrderInfo{
 		OrderId:        "",
 		BusinessId:     req.BusinessId,
 		PayAddress:     addrHex.AddressHex,
 		AlgorithmId:    addrHex.DasAlgorithmId,
-		Amount:         req.Amount,
+		Amount:         premiumAmount,
 		PayTokenId:     req.PayTokenId,
 		PayStatus:      tables.PayStatusUnpaid,
 		OrderStatus:    tables.OrderStatusNormal,
@@ -98,11 +102,19 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 			apiResp.ApiRespErr(http_api.ApiCodePaymentMethodDisable, "This payment method is unavailable")
 			return nil
 		}
-		if req.Amount.IntPart() < 52 {
+		if premiumAmount.IntPart() < 52 {
 			apiResp.ApiRespErr(http_api.ApiCodeAmountIsTooLow, "Amount not less than 0.52$")
 			return nil
 		}
-		pi, err := stripe_api.CreatePaymentIntent(req.BusinessId, orderInfo.OrderId, req.Amount.IntPart())
+		if config.Cfg.Chain.Stripe.PremiumPercentage.Cmp(decimal.Zero) == 1 {
+			premiumAmount = premiumAmount.Mul(config.Cfg.Chain.Stripe.PremiumPercentage.Add(decimal.NewFromInt(1)))
+			orderInfo.PremiumPercentage = config.Cfg.Chain.Stripe.PremiumPercentage
+		}
+		if config.Cfg.Chain.Stripe.PremiumBase.Cmp(decimal.Zero) == 1 {
+			premiumAmount = premiumAmount.Add(config.Cfg.Chain.Stripe.PremiumBase.Mul(decimal.NewFromInt(100)))
+			orderInfo.PremiumBase = config.Cfg.Chain.Stripe.PremiumBase
+		}
+		pi, err := stripe_api.CreatePaymentIntent(req.BusinessId, orderInfo.OrderId, premiumAmount.IntPart())
 		if err != nil {
 			apiResp.ApiRespErr(http_api.ApiCodeError500, "Failed to create a payment intent")
 			return fmt.Errorf("CreatePaymentIntent err: %s", err.Error())
@@ -113,11 +125,14 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 			PayAddress:  orderInfo.PayAddress,
 			AlgorithmId: orderInfo.AlgorithmId,
 			Timestamp:   time.Now().UnixMilli(),
-			Amount:      req.Amount,
+			Amount:      premiumAmount,
 			PayTokenId:  req.PayTokenId,
 		}
 		resp.StripePaymentIntentId = pi.ID
 		resp.ClientSecret = pi.ClientSecret
+	}
+	if orderInfo.Amount.Cmp(premiumAmount) != 0 {
+		orderInfo.Amount = premiumAmount
 	}
 	if err := h.DbDao.CreateOrderInfoWithPaymentInfo(orderInfo, paymentInfo); err != nil {
 		apiResp.ApiRespErr(http_api.ApiCodeDbError, "Failed to create order")
@@ -125,6 +140,9 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 	}
 
 	//
+	resp.PremiumAmount = premiumAmount
+	resp.PremiumPercentage = orderInfo.PremiumPercentage
+	resp.PremiumBase = orderInfo.PremiumBase
 	resp.OrderId = orderInfo.OrderId
 	resp.PaymentAddress = req.PaymentAddress
 	resp.ContractAddress = req.PayTokenId.GetContractAddress(config.Cfg.Server.Net)
