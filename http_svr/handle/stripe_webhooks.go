@@ -64,6 +64,15 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 		if event.Type == "charge.refunded" {
 			msg = fmt.Sprintf("Event: %s\nEventID: %s\nChargeID: %s\nAmount: %.2f\nAmountRefunded: %.2f", event.Type, event.ID, charge.ID, float64(charge.Amount)/100, float64(charge.AmountRefunded)/100)
 		}
+	case "charge.dispute.created":
+		var charge stripe.Charge
+		if err := charge.UnmarshalJSON(event.Data.Raw); err != nil {
+			e = fmt.Errorf("UnmarshalJSON err: %s", err.Error())
+			return
+		}
+		msg = fmt.Sprintf("Event: %s\nEventID: %s\nDisputeID: %s\nReason: %s\n", event.Type, event.ID, charge.Dispute.ID, charge.Dispute.Reason)
+		notify.SendLarkTextNotifyAtAll(config.Cfg.Notify.LarkErrorKey, "Stripe Dispute", msg)
+		msg = ""
 	case "payment_intent.amount_capturable_updated", "payment_intent.requires_action", "payment_intent.canceled",
 		"payment_intent.created", "payment_intent.payment_failed", "payment_intent.succeeded":
 		var pi stripe.PaymentIntent

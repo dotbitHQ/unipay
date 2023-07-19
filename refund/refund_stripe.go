@@ -31,6 +31,7 @@ func (t *ToolRefund) doRefundStripe(list []tables.ViewRefundPaymentInfo) error {
 		//(a-0.034a)x>0.034a+0.5*0.034
 		//0.966ax>0.034a+0.017
 		//x>(0.034a+0.017)/0.966a
+		// 0.5$ : 0.07039337
 		//5$: x>0.03871636
 		//1000$: x>0.03521429
 
@@ -40,6 +41,7 @@ func (t *ToolRefund) doRefundStripe(list []tables.ViewRefundPaymentInfo) error {
 		// ax-a*0.034x>a*0.034+0.5
 		// 0.966ax>0.034a+0.5
 		// x>(0.034a+0.5)/0.966a
+		// 0.5$: 0.034*0.5/0.966*0.5 // 0.17/0.483 0.35196687
 		// 5$: 0.67/4.83 // 0.13871636
 		// 1000$: 34.5/966 // 0.03571429
 
