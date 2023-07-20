@@ -56,31 +56,33 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 	switch event.Type {
 	case "charge.expired", "charge.failed", "charge.refunded",
 		"charge.succeeded", "charge.updated", "charge.refund.updated":
-		var charge stripe.Charge
-		if err := charge.UnmarshalJSON(event.Data.Raw); err != nil {
-			e = fmt.Errorf("UnmarshalJSON err: %s", err.Error())
-			return
-		}
 		if event.Type == "charge.refunded" {
-			msg = fmt.Sprintf("Event: %s\nEventID: %s\nChargeID: %s\nAmount: %.2f\nAmountRefunded: %.2f", event.Type, event.ID, charge.ID, float64(charge.Amount)/100, float64(charge.AmountRefunded)/100)
+			var charge stripe.Charge
+			if err := charge.UnmarshalJSON(event.Data.Raw); err != nil {
+				e = fmt.Errorf("UnmarshalJSON err: %s", err.Error())
+				return
+			}
+			msg = fmt.Sprintf("Event: %s\nEventID: %s\nChargeID: %s\nAmount: %.2f\nAmountRefunded: %.2f\nPaymentIntentID: %s", event.Type, event.ID, charge.ID, float64(charge.Amount)/100, float64(charge.AmountRefunded)/100, charge.PaymentIntent.ID)
 		}
-	case "charge.dispute.created":
-		var charge stripe.Charge
-		if err := charge.UnmarshalJSON(event.Data.Raw); err != nil {
-			e = fmt.Errorf("UnmarshalJSON err: %s", err.Error())
-			return
+	case "charge.dispute.created", "charge.dispute.updated":
+		if event.Type == "charge.dispute.created" {
+			var dispute stripe.Dispute
+			if err := dispute.UnmarshalJSON(event.Data.Raw); err != nil {
+				e = fmt.Errorf("UnmarshalJSON err: %s", err.Error())
+				return
+			}
+			msg = fmt.Sprintf("Event: %s\nEventID: %s\nDisputeID: %s\nAmount: %.2f\nReason: %s\nPaymentIntentID: %s", event.Type, event.ID, dispute.ID, float64(dispute.Amount)/100, dispute.Reason, dispute.PaymentIntent.ID)
+			notify.SendLarkTextNotifyAtAll(config.Cfg.Notify.LarkErrorKey, "Stripe Dispute", msg)
+			msg = ""
 		}
-		msg = fmt.Sprintf("Event: %s\nEventID: %s\nDisputeID: %s\nReason: %s\n", event.Type, event.ID, charge.Dispute.ID, charge.Dispute.Reason)
-		notify.SendLarkTextNotifyAtAll(config.Cfg.Notify.LarkErrorKey, "Stripe Dispute", msg)
-		msg = ""
 	case "payment_intent.amount_capturable_updated", "payment_intent.requires_action", "payment_intent.canceled",
 		"payment_intent.created", "payment_intent.payment_failed", "payment_intent.succeeded":
-		var pi stripe.PaymentIntent
-		if err := pi.UnmarshalJSON(event.Data.Raw); err != nil {
-			e = fmt.Errorf("UnmarshalJSON err: %s", err.Error())
-			return
-		}
 		if event.Type == "payment_intent.succeeded" {
+			var pi stripe.PaymentIntent
+			if err := pi.UnmarshalJSON(event.Data.Raw); err != nil {
+				e = fmt.Errorf("UnmarshalJSON err: %s", err.Error())
+				return
+			}
 			paymentInfo, err := h.DbDao.GetPaymentInfoByPayHash(pi.ID)
 			if err != nil {
 				e = fmt.Errorf("GetPaymentInfoByPayHash err: %s[%s]", err.Error(), pi.ID)

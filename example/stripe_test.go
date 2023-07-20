@@ -113,3 +113,13 @@ func TestListCustom(t *testing.T) {
 		fmt.Println(c.ID)
 	}
 }
+
+func TestDispute(t *testing.T) {
+	var dispute stripe.Dispute
+	str := ``
+
+	if err := dispute.UnmarshalJSON([]byte(str)); err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(dispute.ID, dispute.Amount, dispute.Charge.ID, dispute.PaymentIntent.ID)
+}
