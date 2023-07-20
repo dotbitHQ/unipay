@@ -64,16 +64,35 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 			}
 			msg = fmt.Sprintf("Event: %s\nEventID: %s\nChargeID: %s\nAmount: %.2f\nAmountRefunded: %.2f\nPaymentIntentID: %s", event.Type, event.ID, charge.ID, float64(charge.Amount)/100, float64(charge.AmountRefunded)/100, charge.PaymentIntent.ID)
 		}
-	case "charge.dispute.created", "charge.dispute.updated":
+	case "charge.dispute.created", "charge.dispute.funds_withdrawn", "charge.dispute.updated":
 		if event.Type == "charge.dispute.created" {
 			var dispute stripe.Dispute
 			if err := dispute.UnmarshalJSON(event.Data.Raw); err != nil {
 				e = fmt.Errorf("UnmarshalJSON err: %s", err.Error())
 				return
 			}
-			msg = fmt.Sprintf("Event: %s\nEventID: %s\nDisputeID: %s\nAmount: %.2f\nReason: %s\nPaymentIntentID: %s", event.Type, event.ID, dispute.ID, float64(dispute.Amount)/100, dispute.Reason, dispute.PaymentIntent.ID)
+			fee := int64(0)
+			if len(dispute.BalanceTransactions) > 0 {
+				fee = dispute.BalanceTransactions[0].Fee
+			}
+			msg = fmt.Sprintf("Event: %s\nEventID: %s\nDisputeID: %s\nAmount: %.2f\nFee: %.2f\nReason: %s\nPaymentIntentID: %s", event.Type, event.ID, dispute.ID, float64(dispute.Amount)/100, float64(fee)/100, dispute.Reason, dispute.PaymentIntent.ID)
 			notify.SendLarkTextNotifyAtAll(config.Cfg.Notify.LarkErrorKey, "Stripe Dispute", msg)
 			msg = ""
+			//
+			pID := dispute.PaymentIntent.ID
+			paymentInfo, err := h.DbDao.GetPaymentInfoByPayHash(pID)
+			if err != nil {
+				e = fmt.Errorf("GetPaymentInfoByPayHash err: %s[%s]", err.Error(), pID)
+				return
+			} else if paymentInfo.Id == 0 {
+				log.Error("doStripeWebhooks: paymentInfo.Id == 0;", pID)
+				httpCode = http.StatusOK
+				return
+			}
+			if err = h.DbDao.UpdatePayHashStatusToFailByDispute(pID); err != nil {
+				e = fmt.Errorf("UpdatePayHashStatusToFailByDispute err: %s[%s]", err.Error(), pID)
+				return
+			}
 		}
 	case "payment_intent.amount_capturable_updated", "payment_intent.requires_action", "payment_intent.canceled",
 		"payment_intent.created", "payment_intent.payment_failed", "payment_intent.succeeded":

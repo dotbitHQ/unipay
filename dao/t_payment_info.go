@@ -195,6 +195,15 @@ func (d *DbDao) UpdatePayHashStatusToFailed(payHash string) error {
 		}).Error
 }
 
+func (d *DbDao) UpdatePayHashStatusToFailByDispute(payHash string) error {
+	return d.db.Model(tables.TablePaymentInfo{}).
+		Where("pay_hash=? AND pay_hash_status=? AND refund_status=?",
+			payHash, tables.PayHashStatusConfirm, tables.RefundStatusDefault).
+		Updates(map[string]interface{}{
+			"pay_hash_status": tables.PayHashStatusFailByDispute,
+		}).Error
+}
+
 func (d *DbDao) GetPaymentInfoByOrderId(orderId string) (info tables.TablePaymentInfo, err error) {
 	err = d.db.Where("order_id=?", orderId).Find(&info).Limit(1).Error
 	return
