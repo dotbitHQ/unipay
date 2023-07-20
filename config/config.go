@@ -17,7 +17,6 @@ import (
 	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
 	"github.com/stripe/stripe-go/v74"
-	"github.com/stripe/stripe-go/v74/applepaydomain"
 	"strings"
 	"sync"
 	"time"
@@ -259,8 +258,8 @@ func InitDasTxBuilderBase(ctx context.Context, dasCore *core.DasCore, fromScript
 
 func initStripe() {
 	stripe.Key = Cfg.Chain.Stripe.Key
-	params := &stripe.ApplePayDomainParams{
-		DomainName: stripe.String(Cfg.Chain.Stripe.ApplePayDoMain),
-	}
-	_, _ = applepaydomain.New(params)
+	//params := &stripe.ApplePayDomainParams{
+	//	DomainName: stripe.String(Cfg.Chain.Stripe.ApplePayDoMain),
+	//}
+	//_, _ = applepaydomain.New(params)
 }
