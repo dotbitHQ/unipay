@@ -123,3 +123,16 @@ func TestDispute(t *testing.T) {
 	}
 	fmt.Println(dispute.ID, dispute.Amount, dispute.Charge.ID, dispute.PaymentIntent.ID)
 }
+
+func TestPremium(t *testing.T) {
+	amount := decimal.NewFromInt(100)
+	dec36 := decimal.NewFromFloat(0.036)
+	dec52 := decimal.NewFromFloat(52)
+	amount = amount.Mul(decimal.NewFromInt(1).Add(dec36)).Add(dec52)
+	fmt.Println(amount, amount.IntPart())
+
+	dec34 := decimal.NewFromFloat(0.034)
+	dec50 := decimal.NewFromFloat(50)
+	amountRefund := amount.Sub(amount.Mul(dec34).Add(dec50))
+	fmt.Println(amountRefund, amountRefund.IntPart())
+}
