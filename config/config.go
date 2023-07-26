@@ -100,7 +100,6 @@ type CfgServer struct {
 			LargeAmount       int64           `json:"large_amount" yaml:"large_amount"`
 			PremiumPercentage decimal.Decimal `json:"premium_percentage" yaml:"premium_percentage"`
 			PremiumBase       decimal.Decimal `json:"premium_base" yaml:"premium_base"`
-			ApplePayDoMain    string          `json:"apple_pay_do_main" yaml:"apple_pay_do_main"`
 		} `json:"stripe" yaml:"stripe"`
 	} `json:"chain" yaml:"chain"`
 }
@@ -258,8 +257,4 @@ func InitDasTxBuilderBase(ctx context.Context, dasCore *core.DasCore, fromScript
 
 func initStripe() {
 	stripe.Key = Cfg.Chain.Stripe.Key
-	//params := &stripe.ApplePayDomainParams{
-	//	DomainName: stripe.String(Cfg.Chain.Stripe.ApplePayDoMain),
-	//}
-	//_, _ = applepaydomain.New(params)
 }
