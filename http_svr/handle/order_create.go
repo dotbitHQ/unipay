@@ -18,10 +18,11 @@ type ReqOrderCreate struct {
 	core.ChainTypeAddress
 	BusinessId        string            `json:"business_id"`
 	Amount            decimal.Decimal   `json:"amount"`
-	PremiumPercentage decimal.Decimal   `json:"premium_percentage"`
-	PremiumBase       decimal.Decimal   `json:"premium_base"`
 	PayTokenId        tables.PayTokenId `json:"pay_token_id"`
 	PaymentAddress    string            `json:"payment_address"`
+	PremiumPercentage decimal.Decimal   `json:"premium_percentage"`
+	PremiumBase       decimal.Decimal   `json:"premium_base"`
+	PremiumAmount     decimal.Decimal   `json:"premium_amount"`
 }
 
 type RespOrderCreate struct {
@@ -105,12 +106,10 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 			return nil
 		}
 
-		if req.PremiumPercentage.Cmp(decimal.Zero) == 1 {
-			orderInfo.PremiumPercentage = req.PremiumPercentage
-		}
-		if req.PremiumBase.Cmp(decimal.Zero) == 1 {
-			orderInfo.PremiumBase = req.PremiumBase
-		}
+		orderInfo.PremiumPercentage = req.PremiumPercentage
+		orderInfo.PremiumBase = req.PremiumBase
+		orderInfo.PremiumAmount = req.PremiumAmount
+
 		pi, err := stripe_api.CreatePaymentIntent(req.BusinessId, orderInfo.OrderId, req.Amount.IntPart())
 		if err != nil {
 			apiResp.ApiRespErr(http_api.ApiCodeError500, "Failed to create a payment intent")
