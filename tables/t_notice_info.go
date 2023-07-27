@@ -34,8 +34,9 @@ func (t *TableNoticeInfo) InitNoticeId() {
 type EventType string
 
 const (
-	EventTypeOrderPay    EventType = "ORDER.PAY"
-	EventTypeOrderRefund EventType = "ORDER.REFUND"
+	EventTypeOrderPay       EventType = "ORDER.PAY"
+	EventTypeOrderRefund    EventType = "ORDER.REFUND"
+	EventTypePaymentDispute EventType = "PAYMENT.DISPUTE"
 )
 
 type NoticeStatus int

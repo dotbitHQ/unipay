@@ -14,7 +14,31 @@ type CallbackNotice struct {
 	DbDao *dao.DbDao
 }
 
-//func (c *CallbackNotice) HandlePaymentToFailBy
+func (c *CallbackNotice) HandlePaymentToFailByDispute(paymentInfo tables.TablePaymentInfo, orderInfo tables.TableOrderInfo) error {
+	noticeInfo := tables.TableNoticeInfo{
+		EventType:    tables.EventTypePaymentDispute,
+		PayHash:      paymentInfo.PayHash,
+		NoticeCount:  0,
+		NoticeStatus: tables.NoticeStatusDefault,
+		Timestamp:    time.Now().UnixMilli(),
+	}
+	noticeInfo.InitNoticeId()
+
+	paymentInfo.PayHashStatus = tables.PayHashStatusFailByDispute
+	orderInfo.PayStatus = tables.PayStatusDispute
+
+	if err := c.callbackNotice(noticeInfo, paymentInfo, orderInfo); err != nil {
+		log.Error("callbackNotice err: %s", err.Error())
+		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "callbackNotice", err.Error())
+	} else {
+		noticeInfo.NoticeStatus = tables.NoticeStatusOK
+	}
+
+	if err := c.DbDao.UpdatePayHashStatusToFailByDispute(paymentInfo, noticeInfo); err != nil {
+		return fmt.Errorf("UpdatePayHashStatusToFailByDispute err: %s[%s]", err.Error(), paymentInfo.PayHash)
+	}
+	return nil
+}
 
 func (c *CallbackNotice) HandlePayment(paymentInfo tables.TablePaymentInfo, orderInfo tables.TableOrderInfo) error {
 	paymentInfo.PayHashStatus = tables.PayHashStatusConfirm

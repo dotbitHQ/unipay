@@ -195,13 +195,33 @@ func (d *DbDao) UpdatePayHashStatusToFailed(payHash string) error {
 		}).Error
 }
 
-func (d *DbDao) UpdatePayHashStatusToFailByDispute(payHash string) error {
-	return d.db.Model(tables.TablePaymentInfo{}).
-		Where("pay_hash=? AND pay_hash_status=? AND refund_status=?",
-			payHash, tables.PayHashStatusConfirm, tables.RefundStatusDefault).
-		Updates(map[string]interface{}{
-			"pay_hash_status": tables.PayHashStatusFailByDispute,
-		}).Error
+func (d *DbDao) UpdatePayHashStatusToFailByDispute(paymentInfo tables.TablePaymentInfo, noticeInfo tables.TableNoticeInfo) error {
+	return d.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(tables.TableOrderInfo{}).
+			Where("order_id=? AND pay_status=?",
+				paymentInfo.OrderId, tables.PayStatusPaid).
+			Updates(map[string]interface{}{
+				"pay_status": tables.PayStatusDispute,
+			}).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Clauses(clause.Insert{
+			Modifier: "IGNORE",
+		}).Create(&noticeInfo).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(tables.TablePaymentInfo{}).
+			Where("pay_hash=? AND order_id=? AND pay_hash_status=?",
+				paymentInfo.PayHash, paymentInfo.OrderId, tables.PayHashStatusConfirm).
+			Updates(map[string]interface{}{
+				"pay_hash_status": tables.PayHashStatusFailByDispute,
+			}).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (d *DbDao) GetPaymentInfoByOrderId(orderId string) (info tables.TablePaymentInfo, err error) {

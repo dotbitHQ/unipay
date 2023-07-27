@@ -84,8 +84,9 @@ func (p PayTokenId) GetContractAddress(net common.DasNetType) string {
 type PayStatus int
 
 const (
-	PayStatusUnpaid PayStatus = 0
-	PayStatusPaid   PayStatus = 1
+	PayStatusUnpaid  PayStatus = 0
+	PayStatusPaid    PayStatus = 1
+	PayStatusDispute PayStatus = 2
 )
 
 type OrderStatus int

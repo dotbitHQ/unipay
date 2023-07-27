@@ -89,8 +89,17 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 				httpCode = http.StatusOK
 				return
 			}
-			if err = h.DbDao.UpdatePayHashStatusToFailByDispute(pID); err != nil {
-				e = fmt.Errorf("UpdatePayHashStatusToFailByDispute err: %s[%s]", err.Error(), pID)
+			orderInfo, err := h.DbDao.GetOrderInfoByOrderId(paymentInfo.OrderId)
+			if err != nil {
+				e = fmt.Errorf("GetOrderInfoByOrderId err: %s[%s]", err.Error(), pID)
+				return
+			} else if orderInfo.Id == 0 {
+				log.Error("doStripeWebhooks: orderInfo.Id == 0;", pID, paymentInfo.OrderId)
+				httpCode = http.StatusOK
+				return
+			}
+			if err := h.CN.HandlePaymentToFailByDispute(paymentInfo, orderInfo); err != nil {
+				e = fmt.Errorf("HandlePayment err: %s[%s]", err.Error(), pID)
 				return
 			}
 		}
