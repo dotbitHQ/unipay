@@ -25,7 +25,7 @@ func (c *CallbackNotice) HandlePaymentToFailByDispute(paymentInfo tables.TablePa
 	noticeInfo.InitNoticeId()
 
 	paymentInfo.PayHashStatus = tables.PayHashStatusFailByDispute
-	orderInfo.PayStatus = tables.PayStatusDispute
+	orderInfo.OrderStatus = tables.OrderStatusFail
 
 	if err := c.callbackNotice(noticeInfo, paymentInfo, orderInfo); err != nil {
 		log.Error("callbackNotice err: %s", err.Error())

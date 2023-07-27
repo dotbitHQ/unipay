@@ -92,7 +92,9 @@ const (
 type OrderStatus int
 
 const (
-	OrderStatusNormal OrderStatus = 0
+	OrderStatusNormal  OrderStatus = 0
+	OrderStatusSuccess OrderStatus = 1
+	OrderStatusFail    OrderStatus = 2
 )
 
 func (t *TableOrderInfo) InitOrderId() {

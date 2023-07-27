@@ -201,7 +201,7 @@ func (d *DbDao) UpdatePayHashStatusToFailByDispute(paymentInfo tables.TablePayme
 			Where("order_id=? AND pay_status=?",
 				paymentInfo.OrderId, tables.PayStatusPaid).
 			Updates(map[string]interface{}{
-				"pay_status": tables.PayStatusDispute,
+				"order_status": tables.OrderStatusFail,
 			}).Error; err != nil {
 			return err
 		}
