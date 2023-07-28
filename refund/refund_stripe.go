@@ -28,7 +28,7 @@ func (t *ToolRefund) doRefundStripe(list []tables.ViewRefundPaymentInfo) error {
 		dec34 := decimal.NewFromFloat(0.034)
 		dec50 := decimal.NewFromFloat(50)
 		amountRefund := v.Amount.Sub(v.Amount.Mul(dec34).Add(dec50))
-		r, err := stripe_api.RefundPaymentIntent(v.PayHash, amountRefund.IntPart())
+		r, err := stripe_api.RefundPaymentIntent(v.PayHash, amountRefund.Floor().IntPart())
 		if err != nil {
 			return fmt.Errorf("RefundPaymentIntent err: %s", err.Error())
 		}
