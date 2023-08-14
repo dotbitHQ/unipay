@@ -12,6 +12,11 @@ func CreatePaymentIntent(businessId, orderId string, amount int64) (*stripe.Paym
 		Amount:             stripe.Int64(amount),
 		PaymentMethodTypes: stripe.StringSlice([]string{string(stripe.ChargePaymentMethodDetailsTypeCard)}),
 		Currency:           stripe.String(string(stripe.CurrencyUSD)),
+		PaymentMethodOptions: &stripe.PaymentIntentPaymentMethodOptionsParams{
+			Card: &stripe.PaymentIntentPaymentMethodOptionsCardParams{
+				RequestThreeDSecure: stripe.String(string(stripe.PaymentIntentPaymentMethodOptionsCardRequestThreeDSecureAny)),
+			},
+		},
 	}
 	params.Metadata = map[string]string{"business_id": businessId, "order_id": orderId}
 	pi, err := paymentintent.New(params)
