@@ -6,6 +6,7 @@ import (
 	"github.com/dotbitHQ/das-lib/common"
 	"github.com/dotbitHQ/das-lib/core"
 	"github.com/dotbitHQ/das-lib/dascache"
+	"github.com/dotbitHQ/das-lib/remote_sign"
 	"github.com/dotbitHQ/das-lib/sign"
 	"github.com/dotbitHQ/das-lib/txbuilder"
 	"github.com/fsnotify/fsnotify"
@@ -246,6 +247,29 @@ func InitDasTxBuilderBase(ctx context.Context, dasCore *core.DasCore, fromScript
 			return nil, fmt.Errorf("sign.NewClient err: %s", err.Error())
 		}
 		handleSign = sign.RemoteSign(remoteSignClient, Cfg.Server.Net, svrArgs)
+	}
+	txBuilderBase := txbuilder.NewDasTxBuilderBase(ctx, dasCore, handleSign, svrArgs)
+	return txBuilderBase, nil
+}
+
+func InitDasTxBuilderBaseV2(ctx context.Context, dasCore *core.DasCore, fromScript *types.Script, private string) (*txbuilder.DasTxBuilderBase, error) {
+	if fromScript == nil {
+		return nil, fmt.Errorf("fromScript is nil")
+	}
+	svrArgs := common.Bytes2Hex(fromScript.Args)
+	var handleSign sign.HandleSignCkbMessage
+	if private != "" {
+		handleSign = sign.LocalSign(private)
+	} else if Cfg.Server.RemoteSignApiUrl != "" {
+		mode := address.Testnet
+		if Cfg.Server.Net == common.DasNetTypeMainNet {
+			mode = address.Mainnet
+		}
+		addr, err := address.ConvertScriptToShortAddress(mode, fromScript)
+		if err != nil {
+			return nil, fmt.Errorf("address.ConvertScriptToShortAddress err: %s", err.Error())
+		}
+		handleSign = remote_sign.SignTxForCKB(Cfg.Server.RemoteSignApiUrl, addr)
 	}
 	txBuilderBase := txbuilder.NewDasTxBuilderBase(ctx, dasCore, handleSign, svrArgs)
 	return txBuilderBase, nil

@@ -3,7 +3,9 @@ package refund
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/dotbitHQ/das-lib/chain/chain_tron"
 	"github.com/dotbitHQ/das-lib/common"
+	"github.com/dotbitHQ/das-lib/remote_sign"
 	"github.com/fbsobreira/gotron-sdk/pkg/proto/api"
 	"unipay/config"
 	"unipay/notify"
@@ -60,14 +62,31 @@ func (t *ToolRefund) refundTron(paymentAddress, private string, info tables.View
 		if err != nil {
 			return fmt.Errorf("AddSign err:%s", err.Error())
 		}
-	} else if t.remoteSignClient != nil {
-		tx, err = t.remoteSignClient.SignTrxTx(fromHex, tx)
+	} else if config.Cfg.Server.RemoteSignApiUrl != "" {
+		hash, err := chain_tron.GetTxHash(tx)
 		if err != nil {
-			return fmt.Errorf("SignTrxTx err: %s", err.Error())
+			return fmt.Errorf("chain_tron.GetTxHash err: %s", err.Error())
 		}
+		fromAddr, err := common.TronHexToBase58(fromHex)
+		if err != nil {
+			return fmt.Errorf("common.TronHexToBase58 err: %s", err.Error())
+		}
+		signData, err := remote_sign.SignTxForTRON(config.Cfg.Server.RemoteSignApiUrl, fromAddr, hash)
+		if err != nil {
+			return fmt.Errorf("remote_sign.SignTxForTRON err: %s", err.Error())
+		}
+
+		tx.Transaction.Signature = append(tx.Transaction.Signature, signData)
+		tx.Txid = hash
 	} else {
 		return fmt.Errorf("no signature method configured")
 	}
+	//else if t.remoteSignClient != nil {
+	//	tx, err = t.remoteSignClient.SignTrxTx(fromHex, tx)
+	//	if err != nil {
+	//		return fmt.Errorf("SignTrxTx err: %s", err.Error())
+	//	}
+	//}
 
 	// send tx
 	refundHash := hex.EncodeToString(tx.Txid)

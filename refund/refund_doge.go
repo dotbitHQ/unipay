@@ -3,8 +3,8 @@ package refund
 import (
 	"fmt"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/dotbitHQ/das-lib/bitcoin"
 	"github.com/dotbitHQ/das-lib/common"
+	"github.com/dotbitHQ/das-lib/remote_sign"
 	"strings"
 	"time"
 	"unipay/config"
@@ -61,13 +61,19 @@ func (t *ToolRefund) doRefundDoge(paymentAddress, private string, list []tables.
 			return fmt.Errorf("LocalSignTx err: %s", err.Error())
 		}
 		signTx = tx
-	} else if t.chainDoge.RemoteSignClient != nil {
-		if signTx, err = t.chainDoge.RemoteSignTx(bitcoin.RemoteSignMethodDogeTx, tx, uos); err != nil {
-			return fmt.Errorf("RemoteSignTx err: %s", err.Error())
+	} else if config.Cfg.Server.RemoteSignApiUrl != "" {
+		signTx, err = remote_sign.SignTxForDOGE(config.Cfg.Server.RemoteSignApiUrl, paymentAddress, tx)
+		if err != nil {
+			return fmt.Errorf("remote_sign.SignTxForDOGE err: %s", err.Error())
 		}
 	} else {
 		return fmt.Errorf("no signature configured")
 	}
+	//else if t.chainDoge.RemoteSignClient != nil {
+	//	if signTx, err = t.chainDoge.RemoteSignTx(bitcoin.RemoteSignMethodDogeTx, tx, uos); err != nil {
+	//		return fmt.Errorf("RemoteSignTx err: %s", err.Error())
+	//	}
+	//}
 
 	// send tx
 	refundHash := signTx.TxHash()
