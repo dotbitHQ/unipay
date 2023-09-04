@@ -65,6 +65,7 @@ type CfgServer struct {
 	Notify      struct {
 		LarkErrorKey   string `json:"lark_error_key" yaml:"lark_error_key"`
 		LarkDasInfoKey string `json:"lark_das_info_key" yaml:"lark_das_info_key"`
+		StripeKey      string `json:"stripe_key" yaml:"stripe_key"`
 	} `json:"notify" yaml:"notify"`
 	DB struct {
 		Mysql DbMysql `json:"mysql" yaml:"mysql"`

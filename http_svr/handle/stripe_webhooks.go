@@ -133,6 +133,21 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 				e = fmt.Errorf("HandlePayment err: %s[%s]", err.Error(), pi.ID)
 				return
 			}
+			//
+			account := pi.Metadata["account"]
+			algorithmId := pi.Metadata["algorithm_id"]
+			address := pi.Metadata["address"]
+			if account != "" && algorithmId != "" && address != "" {
+				si := notify.StripeInfo{
+					PID:         pi.ID,
+					Account:     account,
+					AlgorithmId: algorithmId,
+					Address:     address,
+					Amount:      pi.Amount,
+				}
+				notify.SendStripeNotify(config.Cfg.Notify.StripeKey, si)
+			}
+			//
 			msg = fmt.Sprintf("Event: %s\nEventID: %s\nPaymentIntentID: %s\nAmount: %.2f", event.Type, event.ID, pi.ID, float64(pi.Amount)/100)
 			if config.Cfg.Chain.Stripe.LargeAmount > 0 && pi.Amount > config.Cfg.Chain.Stripe.LargeAmount*100 {
 				notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "Large Amount Order for Stripe", msg)

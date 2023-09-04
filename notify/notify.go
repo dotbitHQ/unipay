@@ -91,3 +91,22 @@ func SendLarkTextNotifyAtAll(key, title, text string) {
 		log.Info("SendLarkTextNotifyAtAll req:", body)
 	}
 }
+
+type StripeInfo struct {
+	PID         string
+	Account     string
+	AlgorithmId string
+	Address     string
+	Amount      int64
+}
+
+func SendStripeNotify(key string, si StripeInfo) {
+	msg := fmt.Sprintf(`> PID: %s
+> Account: %s
+> AlgorithmId: %s
+> Address: %s
+> Amount: %.2f`, si.PID, si.Account, si.AlgorithmId, si.Address, float64(si.Amount)/100)
+	go func() {
+		SendLarkTextNotify(key, "stripe payment", msg)
+	}()
+}

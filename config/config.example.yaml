@@ -7,6 +7,7 @@ business_ids: # Link to business callback when order payment and refund are comp
   "das-register-svr": "http://127.0.0.1:8119/v1/unipay/notice"
 notify:
   lark_error_key: ""
+  stripe_key: ""
 db:
   mysql:
     addr: "docker.for.mac.localhost:3306" #"127.0.0.1:3306"
