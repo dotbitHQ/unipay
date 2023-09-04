@@ -137,12 +137,14 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 			account := pi.Metadata["account"]
 			algorithmId := pi.Metadata["algorithm_id"]
 			address := pi.Metadata["address"]
+			action := pi.Metadata["action"]
 			if account != "" && algorithmId != "" && address != "" {
 				si := notify.StripeInfo{
 					PID:         pi.ID,
 					Account:     account,
 					AlgorithmId: algorithmId,
 					Address:     address,
+					Action:      action,
 					Amount:      pi.Amount,
 				}
 				notify.SendStripeNotify(config.Cfg.Notify.StripeKey, si)

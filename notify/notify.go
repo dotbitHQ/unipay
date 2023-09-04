@@ -97,6 +97,7 @@ type StripeInfo struct {
 	Account     string
 	AlgorithmId string
 	Address     string
+	Action      string
 	Amount      int64
 }
 
@@ -105,7 +106,8 @@ func SendStripeNotify(key string, si StripeInfo) {
 > Account: %s
 > AlgorithmId: %s
 > Address: %s
-> Amount: %.2f`, si.PID, si.Account, si.AlgorithmId, si.Address, float64(si.Amount)/100)
+> Action: %s
+> Amount: %.2f`, si.PID, si.Account, si.AlgorithmId, si.Address, si.Action, float64(si.Amount)/100)
 	go func() {
 		SendLarkTextNotify(key, "Stripe Payment", msg)
 	}()
