@@ -107,6 +107,6 @@ func SendStripeNotify(key string, si StripeInfo) {
 > Address: %s
 > Amount: %.2f`, si.PID, si.Account, si.AlgorithmId, si.Address, float64(si.Amount)/100)
 	go func() {
-		SendLarkTextNotify(key, "stripe payment", msg)
+		SendLarkTextNotify(key, "Stripe Payment", msg)
 	}()
 }
