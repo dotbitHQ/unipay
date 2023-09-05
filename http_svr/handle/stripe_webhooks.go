@@ -105,7 +105,29 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 		}
 	case "payment_intent.amount_capturable_updated", "payment_intent.requires_action", "payment_intent.canceled",
 		"payment_intent.created", "payment_intent.payment_failed", "payment_intent.succeeded":
-		if event.Type == "payment_intent.succeeded" {
+		if event.Type == "payment_intent.created" {
+			var pi stripe.PaymentIntent
+			if err := pi.UnmarshalJSON(event.Data.Raw); err != nil {
+				e = fmt.Errorf("UnmarshalJSON err: %s", err.Error())
+				return
+			}
+			//
+			account := pi.Metadata["account"]
+			algorithmId := pi.Metadata["algorithm_id"]
+			address := pi.Metadata["address"]
+			action := "order"
+			if account != "" && algorithmId != "" && address != "" {
+				si := notify.StripeInfo{
+					PID:         pi.ID,
+					Account:     account,
+					AlgorithmId: algorithmId,
+					Address:     address,
+					Action:      action,
+					Amount:      pi.Amount,
+				}
+				notify.SendStripeNotify(config.Cfg.Notify.StripeKey, si)
+			}
+		} else if event.Type == "payment_intent.succeeded" {
 			var pi stripe.PaymentIntent
 			if err := pi.UnmarshalJSON(event.Data.Raw); err != nil {
 				e = fmt.Errorf("UnmarshalJSON err: %s", err.Error())
@@ -138,7 +160,7 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 			algorithmId := pi.Metadata["algorithm_id"]
 			address := pi.Metadata["address"]
 			action := pi.Metadata["action"]
-			if account != "" && algorithmId != "" && address != "" {
+			if account != "" && algorithmId != "" && address != "" && action != "" {
 				si := notify.StripeInfo{
 					PID:         pi.ID,
 					Account:     account,
