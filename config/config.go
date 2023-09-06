@@ -269,7 +269,7 @@ func InitDasTxBuilderBaseV2(ctx context.Context, dasCore *core.DasCore, fromScri
 		if err != nil {
 			return nil, fmt.Errorf("address.ConvertScriptToShortAddress err: %s", err.Error())
 		}
-		handleSign = remote_sign.SignTxForCKB(Cfg.Server.RemoteSignApiUrl, addr)
+		handleSign = remote_sign.SignTxForCKBHandle(Cfg.Server.RemoteSignApiUrl, addr)
 	}
 	txBuilderBase := txbuilder.NewDasTxBuilderBase(ctx, dasCore, handleSign, svrArgs)
 	return txBuilderBase, nil

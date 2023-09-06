@@ -114,7 +114,7 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 			e = fmt.Errorf("p.chainEvm.Client.ChainID err: %s", err.Error())
 			return
 		}
-		tx, err = remote_sign.SignTxForEVM(chainID.Int64(), config.Cfg.Server.RemoteSignApiUrl, fromAddr, tx)
+		tx, err = remote_sign.SignTxForEVM(config.Cfg.Server.RemoteSignApiUrl, fromAddr, chainID.Int64(), tx)
 		if err != nil {
 			e = fmt.Errorf("remote_sign.SignTxForEVM err: %s", err.Error())
 			return
