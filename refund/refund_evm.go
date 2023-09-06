@@ -109,6 +109,7 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 			return
 		}
 	} else if config.Cfg.Server.RemoteSignApiUrl != "" {
+		log.Info("refundEvm remote sign")
 		chainID, err := p.chainEvm.Client.ChainID(context.Background())
 		if err != nil {
 			e = fmt.Errorf("p.chainEvm.Client.ChainID err: %s", err.Error())

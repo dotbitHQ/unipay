@@ -58,11 +58,13 @@ func (t *ToolRefund) refundTron(paymentAddress, private string, info tables.View
 	}
 
 	if private != "" {
+		log.Info("refundTron private")
 		err = t.chainTron.LocalSign(tx, private)
 		if err != nil {
 			return fmt.Errorf("AddSign err:%s", err.Error())
 		}
 	} else if config.Cfg.Server.RemoteSignApiUrl != "" {
+		log.Info("refundTron remote sign")
 		hash, err := chain_tron.GetTxHash(tx)
 		if err != nil {
 			return fmt.Errorf("chain_tron.GetTxHash err: %s", err.Error())

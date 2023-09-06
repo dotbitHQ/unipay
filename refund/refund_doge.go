@@ -57,11 +57,13 @@ func (t *ToolRefund) doRefundDoge(paymentAddress, private string, list []tables.
 	// sign
 	var signTx *wire.MsgTx
 	if private != "" {
+		log.Info("doRefundDoge private")
 		if _, err = t.chainDoge.LocalSignTx(tx, uos); err != nil {
 			return fmt.Errorf("LocalSignTx err: %s", err.Error())
 		}
 		signTx = tx
 	} else if config.Cfg.Server.RemoteSignApiUrl != "" {
+		log.Info("doRefundDoge remote sign")
 		signTx, err = remote_sign.SignTxForDOGE(config.Cfg.Server.RemoteSignApiUrl, paymentAddress, tx)
 		if err != nil {
 			return fmt.Errorf("remote_sign.SignTxForDOGE err: %s", err.Error())
