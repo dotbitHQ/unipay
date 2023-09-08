@@ -1,10 +1,10 @@
 module unipay
 
-go 1.17
+go 1.18
 
 require (
-	github.com/btcsuite/btcd v0.23.0
-	github.com/dotbitHQ/das-lib v1.1.1-0.20230905034744-0eca4f8bb183
+	github.com/btcsuite/btcd v0.23.3
+	github.com/dotbitHQ/das-lib v1.1.1-0.20230908084332-05bca73e0fdd
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/fbsobreira/gotron-sdk v0.0.0-20230323193002-7843d2a7548e
 	github.com/fsnotify/fsnotify v1.5.4
@@ -18,7 +18,7 @@ require (
 	github.com/shopspring/decimal v1.3.1
 	github.com/stripe/stripe-go/v74 v74.20.0
 	github.com/urfave/cli/v2 v2.10.2
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/sync v0.1.0
 	gorm.io/gorm v1.23.6
 
 )
@@ -30,7 +30,7 @@ require (
 	github.com/btcsuite/btcd/btcutil v1.1.3 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
-	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d // indirect
+	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/clipperhouse/uax29 v1.12.4 // indirect

@@ -27,8 +27,7 @@ import (
 )
 
 var (
-	//node, addFee = "https://rpc.ankr.com/eth_goerli", float64(2)
-	node, addFee = "https://rpc.ankr.com/bsc_testnet_chapel", float64(2)
+	node, addFee = "https://rpc.ankr.com/eth_goerli", float64(2)
 	nodeBsc      = "https://rpc.ankr.com/bsc_testnet_chapel"
 	nodePolygon  = "https://rpc.ankr.com/polygon_mumbai"
 	nodeTron     = "grpc.nile.trongrid.io:50051"

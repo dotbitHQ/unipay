@@ -1,6 +1,7 @@
 package refund
 
 import (
+	"context"
 	"fmt"
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
 	"github.com/dotbitHQ/das-lib/remote_sign"
@@ -107,17 +108,30 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 			e = fmt.Errorf("SignWithPrivateKey err:%s", err.Error())
 			return
 		}
-	} else if t.remoteSignClient != nil {
-		log.Info("refundEvm remoteSignClient")
-		tx, err = t.remoteSignClient.SignEvmTx(remote_sign.SignMethodEvm, fromAddr, tx)
+	} else if config.Cfg.Server.RemoteSignApiUrl != "" {
+		log.Info("refundEvm remote sign")
+		chainID, err := p.chainEvm.Client.ChainID(context.Background())
 		if err != nil {
-			e = fmt.Errorf("SignEvmTx err: %s [%s]", err.Error(), p.info.PayTokenId)
+			e = fmt.Errorf("p.chainEvm.Client.ChainID err: %s", err.Error())
+			return
+		}
+		tx, err = remote_sign.SignTxForEVM(config.Cfg.Server.RemoteSignApiUrl, fromAddr, chainID.Int64(), tx)
+		if err != nil {
+			e = fmt.Errorf("remote_sign.SignTxForEVM err: %s", err.Error())
 			return
 		}
 	} else {
 		e = fmt.Errorf("no signature method configured")
 		return
 	}
+	//else if t.remoteSignClient != nil {
+	//	log.Info("refundEvm remoteSignClient")
+	//	tx, err = t.remoteSignClient.SignEvmTx(remote_sign.SignMethodEvm, fromAddr, tx)
+	//	if err != nil {
+	//		e = fmt.Errorf("SignEvmTx err: %s [%s]", err.Error(), p.info.PayTokenId)
+	//		return
+	//	}
+	//}
 
 	// send tx
 	refundHash := tx.Hash().Hex()

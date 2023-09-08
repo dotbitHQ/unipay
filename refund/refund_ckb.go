@@ -98,7 +98,8 @@ func (t *ToolRefund) doRefundCkb(paymentAddress, private string, list []tables.V
 	txParams.Witnesses = append(txParams.Witnesses, actionWitness)
 
 	// tx
-	txBuilderBase, err := config.InitDasTxBuilderBase(t.Ctx, t.DasCore, fromScript, private)
+	//txBuilderBase, err := config.InitDasTxBuilderBase(t.Ctx, t.DasCore, fromScript, private)
+	txBuilderBase, err := config.InitDasTxBuilderBaseV2(t.Ctx, t.DasCore, fromScript, private)
 	if err != nil {
 		return fmt.Errorf("InitDasTxBuilderBase err: %s", err.Error())
 	}
