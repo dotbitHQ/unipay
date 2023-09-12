@@ -12,8 +12,8 @@ db:
   mysql:
     addr: "docker.for.mac.localhost:3306" #"127.0.0.1:3306"
     user: "root"
-    password: "12345678"
-    db_name: "unipay_db"
+    password: "123456"
+    db_name: "unipay"
 chain:
   ckb:
     refund: true # do refund

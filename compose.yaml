@@ -1,0 +1,56 @@
+version: '3'
+networks:
+  dotbit:
+    ipam:
+      driver: default
+      config:
+        - subnet: 182.17.0.0/16
+          gateway: 182.17.0.1
+
+services:
+  mysql:
+    image: mysql/mysql-server:8.0
+    restart: always
+    ports:
+      - ${MYSQL_PORT:-3306}:3306
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DAS_DB_PORT:-123456}
+      TZ: Asia/Shanghai
+      # This allows ip ranges from 182.17.0.1 to 182.17.255.255 to connect to root
+      MYSQL_ROOT_HOST: "182.17.%.%"
+    networks:
+      - dotbit
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+  unipay:
+    image: admindid/unipay:latest
+    restart: always
+    working_dir: /app
+    ports:
+      - ${REVERSE_PORT:-9092}:9092
+    volumes:
+      - ./config/config.yaml:/app/config/config.yaml
+    depends_on:
+      - mysql
+    networks:
+      - dotbit
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+  refund_svr:
+    image: admindid/unipay:latest
+    restart: always
+    working_dir: /app
+    entrypoint: ["/app/refund_svr", "--config", "/app/config/config.yaml"]
+    volumes:
+      - ./config/config.yaml:/app/config/config.yaml
+    depends_on:
+      - mysql
+    networks:
+      - dotbit
+    extra_hosts:
+      - host.docker.internal:host-gateway

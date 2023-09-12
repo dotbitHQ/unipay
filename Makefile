@@ -15,7 +15,7 @@ update:
 	go mod tidy
 
 docker:
-	docker build --network host -t dotbitteam/unipay:latest .
+	docker build --network host -t admindid/unipay:latest .
 
 docker-publish:
-	docker image push dotbitteam/unipay:latest
+	docker image push admindid/unipay:latest
