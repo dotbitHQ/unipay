@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - test3
 
 jobs:
   ci:
@@ -20,7 +21,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: unipay
+          name: unipay_${{ github.sha }}
           path: |
             unipay_svr
             refund_svr
