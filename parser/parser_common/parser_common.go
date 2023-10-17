@@ -2,7 +2,7 @@ package parser_common
 
 import (
 	"fmt"
-	"github.com/scorpiotzh/mylog"
+	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -10,7 +10,7 @@ import (
 	"unipay/notify"
 )
 
-var log = mylog.NewLogger("parser_common", mylog.LevelDebug)
+var log = logger.NewLogger("parser_common", logger.LevelDebug)
 
 type ParserApi interface {
 	GetLatestBlockNumber() (uint64, error)

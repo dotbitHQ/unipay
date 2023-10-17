@@ -7,7 +7,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/dotbitHQ/das-lib/bitcoin"
-	"github.com/scorpiotzh/mylog"
+	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
 	"strings"
@@ -18,7 +18,7 @@ import (
 	"unipay/tables"
 )
 
-var log = mylog.NewLogger("parser_bitcoin", mylog.LevelDebug)
+var log = logger.NewLogger("parser_bitcoin", logger.LevelDebug)
 
 type ParserBitcoin struct {
 	NodeRpc *bitcoin.BaseRequest

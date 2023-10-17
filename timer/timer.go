@@ -3,7 +3,7 @@ package timer
 import (
 	"context"
 	"github.com/dotbitHQ/das-lib/core"
-	"github.com/scorpiotzh/mylog"
+	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"sync"
 	"time"
 	"unipay/config"
@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	log = mylog.NewLogger("main", mylog.LevelDebug)
+	log = logger.NewLogger("main", logger.LevelDebug)
 )
 
 type ToolTimer struct {

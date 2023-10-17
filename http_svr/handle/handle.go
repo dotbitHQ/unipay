@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/dotbitHQ/das-lib/core"
+	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"github.com/gin-gonic/gin"
-	"github.com/scorpiotzh/mylog"
 	"unipay/dao"
 	"unipay/notify"
 )
 
 var (
-	log = mylog.NewLogger("http_handle", mylog.LevelDebug)
+	log = logger.NewLogger("http_handle", logger.LevelDebug)
 )
 
 type HttpHandle struct {

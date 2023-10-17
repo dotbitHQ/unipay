@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
 	dascommon "github.com/dotbitHQ/das-lib/common"
+	"github.com/dotbitHQ/das-lib/http_api/logger"
 	ethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/scorpiotzh/mylog"
 	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
@@ -16,7 +16,7 @@ import (
 	"unipay/tables"
 )
 
-var log = mylog.NewLogger("parser_evm", mylog.LevelDebug)
+var log = logger.NewLogger("parser_evm", logger.LevelDebug)
 
 type ParserEvm struct {
 	ChainEvm *chain_evm.ChainEvm

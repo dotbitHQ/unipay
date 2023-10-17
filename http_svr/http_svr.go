@@ -2,14 +2,14 @@ package http_svr
 
 import (
 	"context"
+	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"github.com/gin-gonic/gin"
-	"github.com/scorpiotzh/mylog"
 	"net/http"
 	"unipay/http_svr/handle"
 )
 
 var (
-	log = mylog.NewLogger("http_svr", mylog.LevelDebug)
+	log = logger.NewLogger("http_svr", logger.LevelDebug)
 )
 
 type HttpSvr struct {

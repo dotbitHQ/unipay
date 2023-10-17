@@ -6,6 +6,7 @@ import (
 	"github.com/dotbitHQ/das-lib/common"
 	"github.com/dotbitHQ/das-lib/core"
 	"github.com/dotbitHQ/das-lib/dascache"
+	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"github.com/dotbitHQ/das-lib/remote_sign"
 	"github.com/dotbitHQ/das-lib/sign"
 	"github.com/dotbitHQ/das-lib/txbuilder"
@@ -14,7 +15,6 @@ import (
 	"github.com/nervosnetwork/ckb-sdk-go/rpc"
 	"github.com/nervosnetwork/ckb-sdk-go/transaction"
 	"github.com/nervosnetwork/ckb-sdk-go/types"
-	"github.com/scorpiotzh/mylog"
 	"github.com/scorpiotzh/toolib"
 	"github.com/stripe/stripe-go/v74"
 	"strings"
@@ -25,18 +25,18 @@ import (
 
 var (
 	Cfg CfgServer
-	log = mylog.NewLogger("config", mylog.LevelDebug)
+	log = logger.NewLogger("config", logger.LevelDebug)
 )
 
 func InitCfg(configFilePath string) error {
 	if configFilePath == "" {
 		configFilePath = "./config/config.yaml"
 	}
-	log.Info("config file path：", configFilePath)
+	log.Debug("config file path：", configFilePath)
 	if err := toolib.UnmarshalYamlFile(configFilePath, &Cfg); err != nil {
 		return fmt.Errorf("UnmarshalYamlFile err:%s", err.Error())
 	}
-	log.Info("config file：", toolib.JsonString(Cfg))
+	log.Debug("config file：", toolib.JsonString(Cfg))
 	initStripe()
 	return nil
 }
@@ -46,11 +46,11 @@ func AddCfgFileWatcher(configFilePath string) (*fsnotify.Watcher, error) {
 		configFilePath = "./config/config.yaml"
 	}
 	return toolib.AddFileWatcher(configFilePath, func() {
-		log.Info("config file path：", configFilePath)
+		log.Debug("config file path：", configFilePath)
 		if err := toolib.UnmarshalYamlFile(configFilePath, &Cfg); err != nil {
 			log.Error("UnmarshalYamlFile err:", err.Error())
 		}
-		log.Info("config file：", toolib.JsonString(Cfg))
+		log.Debug("config file：", toolib.JsonString(Cfg))
 		initStripe()
 	})
 }

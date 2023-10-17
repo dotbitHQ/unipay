@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/dotbitHQ/das-lib/common"
+	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"github.com/nervosnetwork/ckb-sdk-go/address"
 	"github.com/nervosnetwork/ckb-sdk-go/rpc"
 	"github.com/nervosnetwork/ckb-sdk-go/types"
-	"github.com/scorpiotzh/mylog"
 	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
@@ -18,7 +18,7 @@ import (
 	"unipay/tables"
 )
 
-var log = mylog.NewLogger("parser_ckb", mylog.LevelDebug)
+var log = logger.NewLogger("parser_ckb", logger.LevelDebug)
 
 type ParserCkb struct {
 	Ctx    context.Context

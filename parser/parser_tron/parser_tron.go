@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
 	"github.com/dotbitHQ/das-lib/common"
+	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"github.com/fbsobreira/gotron-sdk/pkg/proto/api"
 	"github.com/fbsobreira/gotron-sdk/pkg/proto/core"
 	"github.com/golang/protobuf/proto"
-	"github.com/scorpiotzh/mylog"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
 	"math/big"
@@ -18,7 +18,7 @@ import (
 	"unipay/tables"
 )
 
-var log = mylog.NewLogger("parser_tron", mylog.LevelDebug)
+var log = logger.NewLogger("parser_tron", logger.LevelDebug)
 
 type ParserTron struct {
 	ChainTron *chain_tron.ChainTron

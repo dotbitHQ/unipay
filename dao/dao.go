@@ -2,7 +2,7 @@ package dao
 
 import (
 	"fmt"
-	"github.com/scorpiotzh/toolib"
+	"github.com/dotbitHQ/das-lib/http_api"
 	"gorm.io/gorm"
 	"unipay/config"
 	"unipay/tables"
@@ -13,7 +13,7 @@ type DbDao struct {
 }
 
 func NewGormDBNotAutoMigrate(dbMysql config.DbMysql) (*DbDao, error) {
-	db, err := toolib.NewGormDB(dbMysql.Addr, dbMysql.User, dbMysql.Password, dbMysql.DbName, 100, 100)
+	db, err := http_api.NewGormDB(dbMysql.Addr, dbMysql.User, dbMysql.Password, dbMysql.DbName, 100, 100)
 	if err != nil {
 		return nil, fmt.Errorf("toolib.NewGormDB err: %s", err.Error())
 	}
@@ -22,7 +22,7 @@ func NewGormDBNotAutoMigrate(dbMysql config.DbMysql) (*DbDao, error) {
 }
 
 func NewGormDB(dbMysql config.DbMysql) (*DbDao, error) {
-	db, err := toolib.NewGormDB(dbMysql.Addr, dbMysql.User, dbMysql.Password, dbMysql.DbName, 100, 100)
+	db, err := http_api.NewGormDB(dbMysql.Addr, dbMysql.User, dbMysql.Password, dbMysql.DbName, 100, 100)
 	if err != nil {
 		return nil, fmt.Errorf("toolib.NewGormDB err: %s", err.Error())
 	}

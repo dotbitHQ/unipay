@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/btcsuite/btcd v0.23.3
-	github.com/dotbitHQ/das-lib v1.1.1-0.20230908084332-05bca73e0fdd
+	github.com/dotbitHQ/das-lib v1.1.1-0.20231009040113-32bdbc9aa11f
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/fbsobreira/gotron-sdk v0.0.0-20230323193002-7843d2a7548e
 	github.com/fsnotify/fsnotify v1.5.4
@@ -13,7 +13,6 @@ require (
 	github.com/nervosnetwork/ckb-sdk-go v0.101.3
 	github.com/parnurzeal/gorequest v0.2.16
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/scorpiotzh/mylog v1.0.10
 	github.com/scorpiotzh/toolib v1.1.6
 	github.com/shopspring/decimal v1.3.1
 	github.com/stripe/stripe-go/v74 v74.20.0
@@ -39,6 +38,7 @@ require (
 	github.com/decred/dcrd/crypto/blake256 v1.0.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/getsentry/sentry-go v0.24.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/gogf/gf/v2 v2.3.3 // indirect
-	github.com/google/uuid v1.2.0 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
@@ -64,6 +64,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rjeczalik/notify v0.9.3 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/scorpiotzh/mylog v1.0.10 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/smartystreets/goconvey v1.7.2 // indirect
 	github.com/tklauser/go-sysconf v0.3.5 // indirect
@@ -84,7 +85,7 @@ require (
 	golang.org/x/text v0.8.0 // indirect
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
 	google.golang.org/grpc v1.46.0 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
+	google.golang.org/protobuf v1.29.1 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect

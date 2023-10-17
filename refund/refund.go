@@ -7,9 +7,9 @@ import (
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
 	"github.com/dotbitHQ/das-lib/core"
+	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"github.com/dotbitHQ/das-lib/remote_sign"
 	"github.com/robfig/cron/v3"
-	"github.com/scorpiotzh/mylog"
 	"sync"
 	"time"
 	"unipay/config"
@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	log = mylog.NewLogger("refund", mylog.LevelDebug)
+	log = logger.NewLogger("refund", logger.LevelDebug)
 )
 
 type ToolRefund struct {

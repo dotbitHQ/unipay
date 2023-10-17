@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/scorpiotzh/mylog"
+	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"github.com/scorpiotzh/toolib"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	log               = mylog.NewLogger("main", mylog.LevelDebug)
+	log               = logger.NewLogger("main", logger.LevelDebug)
 	exit              = make(chan struct{})
 	ctxServer, cancel = context.WithCancel(context.Background())
 	wgServer          = sync.WaitGroup{}
