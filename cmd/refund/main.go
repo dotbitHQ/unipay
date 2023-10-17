@@ -56,6 +56,7 @@ func runServer(ctx *cli.Context) error {
 
 	// tx tool
 	txtool.Init()
+	txtool.Tools.Run()
 
 	// db
 	dbDao, err := dao.NewGormDBNotAutoMigrate(config.Cfg.DB.Mysql)

@@ -59,6 +59,7 @@ func runServer(ctx *cli.Context) error {
 	// ============= service start =============
 	// tx tool
 	txtool.Init()
+	txtool.Tools.Run()
 
 	// db
 	dbDao, err := dao.NewGormDB(config.Cfg.DB.Mysql)
