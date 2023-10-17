@@ -6,7 +6,6 @@ import (
 	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"sync"
 	"time"
-	"unipay/config"
 	"unipay/dao"
 	"unipay/notify"
 )
@@ -32,7 +31,7 @@ func (t *ToolTimer) RunCallbackNotice() {
 			case <-tickerCallback.C:
 				if err := t.doCallbackNotice(); err != nil {
 					log.Error("doCallbackNotice err: ", err.Error())
-					notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doCallbackNotice", err.Error())
+					notify.SendLarkErrNotify("doCallbackNotice", err.Error())
 				}
 			case <-t.Ctx.Done():
 				log.Warn("RunCallbackNotice done")

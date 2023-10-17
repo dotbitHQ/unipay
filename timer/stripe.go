@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/stripe/stripe-go/v74"
 	"time"
-	"unipay/config"
 	"unipay/notify"
 	"unipay/stripe_api"
 	"unipay/tables"
@@ -19,7 +18,7 @@ func (t *ToolTimer) RunCheckStripeStatus() {
 			case <-tickerStripe.C:
 				if err := t.checkStripeStatus(); err != nil {
 					log.Error("checkStripeStatus err: ", err.Error())
-					notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "checkStripeStatus", err.Error())
+					notify.SendLarkErrNotify("checkStripeStatus", err.Error())
 				}
 			case <-t.Ctx.Done():
 				log.Warn("RunCheckStripeStatus done")

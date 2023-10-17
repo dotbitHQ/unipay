@@ -145,7 +145,7 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 		e = fmt.Errorf("SendTx err: %s", err.Error())
 		if err = t.DbDao.UpdateSinglePaymentToUnRefunded(payHash); err != nil {
 			log.Info("UpdateSinglePaymentToUnRefunded err: ", err.Error(), payHash)
-			notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateSinglePaymentToUnRefunded", fmt.Sprintf("%s\n%s", payHash, err.Error()))
+			notify.SendLarkErrNotify("UpdateSinglePaymentToUnRefunded", fmt.Sprintf("%s\n%s", payHash, err.Error()))
 		}
 		return
 	}

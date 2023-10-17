@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
-	"unipay/config"
 	"unipay/notify"
 )
 
@@ -67,7 +66,7 @@ func (p *ParserCommon) Parser() {
 				if err := p.PA.ConcurrentParsing(p.PC); err != nil {
 					log.Error("ConcurrentParsing err:", parserType, err.Error(), p.PC.CurrentBlockNumber)
 					if !strings.Contains(err.Error(), "data is nil") && !strings.Contains(err.Error(), "HTTP status code received from server: 503") {
-						notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("Parser %d", parserType), err.Error())
+						notify.SendLarkErrNotify(fmt.Sprintf("Parser %d", parserType), err.Error())
 					}
 				}
 				log.Warn("ConcurrentParsing time:", parserType, time.Since(nowTime).Seconds())
@@ -77,7 +76,7 @@ func (p *ParserCommon) Parser() {
 				if err := p.PA.SingleParsing(p.PC); err != nil {
 					log.Error("SingleParsing err:", parserType, err.Error(), p.PC.CurrentBlockNumber)
 					if !strings.Contains(err.Error(), "data is nil") && !strings.Contains(err.Error(), "HTTP status code received from server: 503") {
-						notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, fmt.Sprintf("Parser %d", parserType), err.Error())
+						notify.SendLarkErrNotify(fmt.Sprintf("Parser %d", parserType), err.Error())
 					}
 				}
 				log.Warn("Parsing time:", parserType, time.Since(nowTime).Seconds())

@@ -85,7 +85,7 @@ func (t *ToolRefund) doRefundDoge(paymentAddress, private string, list []tables.
 	if _, err = t.chainDoge.SendTx(signTx); err != nil {
 		if err = t.DbDao.UpdatePaymentListToUnRefunded(payHashList); err != nil {
 			log.Info("UpdatePaymentListToUnRefunded err: ", err.Error(), payHashList)
-			notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doRefundDoge", fmt.Sprintf("%s\n%s", strings.Join(payHashList, ","), err.Error()))
+			notify.SendLarkErrNotify("doRefundDoge", fmt.Sprintf("%s\n%s", strings.Join(payHashList, ","), err.Error()))
 		}
 		return fmt.Errorf("SendTx err: %s", err.Error())
 	}

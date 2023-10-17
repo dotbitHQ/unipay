@@ -174,7 +174,7 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 			//
 			if config.Cfg.Chain.Stripe.LargeAmount > 0 && pi.Amount > config.Cfg.Chain.Stripe.LargeAmount*100 {
 				msg = fmt.Sprintf("Event: %s\nEventID: %s\nPaymentIntentID: %s\nAmount: %.2f", event.Type, event.ID, pi.ID, float64(pi.Amount)/100)
-				notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "Large Amount Order for Stripe", msg)
+				notify.SendLarkErrNotify("Large Amount Order for Stripe", msg)
 				msg = ""
 			}
 		}

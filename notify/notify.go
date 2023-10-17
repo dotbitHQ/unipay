@@ -5,6 +5,7 @@ import (
 	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"github.com/parnurzeal/gorequest"
 	"time"
+	"unipay/txtool"
 )
 
 var log = logger.NewLogger("notify", logger.LevelDebug)
@@ -57,6 +58,13 @@ func SendLarkTextNotify(key, title, text string) {
 	} else {
 		log.Info("SendLarkTextNotify req:", body)
 	}
+}
+
+func SendLarkErrNotify(title, text string) {
+	if title == "" || text == "" {
+		return
+	}
+	txtool.Tools.Metrics.ErrNotify().WithLabelValues(title, text).Inc()
 }
 
 func SendLarkTextNotifyAtAll(key, title, text string) {

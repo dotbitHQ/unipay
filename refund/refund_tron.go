@@ -99,7 +99,7 @@ func (t *ToolRefund) refundTron(paymentAddress, private string, info tables.View
 	if err = t.chainTron.SendTransaction(tx.Transaction); err != nil {
 		if er := t.DbDao.UpdateSinglePaymentToUnRefunded(payHash); er != nil {
 			log.Info("UpdateSinglePaymentToUnRefunded err: ", er.Error(), payHash)
-			notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateSinglePaymentToUnRefunded", fmt.Sprintf("%s\n%s", payHash, er.Error()))
+			notify.SendLarkErrNotify("UpdateSinglePaymentToUnRefunded", fmt.Sprintf("%s\n%s", payHash, er.Error()))
 		}
 		return fmt.Errorf("SendTx err: %s", err.Error())
 	}

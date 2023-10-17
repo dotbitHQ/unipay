@@ -29,7 +29,7 @@ func (c *CallbackNotice) HandlePaymentToFailByDispute(paymentInfo tables.TablePa
 
 	if err := c.callbackNotice(noticeInfo, paymentInfo, orderInfo); err != nil {
 		log.Error("callbackNotice err: %s", err.Error())
-		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "callbackNotice", err.Error())
+		SendLarkErrNotify("callbackNotice", err.Error())
 	} else {
 		noticeInfo.NoticeStatus = tables.NoticeStatusOK
 	}
@@ -54,7 +54,7 @@ func (c *CallbackNotice) HandlePayment(paymentInfo tables.TablePaymentInfo, orde
 	orderInfo.PayStatus = tables.PayStatusPaid
 	if err := c.callbackNotice(noticeInfo, paymentInfo, orderInfo); err != nil {
 		log.Error("callbackNotice err: %s", err.Error())
-		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "callbackNotice", err.Error())
+		SendLarkErrNotify("callbackNotice", err.Error())
 	} else {
 		noticeInfo.NoticeStatus = tables.NoticeStatusOK
 	}
@@ -148,7 +148,7 @@ func (c *CallbackNotice) GetEventInfo(notice tables.TableNoticeInfo) (businessId
 	case 4: // 12 h
 		timestamp += 43200 * 1e3
 	default:
-		SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UpdateNoticeStatusToFail", notice.PayHash)
+		SendLarkErrNotify("UpdateNoticeStatusToFail", notice.PayHash)
 		if err := c.DbDao.UpdateNoticeStatusToFail(notice.Id); err != nil {
 			e = fmt.Errorf("UpdateNoticeStatusToFail err: %s", err.Error())
 			return

@@ -9,6 +9,7 @@ import (
 	"github.com/parnurzeal/gorequest"
 	"net/http"
 	"time"
+	"unipay/txtool"
 )
 
 type ReqPushLog struct {
@@ -36,31 +37,24 @@ func PushLog(url string, req ReqPushLog) {
 
 func DoMonitorLog(method string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		//startTime := time.Now()
-		//ip := getClientIp(ctx)
+		startTime := time.Now()
 
 		blw := &bodyWriter{body: bytes.NewBufferString(""), ResponseWriter: ctx.Writer}
 		ctx.Writer = blw
 		ctx.Next()
 		statusCode := ctx.Writer.Status()
 
+		var resp http_api.ApiResp
 		if statusCode == http.StatusOK && blw.body.String() != "" {
-			var resp http_api.ApiResp
-			if err := json.Unmarshal(blw.body.Bytes(), &resp); err == nil {
-				if resp.ErrNo != http_api.ApiCodeSuccess {
-					log.Warn("DoMonitorLog:", method, resp.ErrNo, resp.ErrMsg)
-				}
-				//pushLog := ReqPushLog{
-				//	Index:   config.Cfg.Server.PushLogIndex,
-				//	Method:  method,
-				//	Ip:      ip,
-				//	Latency: time.Since(startTime),
-				//	ErrMsg:  resp.ErrMsg,
-				//	ErrNo:   resp.ErrNo,
-				//}
-				//PushLog(config.Cfg.Server.PushLogUrl, pushLog)
+			if err := json.Unmarshal(blw.body.Bytes(), &resp); err != nil {
+				log.Warn("DoMonitorLog Unmarshal err:", method, err)
+				return
+			}
+			if resp.ErrNo != http_api.ApiCodeSuccess {
+				log.Warn("DoMonitorLog:", method, resp.ErrNo, resp.ErrMsg)
 			}
 		}
+		txtool.Tools.Metrics.Api().WithLabelValues(method, fmt.Sprint(statusCode), fmt.Sprint(resp.ErrNo), resp.ErrMsg).Observe(time.Since(startTime).Seconds())
 	}
 }
 

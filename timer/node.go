@@ -21,7 +21,7 @@ func (t *ToolTimer) RunCheckNode() {
 			case <-tickerNode.C:
 				if err := t.doCheckNode(); err != nil {
 					log.Error("doCheckNode err: ", err.Error())
-					notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doCheckNode", err.Error())
+					notify.SendLarkErrNotify("doCheckNode", err.Error())
 				}
 			case <-t.Ctx.Done():
 				log.Warn("RunCallbackNotice done")

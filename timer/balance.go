@@ -20,7 +20,7 @@ func (t *ToolTimer) RunCkbBalance() {
 			case <-tickerCKBBalance.C:
 				if err := t.ckbBalance(); err != nil {
 					log.Error("ckbBalance err: ", err.Error())
-					notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "ckbBalance", err.Error())
+					notify.SendLarkErrNotify("ckbBalance", err.Error())
 				}
 			case <-t.Ctx.Done():
 				log.Warn("RunCkbBalance done")

@@ -1,8 +1,10 @@
 server:
+  name: "unipay"
   net: 1
   http_port: ":9092"
   cron_spec: "0 30 */1 * * ?" # refund regular
   remote_sign_api_url: ""
+  prometheus_push_gateway: "http://127.0.0.1:9091"
 business_ids: # Link to business callback when order payment and refund are completed
   "das-register-svr": "http://127.0.0.1:8119/v1/unipay/notice"
 notify:

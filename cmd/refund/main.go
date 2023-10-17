@@ -12,6 +12,7 @@ import (
 	"unipay/config"
 	"unipay/dao"
 	"unipay/refund"
+	"unipay/txtool"
 )
 
 var (
@@ -52,6 +53,9 @@ func runServer(ctx *cli.Context) error {
 		return err
 	}
 	// ============= service start =============
+
+	// tx tool
+	txtool.Init()
 
 	// db
 	dbDao, err := dao.NewGormDBNotAutoMigrate(config.Cfg.DB.Mysql)

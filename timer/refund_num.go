@@ -16,7 +16,7 @@ func (t *ToolTimer) RunCheckRefundNum() {
 			case <-tickerCheck.C:
 				if err := t.checkRefundNum(); err != nil {
 					log.Error("checkRefundNum err: ", err.Error())
-					notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "checkRefundNum", err.Error())
+					notify.SendLarkErrNotify("checkRefundNum", err.Error())
 				}
 			case <-t.Ctx.Done():
 				log.Warn("RunCheckRefundNum done")

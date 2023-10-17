@@ -57,10 +57,12 @@ func AddCfgFileWatcher(configFilePath string) (*fsnotify.Watcher, error) {
 
 type CfgServer struct {
 	Server struct {
-		Net              common.DasNetType `json:"net" yaml:"net"`
-		HttpPort         string            `json:"http_port" yaml:"http_port"`
-		CronSpec         string            `json:"cron_spec" yaml:"cron_spec"`
-		RemoteSignApiUrl string            `json:"remote_sign_api_url" yaml:"remote_sign_api_url"`
+		Name                  string            `json:"name" yaml:"name"`
+		Net                   common.DasNetType `json:"net" yaml:"net"`
+		HttpPort              string            `json:"http_port" yaml:"http_port"`
+		CronSpec              string            `json:"cron_spec" yaml:"cron_spec"`
+		RemoteSignApiUrl      string            `json:"remote_sign_api_url" yaml:"remote_sign_api_url"`
+		PrometheusPushGateway string            `json:"prometheus_push_gateway" yaml:"prometheus_push_gateway"`
 	} `json:"server" yaml:"server"`
 	BusinessIds map[string]string `json:"business_ids" yaml:"business_ids"`
 	Notify      struct {

@@ -102,14 +102,14 @@ func (t *ToolRefund) doRefund() error {
 			}
 			if err != nil {
 				log.Error("doRefund err: ", parserType, paymentAddress, err.Error())
-				notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doRefund", err.Error())
+				notify.SendLarkErrNotify("doRefund", err.Error())
 			}
 		}
 	}
 	// stripe
 	if err = t.doRefundStripe(stripeList); err != nil {
 		log.Error("doRefundStripe err: ", err.Error())
-		notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doRefundStripe", err.Error())
+		notify.SendLarkErrNotify("doRefundStripe", err.Error())
 	}
 
 	return nil
