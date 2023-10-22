@@ -3,7 +3,6 @@ package timer
 import (
 	"fmt"
 	"time"
-	"unipay/config"
 	"unipay/notify"
 )
 
@@ -37,7 +36,6 @@ func (t *ToolTimer) checkRefundNum() error {
 	}
 	log.Info("checkRefundNum:", countRefund)
 	msg := fmt.Sprintf("> count: %d", countRefund)
-	notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "UnRefunded Txs", msg)
-
+	notify.SendLarkErrNotify("UnRefunded Txs", msg)
 	return nil
 }
