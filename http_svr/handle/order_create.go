@@ -84,7 +84,6 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 
 	// create order
 	orderInfo := tables.TableOrderInfo{
-		OrderId:        "",
 		BusinessId:     req.BusinessId,
 		PayAddress:     addrHex.AddressHex,
 		AlgorithmId:    addrHex.DasAlgorithmId,
@@ -96,7 +95,38 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 		PaymentAddress: paymentAddress,
 	}
 	orderInfo.InitOrderId()
+
 	var paymentInfo tables.TablePaymentInfo
+	if orderInfo.Amount.LessThanOrEqual(decimal.Zero) {
+		paymentInfo = tables.TablePaymentInfo{
+			OrderId:       orderInfo.OrderId,
+			PayAddress:    addrHex.AddressHex,
+			AlgorithmId:   addrHex.DasAlgorithmId,
+			Timestamp:     time.Now().UnixMilli(),
+			Amount:        orderInfo.Amount,
+			PayTokenId:    orderInfo.PayTokenId,
+			PayHashStatus: tables.PayHashStatusPending,
+			RefundStatus:  tables.RefundStatusDefault,
+		}
+		noticeInfo := tables.TableNoticeInfo{
+			EventType:    tables.EventTypeOrderPay,
+			PayHash:      paymentInfo.PayHash,
+			NoticeStatus: tables.NoticeStatusDefault,
+			Timestamp:    time.Now().UnixMilli(),
+		}
+		noticeInfo.InitNoticeId()
+		if err := h.DbDao.CreateOrderInfNoNeedPay(orderInfo, paymentInfo, noticeInfo); err != nil {
+			apiResp.ApiRespErr(http_api.ApiCodeDbError, "Failed to create order")
+			return fmt.Errorf("CreateOrderInfoWithPaymentInfo err: %s", err.Error())
+		}
+
+		resp.OrderId = orderInfo.OrderId
+		resp.PaymentAddress = req.PaymentAddress
+		resp.ContractAddress = req.PayTokenId.GetContractAddress(config.Cfg.Server.Net)
+		apiResp.ApiRespOK(resp)
+		return nil
+	}
+
 	if req.PayTokenId == tables.PayTokenIdStripeUSD {
 		if !config.Cfg.Chain.Stripe.Switch {
 			apiResp.ApiRespErr(http_api.ApiCodePaymentMethodDisable, "This payment method is unavailable")
@@ -128,12 +158,12 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 		resp.StripePaymentIntentId = pi.ID
 		resp.ClientSecret = pi.ClientSecret
 	}
+
 	if err := h.DbDao.CreateOrderInfoWithPaymentInfo(orderInfo, paymentInfo); err != nil {
 		apiResp.ApiRespErr(http_api.ApiCodeDbError, "Failed to create order")
 		return fmt.Errorf("CreateOrderInfoWithPaymentInfo err: %s", err.Error())
 	}
 
-	//
 	resp.OrderId = orderInfo.OrderId
 	resp.PaymentAddress = req.PaymentAddress
 	resp.ContractAddress = req.PayTokenId.GetContractAddress(config.Cfg.Server.Net)

@@ -20,6 +20,23 @@ func (d *DbDao) CreateOrderInfoWithPaymentInfo(orderInfo tables.TableOrderInfo, 
 	})
 }
 
+func (d *DbDao) CreateOrderInfNoNeedPay(orderInfo tables.TableOrderInfo, paymentInfo tables.TablePaymentInfo, notice tables.TableNoticeInfo) error {
+	orderInfo.PayStatus = tables.PayStatusPaid
+	paymentInfo.PayHashStatus = tables.PayHashStatusConfirm
+	return d.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&orderInfo).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(&paymentInfo).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(&notice).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
 func (d *DbDao) GetOrderInfo(orderId, businessId string) (info tables.TableOrderInfo, err error) {
 	err = d.db.Where("order_id=? AND business_id=?",
 		orderId, businessId).Find(&info).Error
