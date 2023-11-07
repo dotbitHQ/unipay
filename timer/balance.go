@@ -32,7 +32,7 @@ func (t *ToolTimer) RunCkbBalance() {
 }
 
 func (t *ToolTimer) ckbBalance() error {
-	for addr, _ := range config.Cfg.Chain.Ckb.AddrMap {
+	for addr, _ := range config.Cfg.Chain.Ckb.BalanceCheckMap {
 		parseAddr, err := address.Parse(addr)
 		if err != nil {
 			return fmt.Errorf("address.Parse err: %s", err.Error())

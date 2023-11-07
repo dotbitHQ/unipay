@@ -75,10 +75,11 @@ type CfgServer struct {
 	} `json:"db" yaml:"db"`
 	Chain struct {
 		Ckb struct {
-			Refund  bool              `json:"refund" yaml:"refund"`
-			Switch  bool              `json:"switch" yaml:"switch"`
-			Node    string            `json:"node" yaml:"node"`
-			AddrMap map[string]string `json:"addr_map" yaml:"addr_map"`
+			Refund          bool              `json:"refund" yaml:"refund"`
+			Switch          bool              `json:"switch" yaml:"switch"`
+			Node            string            `json:"node" yaml:"node"`
+			AddrMap         map[string]string `json:"addr_map" yaml:"addr_map"`
+			BalanceCheckMap map[string]string `json:"balance_check_map" yaml:"balance_check_map"`
 		} `json:"ckb" yaml:"ckb"`
 		Eth     EvmNode `json:"eth" yaml:"eth"`
 		Tron    EvmNode `json:"tron" yaml:"tron"`
