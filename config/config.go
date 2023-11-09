@@ -75,11 +75,13 @@ type CfgServer struct {
 	} `json:"db" yaml:"db"`
 	Chain struct {
 		DP struct {
-			Refund             bool              `json:"refund" yaml:"refund"`
-			Switch             bool              `json:"switch" yaml:"switch"`
-			Node               string            `json:"node" yaml:"node"`
-			CurrentBlockNumber uint64            `json:"current_block_number" yaml:"current_block_number"`
-			AddrMap            map[string]string `json:"addr_map" yaml:"addr_map"`
+			Refund                   bool   `json:"refund" yaml:"refund"`
+			Switch                   bool   `json:"switch" yaml:"switch"`
+			Node                     string `json:"node" yaml:"node"`
+			CurrentBlockNumber       uint64 `json:"current_block_number" yaml:"current_block_number"`
+			TransferWhitelist        string `json:"transfer_whitelist" yaml:"transfer_whitelist"`
+			TransferWhitelistPrivate string `json:"transfer_whitelist_private" yaml:"transfer_whitelist_private"`
+			RefundUrl                string `json:"refund_url" yaml:"refund_url"'`
 		} `json:"dp" yaml:"dp"`
 		Ckb struct {
 			Refund          bool              `json:"refund" yaml:"refund"`

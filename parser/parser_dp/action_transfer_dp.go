@@ -56,16 +56,18 @@ func (p *ParserDP) ActionTransferDP(req FuncTransactionHandleReq, pc *parser_com
 		return
 	}
 	var txDPInfoOfSvr core.TxDPInfo
-	for k, _ := range pc.AddrMap {
-		log.Info("AddrMap:", k)
-		addrHex, _, err := p.DasCore.Daf().ArgsToHex(common.Hex2Bytes(k))
-		if err != nil {
-			resp.Err = fmt.Errorf("ArgsToHex err: %s", err.Error())
-			return
-		}
-		if item, ok := dpOutputs[hex.EncodeToString(addrHex.AddressPayload)]; ok {
-			txDPInfoOfSvr = item
-		}
+	transferWhitelist, err := address.Parse(config.Cfg.Chain.DP.TransferWhitelist)
+	if err != nil {
+		resp.Err = fmt.Errorf("address.Parse err: %s", err.Error())
+		return
+	}
+	addrHex, _, err := p.DasCore.Daf().ScriptToHex(transferWhitelist.Script)
+	if err != nil {
+		resp.Err = fmt.Errorf("ArgsToHex err: %s", err.Error())
+		return
+	}
+	if item, ok := dpOutputs[hex.EncodeToString(addrHex.AddressPayload)]; ok {
+		txDPInfoOfSvr = item
 	}
 	if txDPInfoOfSvr.Payload == "" {
 		resp.Err = fmt.Errorf("txDPInfoOfSvr.Payload is nil")

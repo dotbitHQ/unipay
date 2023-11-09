@@ -240,7 +240,7 @@ func (t *ToolParser) initParserDP() error {
 			ConcurrencyNum:     10,
 			ConfirmNum:         3,
 			Switch:             config.Cfg.Chain.DP.Switch,
-			AddrMap:            config.FormatAddrMap(tables.ParserTypeDP, config.Cfg.Chain.DP.AddrMap),
+			AddrMap:            nil,
 		},
 		PA: &parser_dp.ParserDP{
 			Ctx:     t.ctx,

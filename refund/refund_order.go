@@ -18,6 +18,7 @@ func (t *ToolRefund) doRefund() error {
 	//
 	var refundMap = make(map[tables.ParserType]map[string][]tables.ViewRefundPaymentInfo)
 	var stripeList []tables.ViewRefundPaymentInfo
+	var dpList []tables.ViewRefundPaymentInfo
 	for i, v := range list {
 		if v.PayHashStatus != tables.PayHashStatusConfirm && v.RefundStatus != tables.RefundStatusUnRefund {
 			continue
@@ -38,6 +39,8 @@ func (t *ToolRefund) doRefund() error {
 			parserType = tables.ParserTypeDoge
 		case tables.PayTokenIdStripeUSD:
 			stripeList = append(stripeList, list[i])
+		case tables.PayTokenIdDIDPoint:
+			dpList = append(dpList, list[i])
 		default:
 			log.Warn("unknown pay token id[%s]", v.PayTokenId)
 			continue
@@ -110,6 +113,11 @@ func (t *ToolRefund) doRefund() error {
 	if err = t.doRefundStripe(stripeList); err != nil {
 		log.Error("doRefundStripe err: ", err.Error())
 		notify.SendLarkErrNotify("doRefundStripe", err.Error())
+	}
+	// dp
+	if err = t.doRefundDP(dpList); err != nil {
+		log.Error("doRefundDP err: %s", err.Error())
+		notify.SendLarkErrNotify("doRefundDP", err.Error())
 	}
 
 	return nil
