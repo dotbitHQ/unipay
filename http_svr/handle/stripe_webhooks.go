@@ -115,11 +115,12 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 			account := pi.Metadata["account"]
 			algorithmId := pi.Metadata["algorithm_id"]
 			address := pi.Metadata["address"]
+			productInfo := pi.Metadata["product_info"]
 			action := "order"
 			if account != "" && algorithmId != "" && address != "" {
 				si := notify.StripeInfo{
 					PID:         pi.ID,
-					Account:     account,
+					ProductInfo: account + productInfo,
 					AlgorithmId: algorithmId,
 					Address:     address,
 					Action:      action,
@@ -160,10 +161,11 @@ func (h *HttpHandle) doStripeWebhooks(ctx *gin.Context) (httpCode int, e error) 
 			algorithmId := pi.Metadata["algorithm_id"]
 			address := pi.Metadata["address"]
 			action := pi.Metadata["action"]
+			productInfo := pi.Metadata["product_info"]
 			if account != "" && algorithmId != "" && address != "" && action != "" {
 				si := notify.StripeInfo{
 					PID:         pi.ID,
-					Account:     account,
+					ProductInfo: account + productInfo,
 					AlgorithmId: algorithmId,
 					Address:     address,
 					Action:      action,
