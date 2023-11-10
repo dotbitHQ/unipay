@@ -73,6 +73,7 @@ func (p *ParserDP) ActionTransferDP(req FuncTransactionHandleReq, pc *parser_com
 		resp.Err = fmt.Errorf("txDPInfoOfSvr.Payload is nil")
 		return
 	}
+	log.Info("txDPInfoOfSvr.Payload:", txDPInfoOfSvr.Payload, hex.EncodeToString(addrHex.AddressPayload))
 	//
 	var txDPInfoOfUser core.TxDPInfo
 	for k, v := range dpInputs {
