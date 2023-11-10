@@ -8,7 +8,6 @@ import (
 	"github.com/dotbitHQ/das-lib/sign"
 	"github.com/dotbitHQ/das-lib/txbuilder"
 	"github.com/nervosnetwork/ckb-sdk-go/address"
-	"github.com/nervosnetwork/ckb-sdk-go/types"
 	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
 	"unipay/config"
@@ -39,14 +38,13 @@ func (t *ToolRefund) doRefundDP(list []tables.ViewRefundPaymentInfo) error {
 	refundUrl := fmt.Sprintf("%s/v1/dp/refund", config.Cfg.Chain.DP.RefundUrl)
 	sendTxUrl := fmt.Sprintf("%s/v1/send/tx", config.Cfg.Chain.DP.RefundUrl)
 	for i, v := range list {
-		addr, err := address.Parse(v.PaymentAddress)
-		if err != nil {
-			return fmt.Errorf("address.Parse err: %s", err.Error())
-		}
+
 		req := ReqRefundDP{
-			OrderId:      v.OrderId,
-			RefundLock:   addr.Script,
-			RefundAmount: v.Amount,
+			BusinessId:    v.BusinessId,
+			OrderId:       v.OrderId,
+			PayHash:       v.PayHash,
+			RefundAddress: v.PayAddress,
+			RefundAmount:  v.Amount,
 		}
 		var data RespRefundDP
 		resp, err := http_api.SendReqV2(refundUrl, &req, &data)
@@ -112,9 +110,11 @@ func (t *ToolRefund) doRefundDP(list []tables.ViewRefundPaymentInfo) error {
 }
 
 type ReqRefundDP struct {
-	OrderId      string          `json:"order_id"`
-	RefundLock   *types.Script   `json:"refund_lock"`
-	RefundAmount decimal.Decimal `json:"refund_amount"`
+	BusinessId    string          `json:"business_id"`
+	OrderId       string          `json:"order_id"`
+	PayHash       string          `json:"pay_hash"`
+	RefundAddress string          `json:"refund_address"`
+	RefundAmount  decimal.Decimal `json:"refund_amount"`
 }
 
 type RespRefundDP struct {

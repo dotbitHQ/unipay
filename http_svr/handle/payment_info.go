@@ -6,6 +6,7 @@ import (
 	"github.com/dotbitHQ/das-lib/http_api"
 	"github.com/gin-gonic/gin"
 	"github.com/scorpiotzh/toolib"
+	"github.com/shopspring/decimal"
 	"net/http"
 	"unipay/tables"
 )
@@ -24,6 +25,7 @@ type PaymentInfo struct {
 	OrderId         string                `json:"order_id"`
 	PayHash         string                `json:"pay_hash"`
 	PayAddress      string                `json:"pay_address"`
+	Amount          decimal.Decimal       `json:"amount"`
 	AlgorithmId     common.DasAlgorithmId `json:"algorithm_id"`
 	PayHashStatus   tables.PayHashStatus  `json:"pay_hash_status"`
 	RefundHash      string                `json:"refund_hash"`
@@ -78,6 +80,7 @@ func (h *HttpHandle) doPaymentInfo(req *ReqPaymentInfo, apiResp *http_api.ApiRes
 			OrderId:       v.OrderId,
 			PayHash:       v.PayHash,
 			PayAddress:    v.PayAddress,
+			Amount:        v.Amount,
 			AlgorithmId:   v.AlgorithmId,
 			PayHashStatus: v.PayHashStatus,
 			RefundHash:    v.RefundHash,
@@ -95,6 +98,7 @@ func (h *HttpHandle) doPaymentInfo(req *ReqPaymentInfo, apiResp *http_api.ApiRes
 		paymentMap[v.PayHash] = PaymentInfo{
 			OrderId:       v.OrderId,
 			PayHash:       v.PayHash,
+			Amount:        v.Amount,
 			PayAddress:    v.PayAddress,
 			AlgorithmId:   v.AlgorithmId,
 			PayHashStatus: v.PayHashStatus,
