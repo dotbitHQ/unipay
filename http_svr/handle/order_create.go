@@ -2,6 +2,7 @@ package handle
 
 import (
 	"fmt"
+	"github.com/dotbitHQ/das-lib/common"
 	"github.com/dotbitHQ/das-lib/core"
 	"github.com/dotbitHQ/das-lib/http_api"
 	"github.com/gin-gonic/gin"
@@ -98,8 +99,10 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 
 	var paymentInfo tables.TablePaymentInfo
 	if orderInfo.Amount.LessThanOrEqual(decimal.Zero) {
+		payHash := common.Bytes2Hex(common.Blake2b([]byte(orderInfo.OrderId)))
 		paymentInfo = tables.TablePaymentInfo{
 			OrderId:       orderInfo.OrderId,
+			PayHash:       payHash,
 			PayAddress:    addrHex.AddressHex,
 			AlgorithmId:   addrHex.DasAlgorithmId,
 			Timestamp:     time.Now().UnixMilli(),
