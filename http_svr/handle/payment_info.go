@@ -8,6 +8,7 @@ import (
 	"github.com/scorpiotzh/toolib"
 	"github.com/shopspring/decimal"
 	"net/http"
+	"unipay/stripe_api"
 	"unipay/tables"
 )
 
@@ -24,6 +25,7 @@ type RespPaymentInfo struct {
 type PaymentInfo struct {
 	OrderId         string                `json:"order_id"`
 	PayHash         string                `json:"pay_hash"`
+	SourcePayment   string                `json:"source_payment"`
 	PayAddress      string                `json:"pay_address"`
 	Amount          decimal.Decimal       `json:"amount"`
 	AlgorithmId     common.DasAlgorithmId `json:"algorithm_id"`
@@ -76,8 +78,9 @@ func (h *HttpHandle) doPaymentInfo(req *ReqPaymentInfo, apiResp *http_api.ApiRes
 	}
 	var paymentMap = make(map[string]PaymentInfo)
 	for _, v := range list {
-		paymentMap[v.PayHash] = PaymentInfo{
+		tmp := PaymentInfo{
 			OrderId:       v.OrderId,
+			SourcePayment: v.PayAddress,
 			PayHash:       v.PayHash,
 			PayAddress:    v.PayAddress,
 			Amount:        v.Amount,
@@ -86,6 +89,14 @@ func (h *HttpHandle) doPaymentInfo(req *ReqPaymentInfo, apiResp *http_api.ApiRes
 			RefundHash:    v.RefundHash,
 			RefundStatus:  v.RefundStatus,
 		}
+		if v.PayTokenId == tables.PayTokenIdStripeUSD {
+			if pi, err := stripe_api.GetPaymentIntent(v.PayHash); err == nil {
+				if pm, err := stripe_api.GetPaymentMethod(pi.PaymentMethod.ID); err == nil {
+					tmp.SourcePayment = fmt.Sprintf("%s %s", pm.Card.Brand, pm.Card.Last4)
+				}
+			}
+		}
+		paymentMap[v.PayHash] = tmp
 	}
 
 	// get payment list by pay hash

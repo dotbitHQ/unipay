@@ -10,6 +10,7 @@ import (
 	"github.com/stripe/stripe-go/v74/paymentintent"
 	"github.com/stripe/stripe-go/v74/refund"
 	"testing"
+	"unipay/stripe_api"
 )
 
 const (
@@ -135,4 +136,25 @@ func TestPremium(t *testing.T) {
 	dec50 := decimal.NewFromFloat(50)
 	amountRefund := amount.Sub(amount.Mul(dec34).Add(dec50))
 	fmt.Println(amountRefund, amountRefund.IntPart())
+}
+
+func TestGetCharge(t *testing.T) {
+	stripe.Key = stripeKey
+	pi, err := stripe_api.GetPaymentIntent("pi_3OBzpcIQKpnIBBap0Sov2Vlv")
+	if err != nil {
+		t.Fatal(err)
+	}
+	//fmt.Println(toolib.JsonString(pi))
+	pm, err := stripe_api.GetPaymentMethod(pi.PaymentMethod.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(toolib.JsonString(pm))
+
+	ch, err := stripe_api.GetCharge(pi.LatestCharge.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(toolib.JsonString(ch))
+
 }

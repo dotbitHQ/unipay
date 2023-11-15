@@ -3,7 +3,9 @@ package stripe_api
 import (
 	"fmt"
 	"github.com/stripe/stripe-go/v74"
+	"github.com/stripe/stripe-go/v74/charge"
 	"github.com/stripe/stripe-go/v74/paymentintent"
+	"github.com/stripe/stripe-go/v74/paymentmethod"
 	"github.com/stripe/stripe-go/v74/refund"
 )
 
@@ -58,4 +60,21 @@ func RefundPaymentIntent(id string, amount int64) (*stripe.Refund, error) {
 		return nil, fmt.Errorf("refund.New err: %s[%s]", err.Error(), id)
 	}
 	return r, nil
+}
+
+func GetPaymentMethod(pmID string) (*stripe.PaymentMethod, error) {
+	pm, err := paymentmethod.Get(pmID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("paymentmethod.Get err: %s", err.Error())
+	}
+
+	return pm, nil
+}
+
+func GetCharge(cID string) (*stripe.Charge, error) {
+	c, err := charge.Get(cID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("charge.Get err: %s", err.Error())
+	}
+	return c, nil
 }
