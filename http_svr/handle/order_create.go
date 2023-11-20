@@ -75,25 +75,16 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 		return nil
 	}
 
-	// check pay token id
-	paymentAddress, err := config.GetPaymentAddress(req.PayTokenId, req.PaymentAddress)
-	if err != nil {
-		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, err.Error())
-		return nil
-	}
-	log.Info("doOrderCreate:", paymentAddress, req.PayTokenId)
-
 	// create order
 	orderInfo := tables.TableOrderInfo{
-		BusinessId:     req.BusinessId,
-		PayAddress:     addrHex.AddressHex,
-		AlgorithmId:    addrHex.DasAlgorithmId,
-		Amount:         req.Amount,
-		PayTokenId:     req.PayTokenId,
-		PayStatus:      tables.PayStatusUnpaid,
-		OrderStatus:    tables.OrderStatusNormal,
-		Timestamp:      time.Now().UnixMilli(),
-		PaymentAddress: paymentAddress,
+		BusinessId:  req.BusinessId,
+		PayAddress:  addrHex.AddressHex,
+		AlgorithmId: addrHex.DasAlgorithmId,
+		Amount:      req.Amount,
+		PayTokenId:  req.PayTokenId,
+		PayStatus:   tables.PayStatusUnpaid,
+		OrderStatus: tables.OrderStatusNormal,
+		Timestamp:   time.Now().UnixMilli(),
 	}
 	orderInfo.InitOrderId()
 
@@ -129,6 +120,15 @@ func (h *HttpHandle) doOrderCreate(req *ReqOrderCreate, apiResp *http_api.ApiRes
 		apiResp.ApiRespOK(resp)
 		return nil
 	}
+
+	// check pay token id
+	paymentAddress, err := config.GetPaymentAddress(req.PayTokenId, req.PaymentAddress)
+	if err != nil {
+		apiResp.ApiRespErr(http_api.ApiCodeParamsInvalid, err.Error())
+		return nil
+	}
+	orderInfo.PaymentAddress = paymentAddress
+	log.Info("doOrderCreate:", paymentAddress, req.PayTokenId)
 
 	if req.PayTokenId == tables.PayTokenIdStripeUSD {
 		if !config.Cfg.Chain.Stripe.Switch {
