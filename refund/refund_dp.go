@@ -36,7 +36,7 @@ func (t *ToolRefund) doRefundDP(list []tables.ViewRefundPaymentInfo) error {
 		return fmt.Errorf("ScriptToHex err: %s", err.Error())
 	}
 	refundUrl := fmt.Sprintf("%s/v1/dp/refund", config.Cfg.Chain.DP.RefundUrl)
-	sendTxUrl := fmt.Sprintf("%s/v1/send/tx", config.Cfg.Chain.DP.RefundUrl)
+	sendTxUrl := fmt.Sprintf("%s/v1/tx/send", config.Cfg.Chain.DP.RefundUrl)
 	for i, v := range list {
 
 		req := ReqRefundDP{
