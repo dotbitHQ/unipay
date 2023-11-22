@@ -28,8 +28,8 @@ func (c *CallbackNotice) HandlePaymentToFailByDispute(paymentInfo tables.TablePa
 	orderInfo.OrderStatus = tables.OrderStatusFail
 
 	if err := c.callbackNotice(noticeInfo, paymentInfo, orderInfo); err != nil {
-		log.Error("callbackNotice err: %s", err.Error())
-		SendLarkErrNotify("callbackNotice", err.Error())
+		log.Error("callbackNotice err: ", err.Error(), noticeInfo.NoticeId)
+		SendLarkErrNotify("callbackNotice", err.Error()+noticeInfo.NoticeId)
 	} else {
 		noticeInfo.NoticeStatus = tables.NoticeStatusOK
 	}
@@ -53,8 +53,8 @@ func (c *CallbackNotice) HandlePayment(paymentInfo tables.TablePaymentInfo, orde
 
 	orderInfo.PayStatus = tables.PayStatusPaid
 	if err := c.callbackNotice(noticeInfo, paymentInfo, orderInfo); err != nil {
-		log.Error("callbackNotice err: %s", err.Error())
-		SendLarkErrNotify("callbackNotice", err.Error())
+		log.Error("callbackNotice err: ", err.Error(), noticeInfo.NoticeId)
+		SendLarkErrNotify("callbackNotice", err.Error()+noticeInfo.NoticeId)
 	} else {
 		noticeInfo.NoticeStatus = tables.NoticeStatusOK
 	}
@@ -112,6 +112,7 @@ func (c *CallbackNotice) RepeatCallbackNotice(eventMap map[string][]EventInfo) e
 		resp := &respCallbackNotice{}
 		if err := doNoticeReq(callbackUrl, req, resp); err != nil {
 			log.Error("doNoticeReq err:", err.Error())
+			SendLarkErrNotify("doNoticeReq", err.Error())
 			for _, v := range list {
 				noticeCount := v.NoticeCount + 1
 				if err := c.DbDao.UpdateNoticeCount(v.NoticeId, noticeCount); err != nil {
