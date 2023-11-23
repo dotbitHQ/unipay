@@ -90,7 +90,7 @@ func (h *HttpHandle) doPaymentInfo(req *ReqPaymentInfo, apiResp *http_api.ApiRes
 			RefundStatus:  v.RefundStatus,
 		}
 		if v.PayTokenId == tables.PayTokenIdStripeUSD {
-			if pi, err := stripe_api.GetPaymentIntent(v.PayHash); err == nil {
+			if pi, err := stripe_api.GetPaymentIntent(v.PayHash); err == nil && pi.PaymentMethod != nil {
 				if pm, err := stripe_api.GetPaymentMethod(pi.PaymentMethod.ID); err == nil {
 					tmp.SourcePayment = fmt.Sprintf("%s %s", pm.Card.Brand, pm.Card.Last4)
 				}
