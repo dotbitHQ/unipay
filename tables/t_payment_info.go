@@ -58,6 +58,7 @@ const (
 type ViewRefundPaymentInfo struct {
 	Id          uint64                `json:"id" gorm:"column:id;"`
 	PayHash     string                `json:"pay_hash" gorm:"column:pay_hash;"`
+	BusinessId  string                `json:"business_id" gorm:"column:business_id;"`
 	OrderId     string                `json:"order_id" gorm:"column:order_id;"`
 	PayAddress  string                `json:"pay_address" gorm:"column:pay_address;"`
 	AlgorithmId common.DasAlgorithmId `json:"algorithm_id" gorm:"column:algorithm_id;"`

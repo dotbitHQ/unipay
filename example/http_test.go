@@ -35,8 +35,8 @@ func TestOrderCreate(t *testing.T) {
 		ChainTypeAddress: cta,
 		//BusinessId:       BusinessIdAutoSubAccount,
 		BusinessId: BusinessIdDasRegisterSvr,
-		Amount:     decimal.NewFromInt(10 * 1e8),
-		PayTokenId: tables.PayTokenIdDOGE,
+		Amount:     decimal.NewFromInt(10 * common.UsdRateBase),
+		PayTokenId: tables.PayTokenIdDIDPoint,
 		//PaymentAddress: "0xD43B906Be6FbfFFFF60977A0d75EC93696e01dC7",
 		//PaymentAddress: "0x15a33588908cF8Edb27D1AbE3852Bf287Abd3891",
 		//PaymentAddress: "TFUg8zKThCj23acDSwsVjQrBVRywMMQGP1",
@@ -44,7 +44,7 @@ func TestOrderCreate(t *testing.T) {
 		//PaymentAddress: "ckt1qyqvsej8jggu4hmr45g4h8d9pfkpd0fayfksz44t9q",
 		//PaymentAddress: "ckt1qyqrekdjpy72kvhp3e9uf6y5868w5hjg8qnsqt6a0m",
 		//PaymentAddress: "DQaRQ9s28U7EogPcDZudwZc4wD1NucZr2g",
-		PaymentAddress: "DP86MSmWjEZw8GKotxcvAaW5D4e3qoEh6f",
+		//PaymentAddress: "DP86MSmWjEZw8GKotxcvAaW5D4e3qoEh6f",
 	}
 	url := fmt.Sprintf("%s%s", ApiUrl, "/order/create")
 

@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/btcsuite/btcd v0.23.3
-	github.com/dotbitHQ/das-lib v1.1.1-0.20231009040113-32bdbc9aa11f
+	github.com/dotbitHQ/das-lib v1.1.1-0.20231123020948-b7a5fa707ed2
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/fbsobreira/gotron-sdk v0.0.0-20230323193002-7843d2a7548e
 	github.com/fsnotify/fsnotify v1.5.4
@@ -40,7 +40,7 @@ require (
 	github.com/decred/dcrd/crypto/blake256 v1.0.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/getsentry/sentry-go v0.24.0 // indirect
+	github.com/getsentry/sentry-go v0.25.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

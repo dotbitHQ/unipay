@@ -74,11 +74,21 @@ type CfgServer struct {
 		Mysql DbMysql `json:"mysql" yaml:"mysql"`
 	} `json:"db" yaml:"db"`
 	Chain struct {
+		DP struct {
+			Refund                   bool   `json:"refund" yaml:"refund"`
+			Switch                   bool   `json:"switch" yaml:"switch"`
+			Node                     string `json:"node" yaml:"node"`
+			CurrentBlockNumber       uint64 `json:"current_block_number" yaml:"current_block_number"`
+			TransferWhitelist        string `json:"transfer_whitelist" yaml:"transfer_whitelist"`
+			TransferWhitelistPrivate string `json:"transfer_whitelist_private" yaml:"transfer_whitelist_private"`
+			RefundUrl                string `json:"refund_url" yaml:"refund_url"'`
+		} `json:"dp" yaml:"dp"`
 		Ckb struct {
-			Refund  bool              `json:"refund" yaml:"refund"`
-			Switch  bool              `json:"switch" yaml:"switch"`
-			Node    string            `json:"node" yaml:"node"`
-			AddrMap map[string]string `json:"addr_map" yaml:"addr_map"`
+			Refund          bool              `json:"refund" yaml:"refund"`
+			Switch          bool              `json:"switch" yaml:"switch"`
+			Node            string            `json:"node" yaml:"node"`
+			AddrMap         map[string]string `json:"addr_map" yaml:"addr_map"`
+			BalanceCheckMap map[string]string `json:"balance_check_map" yaml:"balance_check_map"`
 		} `json:"ckb" yaml:"ckb"`
 		Eth     EvmNode `json:"eth" yaml:"eth"`
 		Tron    EvmNode `json:"tron" yaml:"tron"`
@@ -136,7 +146,7 @@ func FormatAddrMap(parserType tables.ParserType, addrMap map[string]string) map[
 				res[tronAddr] = v
 			}
 		}
-	case tables.ParserTypeCKB:
+	case tables.ParserTypeCKB, tables.ParserTypeDP:
 		for k, v := range addrMap {
 			parseAddrK, err := address.Parse(k)
 			if err != nil {
@@ -189,6 +199,8 @@ func GetPaymentAddress(payTokenId tables.PayTokenId, paymentAddress string) (str
 		}
 	case tables.PayTokenIdStripeUSD:
 		return "", nil
+	case tables.PayTokenIdDIDPoint:
+		return "", nil
 	}
 	return "", fmt.Errorf("unknow pay token id[%s] in AddrMap[%s]", payTokenId, paymentAddress)
 }
@@ -208,6 +220,7 @@ func InitDasCore(ctx context.Context, wg *sync.WaitGroup) (*core.DasCore, *dasca
 		common.DasContractNameDispatchCellType,
 		common.DasContractNameBalanceCellType,
 		common.DASContractNameEip712LibCellType,
+		common.DasContractNameDpCellType,
 	)
 	ops := []core.DasCoreOption{
 		core.WithClient(ckbClient),
@@ -235,25 +248,6 @@ func InitDasCore(ctx context.Context, wg *sync.WaitGroup) (*core.DasCore, *dasca
 	dasCache.RunClearExpiredOutPoint(time.Minute * 15)
 	log.Info("das cache ok")
 	return dasCore, dasCache, nil
-}
-
-func InitDasTxBuilderBase(ctx context.Context, dasCore *core.DasCore, fromScript *types.Script, private string) (*txbuilder.DasTxBuilderBase, error) {
-	if fromScript == nil {
-		return nil, fmt.Errorf("fromScript is nil")
-	}
-	svrArgs := common.Bytes2Hex(fromScript.Args)
-	var handleSign sign.HandleSignCkbMessage
-	if private != "" {
-		handleSign = sign.LocalSign(private)
-	} else if Cfg.Server.RemoteSignApiUrl != "" {
-		remoteSignClient, err := sign.NewClient(ctx, Cfg.Server.RemoteSignApiUrl)
-		if err != nil {
-			return nil, fmt.Errorf("sign.NewClient err: %s", err.Error())
-		}
-		handleSign = sign.RemoteSign(remoteSignClient, Cfg.Server.Net, svrArgs)
-	}
-	txBuilderBase := txbuilder.NewDasTxBuilderBase(ctx, dasCore, handleSign, svrArgs)
-	return txBuilderBase, nil
 }
 
 func initStripe() {

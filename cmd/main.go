@@ -91,7 +91,7 @@ func runServer(ctx *cli.Context) error {
 	httpSvr.Run()
 
 	// tool parser
-	toolParser, err := parser.NewToolParser(ctxServer, &wgServer, dbDao, cn)
+	toolParser, err := parser.NewToolParser(ctxServer, &wgServer, dbDao, cn, dasCore)
 	if err != nil {
 		return fmt.Errorf("NewToolParser err: %s", err.Error())
 	}

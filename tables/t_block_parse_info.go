@@ -1,6 +1,7 @@
 package tables
 
 import (
+	"fmt"
 	"github.com/dotbitHQ/das-lib/common"
 	"time"
 )
@@ -32,12 +33,33 @@ const (
 	ParserTypeBSC     = 5
 	ParserTypePOLYGON = 6
 	ParserTypeDoge    = 7
+	ParserTypeDP      = 8
 	//ParserTypeDAS     = 99
 )
 
-func (p ParserType) ToAlgorithmId() common.DasAlgorithmId {
+func (p ParserType) ToString() string {
 	switch p {
 	case ParserTypeCKB:
+		return "CKB"
+	case ParserTypeETH:
+		return "ETH"
+	case ParserTypeTRON:
+		return "TRON"
+	case ParserTypeBSC:
+		return "BSC"
+	case ParserTypePOLYGON:
+		return "POLYGON"
+	case ParserTypeDoge:
+		return "DOGE"
+	case ParserTypeDP:
+		return "DP"
+	}
+	return fmt.Sprintf("%d", p)
+}
+
+func (p ParserType) ToAlgorithmId() common.DasAlgorithmId {
+	switch p {
+	case ParserTypeCKB, ParserTypeDP:
 		return common.DasAlgorithmIdCkb
 	case ParserTypeETH, ParserTypeBSC, ParserTypePOLYGON:
 		return common.DasAlgorithmIdEth712

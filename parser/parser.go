@@ -7,6 +7,7 @@ import (
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
 	"github.com/dotbitHQ/das-lib/common"
+	"github.com/dotbitHQ/das-lib/core"
 	"github.com/nervosnetwork/ckb-sdk-go/rpc"
 	"sync"
 	"unipay/config"
@@ -15,28 +16,31 @@ import (
 	"unipay/parser/parser_bitcoin"
 	"unipay/parser/parser_ckb"
 	"unipay/parser/parser_common"
+	"unipay/parser/parser_dp"
 	"unipay/parser/parser_evm"
 	"unipay/parser/parser_tron"
 	"unipay/tables"
 )
 
 type ToolParser struct {
-	ctx   context.Context
-	wg    *sync.WaitGroup
-	dbDao *dao.DbDao
+	ctx     context.Context
+	wg      *sync.WaitGroup
+	dbDao   *dao.DbDao
+	dasCore *core.DasCore
 
 	parserCommonMap map[tables.ParserType]*parser_common.ParserCommon
 
 	cn *notify.CallbackNotice
 }
 
-func NewToolParser(ctx context.Context, wg *sync.WaitGroup, dbDao *dao.DbDao, cn *notify.CallbackNotice) (*ToolParser, error) {
+func NewToolParser(ctx context.Context, wg *sync.WaitGroup, dbDao *dao.DbDao, cn *notify.CallbackNotice, dasCore *core.DasCore) (*ToolParser, error) {
 	tp := ToolParser{
 		parserCommonMap: make(map[tables.ParserType]*parser_common.ParserCommon),
 		ctx:             ctx,
 		wg:              wg,
 		dbDao:           dbDao,
 		cn:              cn,
+		dasCore:         dasCore,
 	}
 
 	if err := tp.initParserEth(); err != nil {
@@ -57,6 +61,10 @@ func NewToolParser(ctx context.Context, wg *sync.WaitGroup, dbDao *dao.DbDao, cn
 	if err := tp.initParserDoge(); err != nil {
 		return nil, fmt.Errorf("initParserDoge err: %s", err.Error())
 	}
+	if err := tp.initParserDP(); err != nil {
+		return nil, fmt.Errorf("initParserDP err: %s", err.Error())
+	}
+
 	return &tp, nil
 }
 
@@ -204,13 +212,39 @@ func (t *ToolParser) initParserCkb() error {
 			PayTokenId:         tables.PayTokenIdDAS,
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     10,
-			ConfirmNum:         2,
+			ConfirmNum:         3,
 			Switch:             config.Cfg.Chain.Ckb.Switch,
 			AddrMap:            config.FormatAddrMap(tables.ParserTypeCKB, config.Cfg.Chain.Ckb.AddrMap),
 		},
 		PA: &parser_ckb.ParserCkb{
 			Ctx:    t.ctx,
 			Client: rpcClient,
+		},
+	}
+	return nil
+}
+
+func (t *ToolParser) initParserDP() error {
+	if !config.Cfg.Chain.DP.Switch {
+		return nil
+	}
+	t.parserCommonMap[tables.ParserTypeDP] = &parser_common.ParserCommon{
+		PC: &parser_common.ParserCore{
+			Ctx:                t.ctx,
+			Wg:                 t.wg,
+			DbDao:              t.dbDao,
+			CN:                 t.cn,
+			ParserType:         tables.ParserTypeDP,
+			PayTokenId:         tables.PayTokenIdDIDPoint,
+			CurrentBlockNumber: 0,
+			ConcurrencyNum:     10,
+			ConfirmNum:         3,
+			Switch:             config.Cfg.Chain.DP.Switch,
+			AddrMap:            nil,
+		},
+		PA: &parser_dp.ParserDP{
+			Ctx:     t.ctx,
+			DasCore: t.dasCore,
 		},
 	}
 	return nil

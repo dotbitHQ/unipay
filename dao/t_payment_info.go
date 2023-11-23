@@ -70,7 +70,7 @@ func (d *DbDao) UpdatePaymentStatus(paymentInfo tables.TablePaymentInfo, noticeI
 
 func (d *DbDao) GetViewRefundListWithin3d() (list []tables.ViewRefundPaymentInfo, err error) {
 	timestamp := time.Now().Add(-time.Hour * 24 * 3).UnixMilli()
-	sql := fmt.Sprintf(`SELECT p.*,o.payment_address,o.premium_percentage,o.premium_base FROM %s p LEFT JOIN %s o ON o.order_id=p.order_id WHERE p.timestamp>=? AND p.order_id!='' AND p.pay_hash_status=? AND p.refund_status=?`,
+	sql := fmt.Sprintf(`SELECT p.*,o.business_id,o.payment_address,o.premium_percentage,o.premium_base FROM %s p LEFT JOIN %s o ON o.order_id=p.order_id WHERE p.timestamp>=? AND p.order_id!='' AND p.pay_hash_status=? AND p.refund_status=?`,
 		tables.TableNamePaymentInfo, tables.TableNameOrderInfo)
 	err = d.db.Raw(sql, timestamp, tables.PayHashStatusConfirm, tables.RefundStatusUnRefund).Find(&list).Error
 	return
