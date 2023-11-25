@@ -77,9 +77,15 @@ func (p *ParserDP) ActionTransferDP(req FuncTransactionHandleReq, pc *parser_com
 	//
 	var txDPInfoOfUser core.TxDPInfo
 	for k, v := range dpInputs {
+		txDPInfoOfUser = core.TxDPInfo{
+			AlgId:    v.AlgId,
+			SubAlgId: v.SubAlgId,
+			Payload:  v.Payload,
+			AmountDP: v.AmountDP,
+			Args:     v.Args,
+		}
 		if item, ok := dpOutputs[k]; ok {
-			v.AmountDP -= item.AmountDP
-			txDPInfoOfUser = v
+			txDPInfoOfUser.AmountDP -= item.AmountDP
 			break
 		}
 	}
