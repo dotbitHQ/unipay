@@ -107,15 +107,15 @@ func (t *ToolRefund) RunRefund() error {
 	if config.Cfg.Server.CronSpec == "" {
 		return nil
 	}
-	log.Info("DoOrderRefund:", config.Cfg.Server.CronSpec)
+	log.Debug("DoOrderRefund:", config.Cfg.Server.CronSpec)
 
 	t.cron = cron.New(cron.WithSeconds())
 	_, err := t.cron.AddFunc(config.Cfg.Server.CronSpec, func() {
-		log.Info("doRefund start ...")
+		log.Debug("doRefund start ...")
 		if err := t.doRefund(); err != nil {
 			log.Error("doRefund err: ", err.Error())
 		}
-		log.Info("doRefund end ...")
+		log.Debug("doRefund end ...")
 	})
 	if err != nil {
 		return fmt.Errorf("c.AddFunc err: %s", err.Error())

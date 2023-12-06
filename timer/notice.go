@@ -9,8 +9,8 @@ import (
 )
 
 func (t *ToolTimer) doCallbackNotice() error {
-	log.Info("doCallbackNotice start")
-	defer log.Info("doCallbackNotice end")
+	log.Debug("doCallbackNotice start")
+	defer log.Debug("doCallbackNotice end")
 
 	// get 24h un notify list
 	list, err := t.DbDao.Get24HUnNotifyList()

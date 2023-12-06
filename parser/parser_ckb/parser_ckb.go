@@ -37,7 +37,7 @@ func (p *ParserCkb) GetLatestBlockNumber() (uint64, error) {
 }
 func (p *ParserCkb) SingleParsing(pc *parser_common.ParserCore) error {
 	parserType, currentBlockNumber := pc.ParserType, pc.CurrentBlockNumber
-	log.Info("SingleParsing:", parserType, currentBlockNumber)
+	log.Debug("SingleParsing:", parserType, currentBlockNumber)
 
 	block, err := p.Client.GetBlockByNumber(p.Ctx, currentBlockNumber)
 	if err != nil {
@@ -46,7 +46,7 @@ func (p *ParserCkb) SingleParsing(pc *parser_common.ParserCore) error {
 
 	blockHash := block.Header.Hash.Hex()
 	parentHash := block.Header.ParentHash.Hex()
-	log.Info("SingleParsing:", parserType, blockHash, parentHash)
+	log.Debug("SingleParsing:", parserType, blockHash, parentHash)
 
 	if isFork, err := pc.HandleFork(blockHash, parentHash); err != nil {
 		return fmt.Errorf("HandleFork err: %s", err.Error())
@@ -65,7 +65,7 @@ func (p *ParserCkb) SingleParsing(pc *parser_common.ParserCore) error {
 }
 func (p *ParserCkb) ConcurrentParsing(pc *parser_common.ParserCore) error {
 	parserType, concurrencyNum, currentBlockNumber := pc.ParserType, pc.ConcurrencyNum, pc.CurrentBlockNumber
-	log.Info("ConcurrentParsing:", parserType, concurrencyNum, currentBlockNumber)
+	log.Debug("ConcurrentParsing:", parserType, concurrencyNum, currentBlockNumber)
 
 	var blockList = make([]tables.TableBlockParserInfo, concurrencyNum)
 	var blocks = make([]*types.Block, concurrencyNum)

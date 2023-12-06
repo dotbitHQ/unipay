@@ -61,7 +61,7 @@ func (p *ParserCommon) Parser() {
 				log.Error("GetLatestBlockNumber err: ", err.Error())
 				time.Sleep(time.Second * 10)
 			} else if concurrencyNum > 1 && p.PC.CurrentBlockNumber < (latestBlockNumber-confirmNum-concurrencyNum) {
-				log.Info("ConcurrentParsing:", p.PC.CurrentBlockNumber, latestBlockNumber)
+				log.Debug("ConcurrentParsing:", p.PC.CurrentBlockNumber, latestBlockNumber)
 				nowTime := time.Now()
 				if err := p.PA.ConcurrentParsing(p.PC); err != nil {
 					log.Error("ConcurrentParsing err:", parserType, err.Error(), p.PC.CurrentBlockNumber)

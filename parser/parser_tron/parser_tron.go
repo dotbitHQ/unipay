@@ -36,7 +36,7 @@ func (p *ParserTron) GetLatestBlockNumber() (uint64, error) {
 }
 func (p *ParserTron) SingleParsing(pc *parser_common.ParserCore) error {
 	parserType, currentBlockNumber := pc.ParserType, pc.CurrentBlockNumber
-	log.Info("SingleParsing:", parserType, currentBlockNumber)
+	log.Debug("SingleParsing:", parserType, currentBlockNumber)
 
 	block, err := p.ChainTron.GetBlockByNumber(currentBlockNumber)
 	if err != nil {
@@ -50,7 +50,7 @@ func (p *ParserTron) SingleParsing(pc *parser_common.ParserCore) error {
 
 	blockHash := hex.EncodeToString(block.Blockid)
 	parentHash := hex.EncodeToString(block.BlockHeader.RawData.ParentHash)
-	log.Info("SingleParsing:", parserType, blockHash, parentHash)
+	log.Debug("SingleParsing:", parserType, blockHash, parentHash)
 
 	if isFork, err := pc.HandleFork(blockHash, parentHash); err != nil {
 		return fmt.Errorf("HandleFork err: %s", err.Error())

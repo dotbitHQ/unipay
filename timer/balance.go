@@ -47,7 +47,7 @@ func (t *ToolTimer) ckbBalance() error {
 		if err != nil {
 			return fmt.Errorf("GetBalanceCells err: %s", err.Error())
 		}
-		log.Info("ckbBalance:", addr, len(liveCells), total)
+		log.Debug("ckbBalance:", addr, len(liveCells), total)
 		capacity := total / common.OneCkb
 		msg := `- Addr: %s
 - Count: %d
@@ -55,7 +55,7 @@ func (t *ToolTimer) ckbBalance() error {
 - Time: %s`
 		msg = fmt.Sprintf(msg, addr, len(liveCells), capacity, time.Now().Format("2006-01-02 15:04:05"))
 
-		log.Info("ckbBalance:", msg)
+		log.Debug("ckbBalance:", msg)
 
 		if capacity < 1000000 {
 			notify.SendLarkTextNotifyAtAll(config.Cfg.Notify.LarkDasInfoKey, "Live Cells", msg)

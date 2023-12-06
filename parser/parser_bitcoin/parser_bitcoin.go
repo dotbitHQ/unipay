@@ -36,7 +36,7 @@ func (p *ParserBitcoin) Init(pc *parser_common.ParserCore) error {
 }
 func (p *ParserBitcoin) SingleParsing(pc *parser_common.ParserCore) error {
 	parserType, currentBlockNumber := pc.ParserType, pc.CurrentBlockNumber
-	log.Info("SingleParsing:", parserType, currentBlockNumber)
+	log.Debug("SingleParsing:", parserType, currentBlockNumber)
 
 	hash, err := p.NodeRpc.GetBlockHash(currentBlockNumber)
 	if err != nil {
@@ -50,7 +50,7 @@ func (p *ParserBitcoin) SingleParsing(pc *parser_common.ParserCore) error {
 
 	blockHash := block.Hash
 	parentHash := block.PreviousBlockHash
-	log.Info("SingleParsing:", parserType, blockHash, parentHash)
+	log.Debug("SingleParsing:", parserType, blockHash, parentHash)
 
 	if isFork, err := pc.HandleFork(blockHash, parentHash); err != nil {
 		return fmt.Errorf("HandleFork err: %s", err.Error())
@@ -68,7 +68,7 @@ func (p *ParserBitcoin) SingleParsing(pc *parser_common.ParserCore) error {
 }
 func (p *ParserBitcoin) ConcurrentParsing(pc *parser_common.ParserCore) error {
 	parserType, concurrencyNum, currentBlockNumber := pc.ParserType, pc.ConcurrencyNum, pc.CurrentBlockNumber
-	log.Info("ConcurrentParsing:", parserType, concurrencyNum, currentBlockNumber)
+	log.Debug("ConcurrentParsing:", parserType, concurrencyNum, currentBlockNumber)
 
 	var blockList = make([]tables.TableBlockParserInfo, concurrencyNum)
 	var blocks = make([]bitcoin.BlockInfo, concurrencyNum)
@@ -149,7 +149,7 @@ func (p *ParserBitcoin) parsingBlockData2(block *bitcoin.BlockInfo, pc *parser_c
 	if block == nil {
 		return fmt.Errorf("block is nil")
 	}
-	log.Info("parsingBlockData:", parserType, block.Height, block.Hash, len(block.Tx))
+	log.Debug("parsingBlockData:", parserType, block.Height, block.Hash, len(block.Tx))
 
 	var indexCh = make(chan int, len(block.Tx))
 	var dataList = make([]btcjson.TxRawResult, len(block.Tx))
@@ -232,7 +232,7 @@ func (p *ParserBitcoin) parsingBlockData(block *bitcoin.BlockInfo, pc *parser_co
 	if block == nil {
 		return fmt.Errorf("block is nil")
 	}
-	log.Info("parsingBlockData:", parserType, block.Height, block.Hash, len(block.Tx))
+	log.Debug("parsingBlockData:", parserType, block.Height, block.Hash, len(block.Tx))
 	for _, v := range block.Tx {
 		//t1 := time.Now()
 		//log.Info("parsingBlockData: t1", t1.String(), i)
