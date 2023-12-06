@@ -79,7 +79,7 @@ func (p *ParserCommon) Parser() {
 						notify.SendLarkErrNotify(fmt.Sprintf("Parser %d", parserType), err.Error())
 					}
 				}
-				log.Warn("Parsing time:", parserType, time.Since(nowTime).Seconds())
+				log.Debug("Parsing time:", parserType, time.Since(nowTime).Seconds())
 				time.Sleep(time.Second * 5)
 			} else {
 				log.Info("Parser:", parserType, p.PC.CurrentBlockNumber, latestBlockNumber)

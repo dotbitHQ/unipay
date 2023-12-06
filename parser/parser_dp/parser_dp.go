@@ -130,7 +130,7 @@ func (p *ParserDP) parsingBlockData(block *types.Block, pc *parser_common.Parser
 	if block == nil {
 		return fmt.Errorf("block is nil")
 	}
-	log.Info("parsingBlockData:", parserType, block.Header.Number)
+	log.Debug("parsingBlockData:", parserType, block.Header.Number)
 	for _, tx := range block.Transactions {
 		txHash := tx.Hash.Hex()
 		blockNumber := block.Header.Number
