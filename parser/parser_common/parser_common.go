@@ -69,7 +69,7 @@ func (p *ParserCommon) Parser() {
 						notify.SendLarkErrNotify(fmt.Sprintf("Parser %d", parserType), err.Error())
 					}
 				}
-				log.Warn("ConcurrentParsing time:", parserType, time.Since(nowTime).Seconds())
+				log.Debug("ConcurrentParsing time:", parserType, time.Since(nowTime).Seconds())
 				time.Sleep(time.Second * 1)
 			} else if p.PC.CurrentBlockNumber < (latestBlockNumber - confirmNum) {
 				nowTime := time.Now()
@@ -82,7 +82,7 @@ func (p *ParserCommon) Parser() {
 				log.Debug("Parsing time:", parserType, time.Since(nowTime).Seconds())
 				time.Sleep(time.Second * 5)
 			} else {
-				log.Info("Parser:", parserType, p.PC.CurrentBlockNumber, latestBlockNumber)
+				log.Debug("Parser:", parserType, p.PC.CurrentBlockNumber, latestBlockNumber)
 				time.Sleep(time.Second * 10)
 			}
 		case <-p.PC.Ctx.Done():

@@ -35,7 +35,7 @@ func (p *ParserDP) GetLatestBlockNumber() (uint64, error) {
 }
 func (p *ParserDP) SingleParsing(pc *parser_common.ParserCore) error {
 	parserType, currentBlockNumber := pc.ParserType, pc.CurrentBlockNumber
-	log.Info("SingleParsing:", parserType, currentBlockNumber)
+	log.Debug("SingleParsing:", parserType, currentBlockNumber)
 
 	block, err := p.DasCore.Client().GetBlockByNumber(p.Ctx, currentBlockNumber)
 	if err != nil {
@@ -44,7 +44,7 @@ func (p *ParserDP) SingleParsing(pc *parser_common.ParserCore) error {
 
 	blockHash := block.Header.Hash.Hex()
 	parentHash := block.Header.ParentHash.Hex()
-	log.Info("SingleParsing:", parserType, blockHash, parentHash)
+	log.Debug("SingleParsing:", parserType, blockHash, parentHash)
 
 	if isFork, err := pc.HandleFork(blockHash, parentHash); err != nil {
 		return fmt.Errorf("HandleFork err: %s", err.Error())
