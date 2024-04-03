@@ -37,6 +37,8 @@ func (t *ToolRefund) doRefund() error {
 			parserType = tables.ParserTypeTRON
 		case tables.PayTokenIdDOGE:
 			parserType = tables.ParserTypeDoge
+		case tables.PayTokenIdBTC:
+			parserType = tables.ParserTypeBTC
 		case tables.PayTokenIdStripeUSD:
 			stripeList = append(stripeList, list[i])
 		case tables.PayTokenIdDIDPoint:
@@ -55,6 +57,7 @@ func (t *ToolRefund) doRefund() error {
 	var parserTypeAddrMap = make(map[tables.ParserType]map[string]string)
 	parserTypeAddrMap[tables.ParserTypeCKB] = config.Cfg.Chain.Ckb.AddrMap
 	parserTypeAddrMap[tables.ParserTypeDoge] = config.Cfg.Chain.Doge.AddrMap
+	parserTypeAddrMap[tables.ParserTypeBTC] = config.Cfg.Chain.BTC.AddrMap
 	parserTypeAddrMap[tables.ParserTypeTRON] = config.Cfg.Chain.Tron.AddrMap
 	parserTypeAddrMap[tables.ParserTypeETH] = config.Cfg.Chain.Eth.AddrMap
 	parserTypeAddrMap[tables.ParserTypeBSC] = config.Cfg.Chain.Bsc.AddrMap
@@ -76,6 +79,8 @@ func (t *ToolRefund) doRefund() error {
 				err = t.doRefundCkb(paymentAddress, private, refundList)
 			case tables.ParserTypeDoge:
 				err = t.doRefundDoge(paymentAddress, private, refundList)
+			case tables.ParserTypeBTC:
+				err = t.doRefundBTC(paymentAddress, private, refundList)
 			case tables.ParserTypeTRON:
 				for _, v := range refundList {
 					if er := t.refundTron(paymentAddress, private, v); er != nil {

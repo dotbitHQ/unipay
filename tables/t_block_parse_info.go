@@ -27,13 +27,14 @@ func (t *TableBlockParserInfo) TableName() string {
 type ParserType int
 
 const (
-	ParserTypeCKB     = 0
-	ParserTypeETH     = 1
-	ParserTypeTRON    = 3
-	ParserTypeBSC     = 5
-	ParserTypePOLYGON = 6
-	ParserTypeDoge    = 7
-	ParserTypeDP      = 8
+	ParserTypeCKB     ParserType = 0
+	ParserTypeETH     ParserType = 1
+	ParserTypeTRON    ParserType = 3
+	ParserTypeBSC     ParserType = 5
+	ParserTypePOLYGON ParserType = 6
+	ParserTypeDoge    ParserType = 7
+	ParserTypeDP      ParserType = 8
+	ParserTypeBTC     ParserType = 9
 	//ParserTypeDAS     = 99
 )
 

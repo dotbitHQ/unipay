@@ -104,6 +104,14 @@ type CfgServer struct {
 			Proxy     string            `json:"proxy" yaml:"proxy"`
 			AddrMap   map[string]string `json:"addr_map" yaml:"addr_map"`
 		} `json:"doge" yaml:"doge"`
+		BTC struct {
+			Refund   bool              `json:"refund" yaml:"refund"`
+			Switch   bool              `json:"switch" yaml:"switch"`
+			Node     string            `json:"node" yaml:"node"`
+			User     string            `json:"user" yaml:"user"`
+			Password string            `json:"password" yaml:"password"`
+			AddrMap  map[string]string `json:"addr_map" yaml:"addr_map"`
+		} `json:"btc" yaml:"btc"`
 		Stripe struct {
 			Refund         bool   `json:"refund" yaml:"refund"`
 			Switch         bool   `json:"switch" yaml:"switch"`

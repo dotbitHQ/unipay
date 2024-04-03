@@ -13,7 +13,7 @@ var (
 )
 
 func (t *ToolTimer) RunCheckNode() {
-	tickerNode := time.NewTicker(time.Minute * 5)
+	tickerNode := time.NewTicker(time.Minute * 10)
 	t.Wg.Add(1)
 	go func() {
 		for {

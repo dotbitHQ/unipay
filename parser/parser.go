@@ -3,6 +3,7 @@ package parser
 import (
 	"context"
 	"fmt"
+	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/dotbitHQ/das-lib/bitcoin"
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
@@ -14,6 +15,7 @@ import (
 	"unipay/dao"
 	"unipay/notify"
 	"unipay/parser/parser_bitcoin"
+	"unipay/parser/parser_btc"
 	"unipay/parser/parser_ckb"
 	"unipay/parser/parser_common"
 	"unipay/parser/parser_dp"
@@ -63,6 +65,9 @@ func NewToolParser(ctx context.Context, wg *sync.WaitGroup, dbDao *dao.DbDao, cn
 	}
 	if err := tp.initParserDP(); err != nil {
 		return nil, fmt.Errorf("initParserDP err: %s", err.Error())
+	}
+	if err := tp.initParserBTC(); err != nil {
+		return nil, fmt.Errorf("initParserBTC err: %s", err.Error())
 	}
 
 	return &tp, nil
@@ -275,6 +280,41 @@ func (t *ToolParser) initParserDoge() error {
 			AddrMap:            config.Cfg.Chain.Doge.AddrMap,
 		},
 		PA: &parser_bitcoin.ParserBitcoin{NodeRpc: &nodeRpc},
+	}
+	return nil
+}
+
+func (t *ToolParser) initParserBTC() error {
+	if !config.Cfg.Chain.BTC.Switch {
+		return nil
+	}
+	connCfg := &rpcclient.ConnConfig{
+		Host:         config.Cfg.Chain.BTC.Node,
+		User:         "root",
+		Pass:         "root",
+		HTTPPostMode: true,
+		DisableTLS:   false,
+	}
+	client, err := rpcclient.New(connCfg, nil)
+	if err != nil {
+		return fmt.Errorf("rpcclient.New err: %s", err.Error())
+	}
+
+	t.parserCommonMap[tables.ParserTypeBTC] = &parser_common.ParserCommon{
+		PC: &parser_common.ParserCore{
+			Ctx:                t.ctx,
+			Wg:                 t.wg,
+			DbDao:              t.dbDao,
+			CN:                 t.cn,
+			ParserType:         tables.ParserTypeBTC,
+			PayTokenId:         tables.PayTokenIdBTC,
+			CurrentBlockNumber: 0,
+			ConcurrencyNum:     3,
+			ConfirmNum:         2,
+			Switch:             config.Cfg.Chain.BTC.Switch,
+			AddrMap:            config.Cfg.Chain.BTC.AddrMap,
+		},
+		PA: &parser_btc.ParserBtc{NodeRpc: client},
 	}
 	return nil
 }

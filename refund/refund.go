@@ -3,6 +3,7 @@ package refund
 import (
 	"context"
 	"fmt"
+	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/dotbitHQ/das-lib/bitcoin"
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
@@ -32,6 +33,7 @@ type ToolRefund struct {
 	chainBsc         *chain_evm.ChainEvm
 	chainPolygon     *chain_evm.ChainEvm
 	chainTron        *chain_tron.ChainTron
+	chainBTC         *bitcoin.TxTool
 
 	cron *cron.Cron
 }
@@ -61,6 +63,31 @@ func (t *ToolRefund) InitRefundInfo() error {
 		}
 		if t.remoteSignClient != nil {
 			t.chainDoge.RemoteSignClient = t.remoteSignClient.Client()
+		}
+	}
+	// btc
+	if config.Cfg.Chain.BTC.Refund {
+		connCfg := &rpcclient.ConnConfig{
+			Host:         config.Cfg.Chain.BTC.Node,
+			User:         "root",
+			Pass:         "root",
+			HTTPPostMode: true,
+			DisableTLS:   false,
+		}
+		client, err := rpcclient.New(connCfg, nil)
+		if err != nil {
+			return fmt.Errorf("rpcclient.New err: %s", err.Error())
+		}
+		t.chainBTC = &bitcoin.TxTool{
+			RpcClient:        nil,
+			Ctx:              t.Ctx,
+			RemoteSignClient: nil,
+			DustLimit:        bitcoin.DustLimitBtc,
+			Params:           bitcoin.GetBTCMainNetParams(),
+			RpcClientBTC:     client,
+		}
+		if t.remoteSignClient != nil {
+			t.chainBTC.RemoteSignClient = t.remoteSignClient.Client()
 		}
 	}
 
