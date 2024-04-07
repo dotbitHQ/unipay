@@ -300,6 +300,11 @@ func (t *ToolParser) initParserBTC() error {
 		return fmt.Errorf("rpcclient.New err: %s", err.Error())
 	}
 
+	netParams := bitcoin.GetBTCMainNetParams()
+	if config.Cfg.Server.Net != common.DasNetTypeMainNet {
+		netParams = bitcoin.GetBTCTestNetParams()
+	}
+
 	t.parserCommonMap[tables.ParserTypeBTC] = &parser_common.ParserCommon{
 		PC: &parser_common.ParserCore{
 			Ctx:                t.ctx,
@@ -314,7 +319,7 @@ func (t *ToolParser) initParserBTC() error {
 			Switch:             config.Cfg.Chain.BTC.Switch,
 			AddrMap:            config.Cfg.Chain.BTC.AddrMap,
 		},
-		PA: &parser_btc.ParserBtc{NodeRpc: client},
+		PA: &parser_btc.ParserBtc{NodeRpc: client, NetParams: netParams},
 	}
 	return nil
 }

@@ -3,10 +3,10 @@ package parser_btc
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/dotbitHQ/das-lib/bitcoin"
 	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
@@ -20,7 +20,8 @@ import (
 var log = logger.NewLogger("parser_btc", logger.LevelDebug)
 
 type ParserBtc struct {
-	NodeRpc *rpcclient.Client
+	NodeRpc   *rpcclient.Client
+	NetParams chaincfg.Params
 }
 
 func (p *ParserBtc) GetLatestBlockNumber() (uint64, error) {
@@ -149,10 +150,9 @@ func (p *ParserBtc) parsingBlockData(block *wire.MsgBlock, pc *parser_common.Par
 	}
 	log.Debug("parsingBlockData:", parserType, blockNumber, block.BlockHash().String(), len(block.Transactions))
 
-	netParams := bitcoin.GetBTCMainNetParams()
 	for _, tx := range block.Transactions {
 		// check address of outputs
-		_, addrList, _, err := txscript.ExtractPkScriptAddrs(tx.TxOut[0].PkScript, &netParams)
+		_, addrList, _, err := txscript.ExtractPkScriptAddrs(tx.TxOut[0].PkScript, &p.NetParams)
 		if err != nil {
 			return fmt.Errorf("txscript.ExtractPkScriptAddrs err: %s", err.Error())
 		}
@@ -166,7 +166,7 @@ func (p *ParserBtc) parsingBlockData(block *wire.MsgBlock, pc *parser_common.Par
 			if err != nil {
 				return fmt.Errorf("txscript.ComputePkScript err: %s", err.Error())
 			}
-			addr, err := pkScript.Address(&netParams)
+			addr, err := pkScript.Address(&p.NetParams)
 			if err != nil {
 				return fmt.Errorf("pkScript.Address err: %s", err.Error())
 			}

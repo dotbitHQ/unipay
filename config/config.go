@@ -105,12 +105,14 @@ type CfgServer struct {
 			AddrMap   map[string]string `json:"addr_map" yaml:"addr_map"`
 		} `json:"doge" yaml:"doge"`
 		BTC struct {
-			Refund   bool              `json:"refund" yaml:"refund"`
-			Switch   bool              `json:"switch" yaml:"switch"`
-			Node     string            `json:"node" yaml:"node"`
-			User     string            `json:"user" yaml:"user"`
-			Password string            `json:"password" yaml:"password"`
-			AddrMap  map[string]string `json:"addr_map" yaml:"addr_map"`
+			UtxoApiUrl string            `json:"utxo_api_url" yaml:"utxo_api_url"`
+			UtxoApiKey string            `json:"utxo_api_key" yaml:"utxo_api_key"`
+			Refund     bool              `json:"refund" yaml:"refund"`
+			Switch     bool              `json:"switch" yaml:"switch"`
+			Node       string            `json:"node" yaml:"node"`
+			User       string            `json:"user" yaml:"user"`
+			Password   string            `json:"password" yaml:"password"`
+			AddrMap    map[string]string `json:"addr_map" yaml:"addr_map"`
 		} `json:"btc" yaml:"btc"`
 		Stripe struct {
 			Refund         bool   `json:"refund" yaml:"refund"`

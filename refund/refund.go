@@ -7,6 +7,7 @@ import (
 	"github.com/dotbitHQ/das-lib/bitcoin"
 	"github.com/dotbitHQ/das-lib/chain/chain_evm"
 	"github.com/dotbitHQ/das-lib/chain/chain_tron"
+	dascommon "github.com/dotbitHQ/das-lib/common"
 	"github.com/dotbitHQ/das-lib/core"
 	"github.com/dotbitHQ/das-lib/http_api/logger"
 	"github.com/dotbitHQ/das-lib/remote_sign"
@@ -78,12 +79,16 @@ func (t *ToolRefund) InitRefundInfo() error {
 		if err != nil {
 			return fmt.Errorf("rpcclient.New err: %s", err.Error())
 		}
+		netParams := bitcoin.GetBTCMainNetParams()
+		if config.Cfg.Server.Net != dascommon.DasNetTypeMainNet {
+			netParams = bitcoin.GetBTCTestNetParams()
+		}
 		t.chainBTC = &bitcoin.TxTool{
 			RpcClient:        nil,
 			Ctx:              t.Ctx,
 			RemoteSignClient: nil,
 			DustLimit:        bitcoin.DustLimitBtc,
-			Params:           bitcoin.GetBTCMainNetParams(),
+			Params:           netParams,
 			RpcClientBTC:     client,
 		}
 		if t.remoteSignClient != nil {
