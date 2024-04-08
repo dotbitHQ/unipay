@@ -211,6 +211,10 @@ func GetPaymentAddress(payTokenId tables.PayTokenId, paymentAddress string) (str
 		return "", nil
 	case tables.PayTokenIdDIDPoint:
 		return "", nil
+	case tables.PayTokenIdBTC:
+		if _, ok := Cfg.Chain.BTC.AddrMap[paymentAddress]; ok {
+			return paymentAddress, nil
+		}
 	}
 	return "", fmt.Errorf("unknow pay token id[%s] in AddrMap[%s]", payTokenId, paymentAddress)
 }
