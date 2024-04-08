@@ -50,6 +50,7 @@ func (p *ParserCommon) Parser() {
 	parserType := p.PC.ParserType
 	concurrencyNum := p.PC.ConcurrencyNum
 	confirmNum := p.PC.ConfirmNum
+	log.Info("Parser:", parserType, concurrencyNum, confirmNum, p.PC.CurrentBlockNumber)
 
 	atomic.AddUint64(&p.PC.CurrentBlockNumber, 1)
 	p.PC.Wg.Add(1)
