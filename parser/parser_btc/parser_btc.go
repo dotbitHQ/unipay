@@ -25,11 +25,11 @@ type ParserBtc struct {
 }
 
 func (p *ParserBtc) GetLatestBlockNumber() (uint64, error) {
-	data, err := p.NodeRpc.GetBlockChainInfo()
+	blockNumber, err := p.NodeRpc.GetBlockCount()
 	if err != nil {
-		return 0, fmt.Errorf("GetBlockChainInfo err: %s", err.Error())
+		return 0, fmt.Errorf("GetBlockCount err: %s", err.Error())
 	}
-	return uint64(data.Blocks), nil
+	return uint64(blockNumber), nil
 }
 func (p *ParserBtc) Init(pc *parser_common.ParserCore) error {
 	return nil
