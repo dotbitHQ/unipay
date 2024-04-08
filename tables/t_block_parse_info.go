@@ -54,6 +54,8 @@ func (p ParserType) ToString() string {
 		return "DOGE"
 	case ParserTypeDP:
 		return "DP"
+	case ParserTypeBTC:
+		return "BTC"
 	}
 	return fmt.Sprintf("%d", p)
 }
@@ -68,6 +70,8 @@ func (p ParserType) ToAlgorithmId() common.DasAlgorithmId {
 		return common.DasAlgorithmIdTron
 	case ParserTypeDoge:
 		return common.DasAlgorithmIdDogeChain
+	case ParserTypeBTC:
+		return common.DasAlgorithmIdBitcoin
 	}
 	return -1
 }
