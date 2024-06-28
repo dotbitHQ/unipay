@@ -14,12 +14,12 @@
 
 Please familiarize yourself with the meaning of some common parameters before reading the API list:
 
-| param                                                                                   | description                                        |
-|:----------------------------------------------------------------------------------------|:---------------------------------------------------|
-| type                                                                                    | Filled with "blockchain" for now                   |
-| coin_type <sup>[1](https://github.com/satoshilabs/slips/blob/master/slip-0044.md)</sup> | 60: eth, 195: trx, 9006: bsc, 966: matic, 3: doge  |
-| account                                                                                 | Contains the suffix `.bit` in it                   |
-| key                                                                                     | Generally refers to the blockchain address for now |
+| param                                                                      | description                                        |
+|:---------------------------------------------------------------------------|:---------------------------------------------------|
+| type                                                                       | Filled with "blockchain" for now                   |
+| [coin_type](https://github.com/satoshilabs/slips/blob/master/slip-0044.md) | 60: eth, 195: trx, 9006: bsc, 966: matic, 3: doge  |
+| account                                                                    | Contains the suffix `.bit` in it                   |
+| key                                                                        | Generally refers to the blockchain address for now |
 
 
 
@@ -218,18 +218,5 @@ curl -X POST localhsot/v1/order/refund -d'{"business_id":"","amount":0.00,"refun
 }
 ```
 ### Error Code
-```go
-
-const (
-  ApiCodeSuccess              Code = 0
-  ApiCodeError500             Code = 500
-  ApiCodeParamsInvalid        Code = 10000
-  ApiCodeMethodNotExist       Code = 10001
-  ApiCodeDbError              Code = 10002
-  
-  ApiCodeAccountFormatInvalid Code = 20006
-  ApiCodeAccountNotExist      Code = 20007
-)
-
-```
+[Error code list](https://github.com/dotbitHQ/das-lib/blob/main/http_api/code.go)
     
