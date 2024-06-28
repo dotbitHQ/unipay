@@ -50,3 +50,6 @@ _if you already have a mysql installed, just run_
 ```bash
 docker run -dv $PWD/config/config.yaml:/app/config/config.yaml --name unipay_svr dotbitteam/unipay:latest
 ```
+## API Usage
+
+[Here](https://github.com/dotbitHQ/unipay/blob/main/API.md) are the APIs details.
