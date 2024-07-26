@@ -13,7 +13,7 @@ var (
 )
 
 func (t *ToolTimer) RunCheckNode() {
-	tickerNode := time.NewTicker(time.Minute * 5)
+	tickerNode := time.NewTicker(time.Minute * 15)
 	t.Wg.Add(1)
 	go func() {
 		for {
@@ -40,7 +40,7 @@ func (t *ToolTimer) doCheckNode() error {
 	for _, v := range list {
 		if bn, ok := nodeMap[v.ParserType]; ok {
 			if v.BlockNumber <= bn {
-				msg := fmt.Sprintf("ParserType(%d), BlockNumber[%d,%d]", v.ParserType, v.BlockNumber, bn)
+				msg := fmt.Sprintf("ParserType(%s), ParserBlockNumber[%d]", v.ParserType.ToString(), v.BlockNumber)
 				notify.SendLarkTextNotify(config.Cfg.Notify.LarkErrorKey, "doCheckNode", msg)
 			}
 		}
