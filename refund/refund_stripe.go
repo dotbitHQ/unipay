@@ -25,7 +25,7 @@ func (t *ToolRefund) doRefundStripe(list []tables.ViewRefundPaymentInfo) error {
 		//	amountRefund = amountRefund.Div(v.PremiumPercentage.Add(decimal.NewFromInt(1)))
 		//}
 
-		dec34 := decimal.NewFromFloat(0.034)
+		dec34 := decimal.NewFromFloat(0.039)
 		dec50 := decimal.NewFromFloat(50)
 		amountRefund := v.Amount.Sub(v.Amount.Mul(dec34).Add(dec50))
 		r, err := stripe_api.RefundPaymentIntent(v.PayHash, amountRefund.Floor().IntPart())
