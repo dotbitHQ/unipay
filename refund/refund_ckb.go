@@ -125,9 +125,9 @@ func (t *ToolRefund) doRefundCkb(paymentAddress, private string, list []tables.V
 		return fmt.Errorf("UpdatePaymentListToRefunded err: %s", err.Error())
 	}
 	if _, err = txBuilder.SendTransaction(); err != nil {
-		if err = t.DbDao.UpdatePaymentListToUnRefunded(payHashList); err != nil {
-			log.Info("UpdatePaymentListToUnRefunded err: ", err.Error(), payHashList)
-			notify.SendLarkErrNotify("doRefundCKB", fmt.Sprintf("%s\n%s", strings.Join(payHashList, ","), err.Error()))
+		if err1 := t.DbDao.UpdatePaymentListToUnRefunded(payHashList); err1 != nil {
+			log.Info("UpdatePaymentListToUnRefunded err: ", err1.Error(), payHashList)
+			notify.SendLarkErrNotify("doRefundCKB", fmt.Sprintf("%s\n%s", strings.Join(payHashList, ","), err1.Error()))
 		}
 		return fmt.Errorf("SendTransaction err: %s", err.Error())
 	}
