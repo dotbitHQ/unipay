@@ -49,6 +49,7 @@ const (
 	PayTokenIdBNB       PayTokenId = "bsc_bnb"
 	PayTokenIdBep20USDT PayTokenId = "bsc_bep20_usdt"
 	PayTokenIdMATIC     PayTokenId = "polygon_matic"
+	PayTokenIdPOL       PayTokenId = "polygon_pol"
 	PayTokenIdDOGE      PayTokenId = "doge_doge"
 	PayTokenIdDAS       PayTokenId = "ckb_das"
 	PayTokenIdCKB       PayTokenId = "ckb_ckb"

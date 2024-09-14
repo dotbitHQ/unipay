@@ -189,7 +189,7 @@ func GetPaymentAddress(payTokenId tables.PayTokenId, paymentAddress string) (str
 		if _, ok := Cfg.Chain.Bsc.AddrMap[paymentAddress]; ok {
 			return strings.ToLower(paymentAddress), nil
 		}
-	case tables.PayTokenIdMATIC:
+	case tables.PayTokenIdPOL: //,tables.PayTokenIdMATIC:
 		if _, ok := Cfg.Chain.Polygon.AddrMap[paymentAddress]; ok {
 			return strings.ToLower(paymentAddress), nil
 		}

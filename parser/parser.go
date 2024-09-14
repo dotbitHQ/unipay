@@ -151,7 +151,7 @@ func (t *ToolParser) initParserPolygon() error {
 			DbDao:              t.dbDao,
 			CN:                 t.cn,
 			ParserType:         tables.ParserTypePOLYGON,
-			PayTokenId:         tables.PayTokenIdMATIC,
+			PayTokenId:         tables.PayTokenIdPOL, //tables.PayTokenIdMATIC,
 			CurrentBlockNumber: 0,
 			ConcurrencyNum:     10,
 			ConfirmNum:         10,
