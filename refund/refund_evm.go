@@ -83,6 +83,7 @@ func (t *ToolRefund) refundEvm(p refundEvmParam) (ok bool, e error) {
 		}
 		fee = gasPrice.Mul(gasLimit)
 
+		log.Info("refundAmount fee:", refundAmount.String(), fee.String())
 		// NOTE fee more than refundAmount
 		if refundAmount.Cmp(fee) != 1 {
 			if err = t.DbDao.UpdateRefundStatusToRejected(payHash); err != nil {
