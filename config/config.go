@@ -183,7 +183,7 @@ func GetPaymentAddress(payTokenId tables.PayTokenId, paymentAddress string) (str
 		if _, ok := Cfg.Chain.Polygon.AddrMap[paymentAddress]; ok {
 			return strings.ToLower(paymentAddress), nil
 		}
-	case tables.PayTokenIdDAS, tables.PayTokenIdCKB:
+	case tables.PayTokenIdDAS, tables.PayTokenIdCKB, tables.PayTokenIdCkbCCC:
 		if _, ok := Cfg.Chain.Ckb.AddrMap[paymentAddress]; ok {
 			if parseAddr, err := address.Parse(paymentAddress); err != nil {
 				return "", fmt.Errorf("address.Parse err: %s[%s]", err.Error(), paymentAddress)

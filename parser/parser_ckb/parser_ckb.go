@@ -167,7 +167,9 @@ func (p *ParserCkb) parsingBlockData(block *types.Block, pc *parser_common.Parse
 				//pc.CreatePaymentForMismatch("", tx.Hash.Hex(), fromAddr, capacity, pc.PayTokenId)
 				continue
 			}
-			if order.PayTokenId != tables.PayTokenIdCKB && order.PayTokenId != tables.PayTokenIdDAS {
+			if order.PayTokenId != tables.PayTokenIdCKB &&
+				order.PayTokenId != tables.PayTokenIdDAS &&
+				order.PayTokenId != tables.PayTokenIdCkbCCC {
 				log.Warn("order pay token id not match", order.OrderId)
 				//pc.CreatePaymentForMismatch(common.DasAlgorithmIdCkb, order.OrderId, tx.Hash.Hex(), fromAddr, capacity, tables.PayTokenIdCKB)
 				continue
