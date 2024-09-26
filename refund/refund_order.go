@@ -31,7 +31,7 @@ func (t *ToolRefund) doRefund() error {
 			parserType = tables.ParserTypeETH
 		case tables.PayTokenIdBNB, tables.PayTokenIdBep20USDT:
 			parserType = tables.ParserTypeBSC
-		case tables.PayTokenIdMATIC:
+		case tables.PayTokenIdPOL: //tables.PayTokenIdMATIC:
 			parserType = tables.ParserTypePOLYGON
 		case tables.PayTokenIdTRX, tables.PayTokenIdTrc20USDT:
 			parserType = tables.ParserTypeTRON
@@ -196,7 +196,8 @@ func (t *ToolRefund) getParserTypeEvmMap() (map[tables.ParserType]parserTypeEvm,
 				return nil, fmt.Errorf("NonceAt polygon err: %s", err.Error())
 			}
 			parserTypePolygon.nonceMap[strings.ToLower(k)] = nonce
-			nonceInfo, err := t.DbDao.GetRefundNonce(nonce, k, []tables.PayTokenId{tables.PayTokenIdMATIC})
+			//nonceInfo, err := t.DbDao.GetRefundNonce(nonce, k, []tables.PayTokenId{tables.PayTokenIdMATIC})
+			nonceInfo, err := t.DbDao.GetRefundNonce(nonce, k, []tables.PayTokenId{tables.PayTokenIdPOL})
 			if err != nil {
 				return nil, fmt.Errorf("GetRefundNonce polygon err: %s[%d][%s]", err.Error(), nonce, k)
 			} else if nonceInfo.Id > 0 {
