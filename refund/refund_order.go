@@ -25,7 +25,7 @@ func (t *ToolRefund) doRefund() error {
 		}
 		var parserType tables.ParserType
 		switch v.PayTokenId {
-		case tables.PayTokenIdCKB, tables.PayTokenIdDAS:
+		case tables.PayTokenIdCKB, tables.PayTokenIdDAS, tables.PayTokenIdCkbCCC:
 			parserType = tables.ParserTypeCKB
 		case tables.PayTokenIdETH, tables.PayTokenIdErc20USDT:
 			parserType = tables.ParserTypeETH
