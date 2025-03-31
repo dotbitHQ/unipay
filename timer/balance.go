@@ -57,7 +57,8 @@ func (t *ToolTimer) ckbBalance() error {
 
 		log.Debug("ckbBalance:", msg)
 
-		if capacity < 1000000 {
+		// close notify
+		if capacity < 1 {
 			notify.SendLarkTextNotifyAtAll(config.Cfg.Notify.LarkDasInfoKey, "Live Cells", msg)
 		} else {
 			notify.SendLarkTextNotify(config.Cfg.Notify.LarkDasInfoKey, "Live Cells", msg)

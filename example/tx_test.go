@@ -30,7 +30,7 @@ var (
 	node, addFee = "https://rpc.ankr.com/eth_goerli", float64(2)
 	nodeBsc      = "https://rpc.ankr.com/bsc_testnet_chapel"
 	nodePolygon  = "https://rpc.ankr.com/polygon_mumbai"
-	nodeTron     = "grpc.nile.trongrid.io:50051"
+	nodeTron     = "grpc.trongrid.io:50051"
 	privateKey   = ""
 	privateKey2  = ""
 )
@@ -97,7 +97,7 @@ func TestTrc20Tx(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	block, err := chainTron.GetBlockByNumber(37205924)
+	block, err := chainTron.GetBlockByNumber(70510010)
 	if err != nil {
 		t.Fatal(err)
 	}
