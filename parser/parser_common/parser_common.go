@@ -59,7 +59,7 @@ func (p *ParserCommon) Parser() {
 			latestBlockNumber, err := p.PA.GetLatestBlockNumber()
 			if err != nil {
 				log.Error("GetLatestBlockNumber err: ", err.Error())
-				time.Sleep(time.Second * 10)
+				time.Sleep(time.Second * 30)
 			} else if concurrencyNum > 1 && p.PC.CurrentBlockNumber < (latestBlockNumber-confirmNum-concurrencyNum) {
 				log.Debug("ConcurrentParsing:", p.PC.CurrentBlockNumber, latestBlockNumber)
 				nowTime := time.Now()
@@ -72,7 +72,7 @@ func (p *ParserCommon) Parser() {
 					}
 				}
 				log.Debug("ConcurrentParsing time:", parserType, time.Since(nowTime).Seconds())
-				time.Sleep(time.Second * 1)
+				time.Sleep(time.Second * 5)
 			} else if p.PC.CurrentBlockNumber < (latestBlockNumber - confirmNum) {
 				nowTime := time.Now()
 				if err := p.PA.SingleParsing(p.PC); err != nil {
@@ -84,10 +84,10 @@ func (p *ParserCommon) Parser() {
 					}
 				}
 				log.Debug("Parsing time:", parserType, time.Since(nowTime).Seconds())
-				time.Sleep(time.Second * 5)
+				time.Sleep(time.Second * 30)
 			} else {
 				log.Debug("Parser:", parserType, p.PC.CurrentBlockNumber, latestBlockNumber)
-				time.Sleep(time.Second * 10)
+				time.Sleep(time.Second * 30)
 			}
 		case <-p.PC.Ctx.Done():
 			log.Warn("Parser done", parserType)
